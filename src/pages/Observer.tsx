@@ -170,9 +170,9 @@ Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="dashboard-header"
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', alignItems: 'stretch', marginBottom: '2rem' }}
         >
+          <div className="dashboard-header" style={{ margin: 0, flex: '1 1 400px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 className="dashboard-title" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Activity className="w-8 h-8 text-blue-400" />
@@ -188,9 +188,10 @@ Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
               <LogOut size={14} /> Log out
             </button>
           </div>
-
+          </div>
+          <div style={{ flex: '0 0 380px' }}>
           {/* Recent Alerts Dashboard */}
-          <div className="selection-card" style={{ marginTop: '2rem' }}>
+          <div className="selection-card" style={{ margin: 0, height: '100%' }}>
             <div className="selection-header">
               <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Bell size={20} style={{ color: '#F59E0B' }}/> Alert History
@@ -237,6 +238,7 @@ Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
                 </div>
               )}
             </div>
+          </div>
           </div>
         </motion.div>
 
@@ -543,55 +545,6 @@ Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
             </div>
           </div>
 
-          {/* Recent Alerts Dashboard */}
-          <div className="selection-card" style={{ marginTop: '2rem' }}>
-            <div className="selection-header">
-              <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Bell size={20} style={{ color: '#F59E0B' }}/> Alert History
-              </h3>
-            </div>
-            
-            <div style={{ marginTop: '1.5rem' }}>
-              {loading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-                  <div className="spinner">Loading...</div>
-                </div>
-              ) : alerts.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem 0', color: '#9CA3AF' }}>
-                  <Bell size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} />
-                  <p>No alerts have been triggered yet.</p>
-                </div>
-              ) : (
-                <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                  {alerts.map((a: any) => (
-                    <div 
-                      key={a.id} 
-                      style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        padding: '1rem', 
-                        background: 'rgba(255,255,255,0.02)',
-                        borderLeft: '4px solid #EF4444',
-                        borderRadius: '0 8px 8px 0'
-                      }}
-                    >
-                      <div>
-                        <h5 style={{ margin: '0 0 0.25rem 0', color: 'white', fontSize: '0.9rem' }}>{a.property_name}</h5>
-                        <div style={{ display: 'flex', gap: '1rem', color: '#9CA3AF', fontSize: '0.8rem' }}>
-                          <span>{a.metric}</span>
-                          <span>{a.condition_type === 'spikes_above' ? 'Spiked by' : a.condition_type === 'changes_by' ? 'Changed by' : 'Dropped by'} {Math.abs(a.percent_change).toFixed(1)}%</span>
-                        </div>
-                      </div>
-                      <div style={{ color: '#6B7280', fontSize: '0.8rem' }}>
-                        {new Date(a.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </motion.div>
       </div>
     </PageTransition>
