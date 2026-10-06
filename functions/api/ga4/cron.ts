@@ -39,34 +39,37 @@ export async function onRequestGet(context: any) {
         const accessToken = tokenData.access_token;
         if (!accessToken) continue;
 
-        // 3. Query GA4 Data API for Today vs Yesterday
+        // 3. Query GA4 Data API for Selected Date Range
         let dateRanges = [
-          { startDate: 'today', endDate: 'today' },
-          { startDate: 'yesterday', endDate: 'yesterday' }
+          { startDate: 'yesterday', endDate: 'yesterday' },
+          { startDate: '2daysAgo', endDate: '2daysAgo' }
         ];
 
-        if (monitor.comparison_period === 'weekly') {
-          dateRanges = [
-            { startDate: 'today', endDate: 'today' },
-            { startDate: '7daysAgo', endDate: '7daysAgo' }
-          ];
-        } else if (monitor.comparison_period === 'monthly') {
-          dateRanges = [
-            { startDate: 'today', endDate: 'today' },
-            { startDate: '28daysAgo', endDate: '28daysAgo' }
-          ];
-        } else if (monitor.comparison_period === 'yearly') {
-          dateRanges = [
-            { startDate: 'today', endDate: 'today' },
-            { startDate: '365daysAgo', endDate: '365daysAgo' }
-          ];
-        }
-
-        if (monitor.comparison_period === 'weekly') {
-          dateRanges = [
-            { startDate: 'today', endDate: 'today' },
-            { startDate: '7daysAgo', endDate: '7daysAgo' }
-          ];
+        switch (monitor.comparison_period) {
+          case 'yesterday_vs_last_week':
+            dateRanges = [
+              { startDate: 'yesterday', endDate: 'yesterday' },
+              { startDate: '8daysAgo', endDate: '8daysAgo' }
+            ];
+            break;
+          case 'last_7_vs_previous_7':
+            dateRanges = [
+              { startDate: '7daysAgo', endDate: 'yesterday' },
+              { startDate: '14daysAgo', endDate: '8daysAgo' }
+            ];
+            break;
+          case 'last_28_vs_previous_28':
+            dateRanges = [
+              { startDate: '28daysAgo', endDate: 'yesterday' },
+              { startDate: '56daysAgo', endDate: '29daysAgo' }
+            ];
+            break;
+          case 'last_30_vs_previous_30':
+            dateRanges = [
+              { startDate: '30daysAgo', endDate: 'yesterday' },
+              { startDate: '60daysAgo', endDate: '31daysAgo' }
+            ];
+            break;
         }
 
         const reportRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${monitor.property_id}:runReport`, {
@@ -84,7 +87,6 @@ export async function onRequestGet(context: any) {
         const report = await reportRes.json();
 
         // 4. Calculate Difference
-        // Usually, rows[0] is today, rows[1] is comparison
         if (report.rows && report.rows.length >= 2) {
           const currentVal = parseFloat(report.rows[0].metricValues[0].value);
           const pastVal = parseFloat(report.rows[1].metricValues[0].value);
