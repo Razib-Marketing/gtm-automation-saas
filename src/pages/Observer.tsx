@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell } from 'lucide-react';
+import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, Play } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -101,6 +101,35 @@ export const Observer = () => {
     }
   };
 
+    const [testingId, setTestingId] = useState<string | null>(null);
+
+  const handleTest = async (id: string) => {
+    setTestingId(id);
+    try {
+      const res = await fetch('/api/ga4/test', {
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ monitorId: id })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Test Email Sent!
+
+Result: ${data.percentChange > 0 ? '+' : ''}${data.percentChange.toFixed(2)}%
+Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
+      } else {
+        alert(`Test failed: ${data.error}`);
+      }
+    } catch (e) {
+      alert('An error occurred during test');
+    } finally {
+      setTestingId(null);
+    }
+  };
+
   const handleEdit = (m: any) => {
     setEditingId(m.id);
     setSelectedProperty(m.property_id);
@@ -179,7 +208,7 @@ export const Observer = () => {
                   <p>No alerts have been triggered yet.</p>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                   {alerts.map((a: any) => (
                     <div 
                       key={a.id} 
@@ -411,7 +440,7 @@ export const Observer = () => {
                   <p>Create a monitor above to start tracking your GA4 properties.</p>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                   {monitors.map(m => (
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }}
@@ -450,6 +479,25 @@ export const Observer = () => {
                           <Mail size={14} style={{ marginRight: '0.5rem' }} /> {m.alert_email}
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button 
+                            onClick={() => handleTest(m.id)}
+                            disabled={testingId === m.id}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              color: testingId === m.id ? '#10B981' : '#9CA3AF',
+                              cursor: testingId === m.id ? 'wait' : 'pointer',
+                              padding: '0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              transition: 'color 0.2s'
+                            }}
+                            onMouseOver={(e) => { if(testingId !== m.id) e.currentTarget.style.color = '#10B981' }}
+                            onMouseOut={(e) => { if(testingId !== m.id) e.currentTarget.style.color = '#9CA3AF' }}
+                            title="Test & Send Email"
+                          >
+                            <Play size={18} />
+                          </button>
                           <button 
                             onClick={() => handleEdit(m)}
                             style={{ 
@@ -514,7 +562,7 @@ export const Observer = () => {
                   <p>No alerts have been triggered yet.</p>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
                   {alerts.map((a: any) => (
                     <div 
                       key={a.id} 

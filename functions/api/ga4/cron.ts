@@ -109,7 +109,27 @@ export async function onRequestGet(context: any) {
             }
 
             if (isTriggered) {
-              if (env.RESEND_API_KEY) {
+              
+            const color = percentChange > 0 ? '#10B981' : '#EF4444';
+            const htmlBody = `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: ${color}; color: white; padding: 20px; text-align: center;"><h2>🚨 GA4 Anomaly Detected</h2></div>
+                <div style="padding: 20px;">
+                  <p>Your Observer monitor for <strong>${monitor.property_name}</strong> has detected significant movement.</p>
+                  <div style="background: #F3F4F6; padding: 15px; border-radius: 6px; margin-top: 20px;">
+                    <table style="width: 100%; text-align: left;">
+                      <tr><th style="padding-bottom: 8px;">Metric:</th><td style="padding-bottom: 8px;">${monitor.metric}</td></tr>
+                      <tr><th style="padding-bottom: 8px;">Evaluation:</th><td style="padding-bottom: 8px;">${monitor.comparison_period.replace(/_/g, ' ')}</td></tr>
+                      <tr><th style="padding-bottom: 8px;">Current Window:</th><td style="padding-bottom: 8px;"><strong>${currentVal}</strong></td></tr>
+                      <tr><th style="padding-bottom: 8px;">Previous Window:</th><td style="padding-bottom: 8px;"><strong>${pastVal}</strong></td></tr>
+                      <tr><th>Change:</th><td><strong style="color: ${color}">${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2)}%</strong></td></tr>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            `;
+
+            if (env.RESEND_API_KEY) {
                 await fetch('https://api.resend.com/emails', {
                   method: 'POST',
                   headers: {
@@ -120,15 +140,11 @@ export async function onRequestGet(context: any) {
                     from: 'Observer <onboarding@resend.dev>',
                     to: monitor.alert_email,
                     subject: `🚨 GA4 Alert: ${monitor.property_name} (${monitor.metric}) ${actionText} ${Math.abs(percentChange).toFixed(1)}%`,
-                    html: `<p>Your monitor for <strong>${monitor.property_name}</strong> triggered an alert.</p>
-                           <p><strong>Metric:</strong> ${monitor.metric}</p>
-                           <p><strong>Current:</strong> ${currentVal}</p>
-                           <p><strong>Previous:</strong> ${pastVal}</p>
-                           <p><strong>Change:</strong> ${percentChange.toFixed(2)}%</p>`
+                    html: htmlBody
                   })
                 });
-              }
-              logs.push(`Alerted ${monitor.alert_email} for ${monitor.property_name} (${actionText} ${percentChange.toFixed(1)}%)`);
+            }
+            logs.push(`Alerted ${monitor.alert_email} for ${monitor.property_name} (${actionText} ${percentChange.toFixed(1)}%)`);
               
               // Log to Database
               const alertId = 'alt_' + Date.now() + Math.random().toString(36).substring(2, 9);
