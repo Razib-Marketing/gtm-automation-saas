@@ -1,0 +1,8 @@
+#!/usr/bin/expect -f
+set timeout 10
+spawn gh auth login --hostname github.com --git-protocol https --web
+expect -re "(Y/n)"
+send "y\r"
+expect -re "Press Enter"
+send "\r"
+expect eof

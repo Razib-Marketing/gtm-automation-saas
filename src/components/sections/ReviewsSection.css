@@ -1,0 +1,159 @@
+.reviews-section {
+  padding: 6rem 0;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  font-size: 1.125rem;
+  color: #9CA3AF;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.reviews-slider-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  padding: 0;
+}
+
+.embla {
+  overflow: hidden;
+  flex: 1;
+  width: 100%;
+}
+
+.embla__container {
+  display: flex;
+  backface-visibility: hidden;
+  margin-left: -1.5rem;
+  align-items: stretch;
+}
+
+.embla__slide {
+  flex: 0 0 calc(33.3333%);
+  min-width: 0;
+  padding-left: 1.5rem;
+}
+
+.slider-arrow {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.slider-arrow:hover {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #00F0FF;
+  transform: scale(1.05);
+}
+
+@media (max-width: 1024px) {
+  .embla__slide {
+    flex: 0 0 calc(50%);
+  }
+}
+
+@media (max-width: 600px) {
+  .reviews-slider-container {
+    gap: 0.5rem;
+  }
+  .slider-arrow {
+    width: 36px;
+    height: 36px;
+  }
+  .embla__slide {
+    flex: 0 0 100%;
+  }
+}
+
+.review-card {
+  background: rgba(18, 18, 24, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  backdrop-filter: blur(24px);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+  text-align: left;
+  height: 100%;
+}
+
+.review-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 240, 255, 0.3);
+}
+
+.stars {
+  display: flex;
+  gap: 0.25rem;
+  color: #F59E0B;
+}
+
+.review-content {
+  font-size: 1.125rem;
+  color: #E5E7EB;
+  line-height: 1.6;
+  font-style: italic;
+  flex-grow: 1;
+}
+
+.review-author {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.author-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.author-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+.author-role {
+  font-size: 0.875rem;
+  color: #9CA3AF;
+}

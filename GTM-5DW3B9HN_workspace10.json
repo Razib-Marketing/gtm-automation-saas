@@ -1,0 +1,4036 @@
+{
+    "exportFormatVersion": 2,
+    "exportTime": "2026-06-18 10:57:44",
+    "containerVersion": {
+        "path": "accounts/6301140598/containers/223375028/versions/0",
+        "accountId": "6301140598",
+        "containerId": "223375028",
+        "containerVersionId": "0",
+        "container": {
+            "path": "accounts/6301140598/containers/223375028",
+            "accountId": "6301140598",
+            "containerId": "223375028",
+            "name": "www.thewentworth.com",
+            "publicId": "GTM-5DW3B9HN",
+            "usageContext": [
+                "WEB"
+            ],
+            "fingerprint": "1750862160357",
+            "tagManagerUrl": "https://tagmanager.google.com/#/container/accounts/6301140598/containers/223375028/workspaces?apiLink=container",
+            "features": {
+                "supportUserPermissions": true,
+                "supportEnvironments": true,
+                "supportWorkspaces": true,
+                "supportGtagConfigs": false,
+                "supportBuiltInVariables": true,
+                "supportClients": false,
+                "supportFolders": true,
+                "supportTags": true,
+                "supportTemplates": true,
+                "supportTriggers": true,
+                "supportVariables": true,
+                "supportVersions": true,
+                "supportZones": true,
+                "supportTransformations": false
+            },
+            "tagIds": [
+                "GTM-5DW3B9HN"
+            ]
+        },
+        "tag": [
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "3",
+                "name": "Integration - AW",
+                "type": "googtag",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "tagId",
+                        "value": "AW-17262629360"
+                    }
+                ],
+                "fingerprint": "1750952726049",
+                "firingTriggerId": [
+                    "2147479573"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "4",
+                "name": "ads_conversion_purchase",
+                "type": "awct",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enableNewCustomerReporting",
+                        "value": "false"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enableConversionLinker",
+                        "value": "true"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "orderId",
+                        "value": "{{DLV - transactionId}}"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enableProductReporting",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "conversionValue",
+                        "value": "{{DLV - ecommerce.value}}{{DLV - transactionTotal}}"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "conversionCookiePrefix",
+                        "value": "_gcl"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enableShippingData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "conversionId",
+                        "value": "17262629360"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "currencyCode",
+                        "value": "USD"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "conversionLabel",
+                        "value": "oB0vCM7r3OIaEPCju6dA"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "rdp",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1779282427030",
+                "firingTriggerId": [
+                    "98"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "6",
+                "name": "Integration - GA4",
+                "type": "googtag",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "tagId",
+                        "value": "G-LNJ4X33X5P"
+                    }
+                ],
+                "fingerprint": "1750952780795",
+                "firingTriggerId": [
+                    "2147479573"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "25",
+                "name": "GA4 - Event - Safara - Purchase",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "items"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - transactionProducts}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "transaction_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - transactionId}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "currency"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "USD"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "value"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - subtotal}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "tax"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - transactionTax}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "checkin_date"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - checkin_date}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "checkout_date"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - checkout_date}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "transaction_date"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - transaction_date}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "lead_time"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - lead_time}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "booking_engine"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "safara"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "from_safara"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "true"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "room_nights"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - room_nights}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "display_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - display_type}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "room_name"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - room_name}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "rate_name"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - rate_name}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - hotelId}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "guest_count"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - guest_count}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "payment_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - payment_type}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enhancedUserId",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "purchase"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{Safara - GA4 Measurement ID - G-LNJ4X33X5P}}"
+                    }
+                ],
+                "fingerprint": "1779451845233",
+                "firingTriggerId": [
+                    "10"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "33",
+                "name": "cHTML - dL Push Event - Safara - Start Add. Guest Details",
+                "type": "html",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "html",
+                        "value": "<script>\nwindow.dataLayer = window.dataLayer || [];\nwindow.dataLayer.push({\n  event: 'Start Add. Guest Details',\n  booking_engine: 'Safara',\n  currency: 'USD',\n  value: {{Safara - DLV - price}},\n  coupon: '{{Safara - DLV - coupon_code}}',\n  hotel_id: '{{Safara - DLV - hotelId}}',\n  items: [\n      {\n        item_id: '{{Safara - DLV - room_id}}', \n        item_name: '{{Safara - DLV - room_name}}',\n        item_category: '{{Safara - DLV - rate_name}}',\n        quantity: {{Safara - DLV - room_count}},\n        price: {{Safara - DLV - price}}\n      }\n    ]\n});\n</script>"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "supportDocumentWrite",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1779451845286",
+                "firingTriggerId": [
+                    "31"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_LOAD",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "40",
+                "name": "GA4 - Event - Safara - Add to Cart",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "items"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - items}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "value"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - price}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "currency"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "USD"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "booking_engine"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "safara"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - hotelId}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "display_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - display_type}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "from_safara"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "true"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enhancedUserId",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "add_to_cart"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{Safara - GA4 Measurement ID - G-LNJ4X33X5P}}"
+                    }
+                ],
+                "fingerprint": "1779451845236",
+                "firingTriggerId": [
+                    "38"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "42",
+                "name": "cHTML - dL Push Event - Safara - Begin Checkout",
+                "type": "html",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "html",
+                        "value": "<script>\nwindow.dataLayer = window.dataLayer || [];\nwindow.dataLayer.push({\n  event: 'begin_checkout',\n  booking_engine: 'Safara',\n  currency: 'USD',\n  value: {{Safara - DLV - price}},\n  coupon: '{{Safara - DLV - coupon_code}}',\n  hotel_id: '{{Safara - DLV - hotelId}}',\n  items: [\n      {\n        item_id: '{{Safara - DLV - room_id}}', \n        item_name: '{{Safara - DLV - room_name}}',\n        item_category: '{{Safara - DLV - rate_name}}',\n        quantity: {{Safara - DLV - room_count}},\n        price: {{Safara - DLV - price}}\n      }\n    ]\n});\n</script>"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "supportDocumentWrite",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1779451845287",
+                "firingTriggerId": [
+                    "41"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "43",
+                "name": "GA4 - Event - Safara - BE Events",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "booking_engine"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "safara"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "display_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - display_type}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "event_action"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Event}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "from_safara"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "true"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - hotelId}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enhancedUserId",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "be_event"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{Safara - GA4 Measurement ID - G-LNJ4X33X5P}}"
+                    }
+                ],
+                "fingerprint": "1779451845235",
+                "firingTriggerId": [
+                    "26"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "47",
+                "name": "cHTML - dL Push Event - Safara - Add to Cart",
+                "type": "html",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "html",
+                        "value": "<script>\nwindow.dataLayer = window.dataLayer || [];\nwindow.dataLayer.push({\n  event: 'add_to_cart',\n  booking_engine: 'Safara',\n  currency: 'USD',\n  value: {{Safara - DLV - price}},\n  coupon: '{{Safara - DLV - coupon_code}}',\n  hotel_id: '{{Safara - DLV - hotelId}}',\n  items: [\n      {\n        item_id: '{{Safara - DLV - room_id}}', \n        item_name: '{{Safara - DLV - room_name}}',\n        item_category: '{{Safara - DLV - rate_name}}',\n        quantity: {{Safara - DLV - room_count}},\n        price: {{Safara - DLV - price}}\n      }\n    ]\n});\n</script>"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "supportDocumentWrite",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1779451845287",
+                "firingTriggerId": [
+                    "44"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "55",
+                "name": "GA4 - Event - Safara - Booking Entrance",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "booking_engine"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "safara"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "from_safara"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "true"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "display_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - display_type}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - hotelId}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enhancedUserId",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "booking_entrance"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{Safara - GA4 Measurement ID - G-LNJ4X33X5P}}"
+                    }
+                ],
+                "fingerprint": "1779451845234",
+                "firingTriggerId": [
+                    "52"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "58",
+                "name": "GA4 - Event - Safara - Begin Checkout",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "items"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - items}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "value"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - price}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "currency"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "USD"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "booking_engine"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "safara"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - hotelId}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "display_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{Safara - DLV - display_type}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "from_safara"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "true"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enhancedUserId",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "begin_checkout"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{Safara - GA4 Measurement ID - G-LNJ4X33X5P}}"
+                    }
+                ],
+                "fingerprint": "1779451845234",
+                "firingTriggerId": [
+                    "53"
+                ],
+                "parentFolderId": "7",
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "59",
+                "name": "ads_conversion_linker",
+                "type": "gclidw",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enableCrossDomain",
+                        "value": "false"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enableUrlPassthrough",
+                        "value": "false"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "enableCookieOverrides",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1779282453182",
+                "firingTriggerId": [
+                    "2147479553"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "62",
+                "name": "Namastay GA4 Events",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "true"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "getEcommerceDataFrom",
+                        "value": "dataLayer"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "{{Event}}"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{GA4 measurement ID}}"
+                    }
+                ],
+                "fingerprint": "1779451845234",
+                "firingTriggerId": [
+                    "61"
+                ],
+                "tagFiringOption": "UNLIMITED",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "69",
+                "name": "Google Analytics GA4 Configuration",
+                "type": "googtag",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "tagId",
+                        "value": "{{GA4 measurement ID}}"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "configSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "send_page_view"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "true"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "firingTriggerId": [
+                    "2147479573"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "76",
+                "name": "Namastay Script",
+                "type": "html",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "html",
+                        "value": "<script src=\"https://sdk.namastay.io/index.js\"></script>\n<script>\n  (function() {\n    var hotelParameters = {\n      apiKey: 'a5c7bf15e6bd4b1e8d920c6b803ef0d6562ej4kbl00uqg9b',\n      spreedlyApiKey: 'D1a8Zma8lZfap6nZpUjPxp6OHBV',\n      widgetButtonsClass: 'namastay-widget-button',\n      specialOfferButtonsClass: 'namastay-offer-button',\n    };\n    \n    initNamastay(hotelParameters);\n    \n    // Track transformed elements - ES5 compatible\n    var transformedInputs = [];\n    var transformedLinks = [];\n    var createdButtons = [];\n    var lastCheckIn = '';\n    var lastCheckOut = '';\n    \n    function extractRateCode(url) {\n      try {\n        var urlObj = new URL(url);\n        var rateParam = urlObj.searchParams.get('Rate');\n        return rateParam;\n      } catch (e) {\n        return null;\n      }\n    }\n    \n    function extractRoomId(url) {\n      try {\n        var urlObj = new URL(url);\n        var roomParam = urlObj.searchParams.get('room');\n        return roomParam;\n      } catch (e) {\n        return null;\n      }\n    }\n    \n    function getDateFromLabel(inputName) {\n      var input = document.querySelector('input[name=\"' + inputName + '\"]');\n      if (!input) return null;\n      \n      // Find the label for this input\n      var label = null;\n      if (input.id) {\n        label = document.querySelector('label[for=\"' + input.id + '\"]');\n      }\n      \n      // If no label found, try next sibling\n      if (!label) {\n        var sibling = input.nextElementSibling;\n        if (sibling && sibling.tagName === 'LABEL') {\n          label = sibling;\n        }\n      }\n      \n      // If still no label, try parent's next child\n      if (!label && input.parentElement) {\n        var parent = input.parentElement;\n        for (var i = 0; i < parent.children.length; i++) {\n          if (parent.children[i].tagName === 'LABEL') {\n            label = parent.children[i];\n            break;\n          }\n        }\n      }\n      \n      if (!label) return null;\n      \n      // Extract date from spans\n      var daySpan = label.querySelector('.datepicker_day');\n      var monthYearSpan = label.querySelector('.datepicker_month_year');\n      \n      if (!daySpan || !monthYearSpan) return null;\n      \n      var day = daySpan.textContent.trim();\n      var monthYear = monthYearSpan.textContent.trim(); // e.g., \"Jan, 2026\"\n      \n      // Parse month and year\n      var parts = monthYear.split(',');\n      if (parts.length !== 2) return null;\n      \n      var monthStr = parts[0].trim();\n      var year = parts[1].trim();\n      \n      // Convert month name to number\n      var monthMap = {\n        'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',\n        'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',\n        'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'\n      };\n      \n      var month = monthMap[monthStr];\n      if (!month) return null;\n      \n      // Pad day with zero if needed\n      if (day.length === 1) {\n        day = '0' + day;\n      }\n      \n      return year + '-' + month + '-' + day;\n    }\n    \n    function getCheckInDate() {\n      // Try input with id first (for regular date inputs)\n      var inputById = document.querySelector('input#checkInDate');\n      if (inputById && inputById.value && inputById.value !== 'Check In') {\n        return inputById.value;\n      }\n      \n      // Try datepicker with name attribute and get from label spans\n      var dateFromLabel = getDateFromLabel('checkInDate');\n      if (dateFromLabel) {\n        return dateFromLabel;\n      }\n      \n      return null;\n    }\n    \n    function getCheckOutDate() {\n      // Try input with id first (for regular date inputs)\n      var inputById = document.querySelector('input#checkOutDate');\n      if (inputById && inputById.value && inputById.value !== 'Check Out') {\n        return inputById.value;\n      }\n      \n      // Try datepicker with name attribute and get from label spans\n      var dateFromLabel = getDateFromLabel('checkOutDate');\n      if (dateFromLabel) {\n        return dateFromLabel;\n      }\n      \n      return null;\n    }\n    \n    function getAdults() {\n      // Try to get adults from various inputs\n      var adultsInput = document.querySelector('input[name=\"adults\"], input#adults, select[name=\"adults\"], select#adults');\n      if (adultsInput && adultsInput.value) {\n        return parseInt(adultsInput.value);\n      }\n      return null;\n    }\n    \n    function updateAllButtons() {\n      var currentCheckIn = getCheckInDate();\n      var currentCheckOut = getCheckOutDate();\n      var currentAdults = getAdults();\n      \n      // Check if dates actually changed\n      if (currentCheckIn === lastCheckIn && currentCheckOut === lastCheckOut) {\n        return;\n      }\n      \n      lastCheckIn = currentCheckIn;\n      lastCheckOut = currentCheckOut;\n      \n      // Update all created buttons\n      for (var i = 0; i < createdButtons.length; i++) {\n        var btn = createdButtons[i];\n        if (btn._updateData && document.body.contains(btn)) {\n          btn._updateData();\n        }\n      }\n      \n      // Update all transformed links\n      for (var j = 0; j < transformedLinks.length; j++) {\n        var link = transformedLinks[j];\n        if (link._updateData && document.body.contains(link)) {\n          link._updateData();\n        }\n      }\n    }\n\n    function transformSynxisLinks() {\n      // Handle links\n      var allLinks = document.querySelectorAll('a[href*=\"?sbe_internalLink\"], a[href*=\"?sbe_openBE\"]');\n      \n      for (var i = 0; i < allLinks.length; i++) {\n        var link = allLinks[i];\n        \n        // Skip if already transformed\n        if (transformedLinks.indexOf(link) !== -1) {\n          continue;\n        }\n        \n        var href = link.getAttribute('href');\n        \n        if (href) {\n          var rateCode = extractRateCode(href);\n          var room = extractRoomId(href);\n          var roomCode = link.getAttribute('data-room-code');\n          \n          link.setAttribute('href', 'javascript:void(0)');\n          link.removeAttribute('target');\n          link.removeAttribute('data-sbe_init');\n          \n          link.style.cursor = 'pointer';\n          \n          // Store metadata for updates\n          link._rateCode = rateCode;\n          link._room = room;\n          link._roomCode = roomCode;\n          \n          // Create update function for this link\n          link._updateData = (function(lnk) {\n            return function() {\n              var currentCheckIn = getCheckInDate();\n              var currentCheckOut = getCheckOutDate();\n              var currentAdults = getAdults();\n              \n              if (lnk._rateCode) {\n                var offerData = { ratePlanCode: lnk._rateCode };\n                if (lnk._roomCode) offerData.roomId = lnk._roomCode;\n                if (currentCheckIn) offerData.startDate = currentCheckIn;\n                if (currentCheckOut) offerData.endDate = currentCheckOut;\n                if (currentAdults) offerData.adult = currentAdults;\n                \n                lnk.classList.add('namastay-offer-button');\n                lnk.setAttribute('data-offer', JSON.stringify(offerData));\n              } else if (lnk._room || lnk._roomCode) {\n                var offerData = { roomId: lnk._roomCode || lnk._room };\n                if (currentCheckIn) offerData.startDate = currentCheckIn;\n                if (currentCheckOut) offerData.endDate = currentCheckOut;\n                // Always include adult, default to 2 if not available\n                offerData.adult = currentAdults || 2;\n                \n                lnk.classList.add('namastay-offer-button');\n                lnk.classList.remove('book-btn');\n                lnk.setAttribute('data-offer', JSON.stringify(offerData));\n              } else {\n                lnk.classList.add('namastay-widget-button');\n              }\n            };\n          })(link);\n          \n          // Initial update\n          link._updateData();\n          \n          // Mark as transformed\n          transformedLinks.push(link);\n        }\n      }\n      \n      // Handle input buttons - transform to button elements\n      var allInputs = document.querySelectorAll('input.skipper-be-cta, input[data-sbe_init=\"true\"]');\n      \n      for (var j = 0; j < allInputs.length; j++) {\n        var input = allInputs[j];\n        \n        // Skip if already transformed\n        if (transformedInputs.indexOf(input) !== -1) {\n          continue;\n        }\n        \n        // Mark as transformed\n        transformedInputs.push(input);\n        \n        // Create new button element\n        var button = document.createElement('button');\n        \n        // Copy classes\n        button.className = input.className;\n        button.classList.remove('skipper-be-cta');\n        \n        // Copy ID if present\n        if (input.id) {\n          button.id = input.id;\n        }\n        \n        // Copy button text from input value\n        button.textContent = input.value || 'Check Availability';\n        \n        // Get initial data from input\n        var roomCode = input.getAttribute('data-room-code');\n        var checkIn = input.getAttribute('data-start-date');\n        var checkOut = input.getAttribute('data-end-date');\n        var adults = input.getAttribute('data-adults');\n        \n        // Store metadata on button for updates\n        button._roomCode = roomCode;\n        button._adults = adults;\n        \n        // Function to update button data\n        button._updateData = (function(btn) {\n          return function() {\n            var currentCheckIn = getCheckInDate() || checkIn;\n            var currentCheckOut = getCheckOutDate() || checkOut;\n            var currentAdults = getAdults() || (btn._adults ? parseInt(btn._adults) : null);\n            \n            // If room code exists, always make it an offer button\n            if (btn._roomCode) {\n              var bookingData = { roomId: btn._roomCode };\n              if (currentCheckIn) bookingData.startDate = currentCheckIn;\n              if (currentCheckOut) bookingData.endDate = currentCheckOut;\n              if (currentAdults) bookingData.adult = currentAdults;\n              \n              btn.setAttribute('data-offer', JSON.stringify(bookingData));\n              btn.classList.remove('namastay-widget-button');\n              btn.classList.add('namastay-offer-button');\n            } else if (currentCheckIn || currentCheckOut || currentAdults) {\n              // Has booking data but no room code\n              var bookingData = {};\n              if (currentCheckIn) bookingData.startDate = currentCheckIn;\n              if (currentCheckOut) bookingData.endDate = currentCheckOut;\n              if (currentAdults) bookingData.adult = currentAdults;\n              \n              btn.setAttribute('data-offer', JSON.stringify(bookingData));\n              btn.classList.remove('namastay-widget-button');\n              btn.classList.add('namastay-offer-button');\n            } else {\n              // No data at all - widget button\n              btn.removeAttribute('data-offer');\n              btn.classList.remove('namastay-offer-button');\n              btn.classList.add('namastay-widget-button');\n            }\n          };\n        })(button);\n        \n        // Initial data update\n        button._updateData();\n        \n        button.style.cursor = 'pointer';\n        button.style.textTransform = 'uppercase';\n        \n        // Replace input with button\n        input.parentNode.replaceChild(button, input);\n        \n        // Store button reference\n        createdButtons.push(button);\n      }\n      \n      // Set up date picker listeners (only once)\n      if (!window._datePickerListenersSetup) {\n        window._datePickerListenersSetup = true;\n        \n        // Add event listeners for date inputs with id\n        var checkInById = document.querySelector('input#checkInDate');\n        var checkOutById = document.querySelector('input#checkOutDate');\n        \n        if (checkInById) {\n          checkInById.addEventListener('change', updateAllButtons);\n          checkInById.addEventListener('input', updateAllButtons);\n        }\n        if (checkOutById) {\n          checkOutById.addEventListener('change', updateAllButtons);\n          checkOutById.addEventListener('input', updateAllButtons);\n        }\n        \n        // Polling - check every 500ms for date changes\n        setInterval(updateAllButtons, 500);\n      }\n    }\n    \n    if (document.readyState === 'loading') {\n      document.addEventListener('DOMContentLoaded', transformSynxisLinks);\n    } else {\n      transformSynxisLinks();\n    }\n    \n    setTimeout(transformSynxisLinks, 1000);\n    setTimeout(transformSynxisLinks, 2000);\n    setTimeout(transformSynxisLinks, 3000);\n    setTimeout(transformSynxisLinks, 5000);\n    \n    // Simplified observer - only watches for new links being added\n    var observer = new MutationObserver(function(mutations) {\n      var hasNewLinks = false;\n      \n      for (var i = 0; i < mutations.length; i++) {\n        if (mutations[i].type === 'childList' && mutations[i].addedNodes.length > 0) {\n          for (var j = 0; j < mutations[i].addedNodes.length; j++) {\n            var node = mutations[i].addedNodes[j];\n            if (node.nodeType === 1) {\n              // Check if it's a Synxis link\n              if (node.tagName === 'A') {\n                var href = node.getAttribute('href');\n                if (href && (href.indexOf('?sbe_openBE') > -1 || href.indexOf('?sbe_internalLink') > -1)) {\n                  hasNewLinks = true;\n                  break;\n                }\n              }\n              // Check if it contains Synxis links\n              if (node.querySelector) {\n                if (node.querySelector('a[href*=\"?sbe_openBE\"]') || node.querySelector('a[href*=\"?sbe_internalLink\"]')) {\n                  hasNewLinks = true;\n                  break;\n                }\n              }\n            }\n          }\n          if (hasNewLinks) break;\n        }\n      }\n      \n      if (hasNewLinks) {\n        // Debounce to prevent rapid successive calls\n        clearTimeout(window._transformTimeout);\n        window._transformTimeout = setTimeout(transformSynxisLinks, 100);\n      }\n    });\n    \n    observer.observe(document.body, {\n      childList: true,\n      subtree: true\n    });\n    \n  })();\n</script>"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "supportDocumentWrite",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1779212297906",
+                "firingTriggerId": [
+                    "2147479553"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "paused": true,
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "101",
+                "name": "stayntouch_ecommerce",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "true"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "getEcommerceDataFrom",
+                        "value": "dataLayer"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - hotel_id}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "{{Event}}"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{GA4 measurement ID}}"
+                    }
+                ],
+                "fingerprint": "1779282292734",
+                "firingTriggerId": [
+                    "96"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "102",
+                "name": "purchase",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "transaction_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - transactionId}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "value"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - transactionTotal}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "currency"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - currency}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - hotelId}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "items"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{CJS - stayntouch_saved_items}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "purchase"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{GA4 measurement ID}}"
+                    }
+                ],
+                "fingerprint": "1780312329018",
+                "firingTriggerId": [
+                    "98"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "103",
+                "name": "page_view_ibe",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "page_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - pageType}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - hotelId}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "page_view"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{GA4 measurement ID}}"
+                    }
+                ],
+                "fingerprint": "1779282355364",
+                "firingTriggerId": [
+                    "97"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "104",
+                "name": "cart_item_modified",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - hotel_id}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "room_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - ecommerce.room_id}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "room_name"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - ecommerce.room_name}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "adults"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - ecommerce.adults}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "check_out_date"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - ecommerce.check_out_date}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "cart_item_modified"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{GA4 measurement ID}}"
+                    }
+                ],
+                "fingerprint": "1779282366800",
+                "firingTriggerId": [
+                    "99"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "105",
+                "name": "payment_failure",
+                "type": "gaawe",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "sendEcommerceData",
+                        "value": "false"
+                    },
+                    {
+                        "type": "LIST",
+                        "key": "eventSettingsTable",
+                        "list": [
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "hotel_id"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - hotel_id}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "failure_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - ecommerce.failure_type}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "error_code"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - ecommerce.error_code}}"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "MAP",
+                                "map": [
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameter",
+                                        "value": "booking_type"
+                                    },
+                                    {
+                                        "type": "TEMPLATE",
+                                        "key": "parameterValue",
+                                        "value": "{{DLV - ecommerce.booking_type}}"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "eventName",
+                        "value": "payment_failure"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "measurementIdOverride",
+                        "value": "{{GA4 measurement ID}}"
+                    }
+                ],
+                "fingerprint": "1779282341579",
+                "firingTriggerId": [
+                    "100"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "106",
+                "name": "cHTML - save_stayntouch_items",
+                "type": "html",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "html",
+                        "value": "<script>\n  (function() {\n    try {\n      var items = {{DLV - ecommerce.items}};\n      if (items && Array.isArray(items) && items.length > 0) {\n        sessionStorage.setItem('st_ibe_cart', JSON.stringify(items));\n      }\n    } catch(e) {\n      // Silently fail if there is an error to avoid console warnings\n    }\n  })();\n</script>"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "supportDocumentWrite",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1780312188110",
+                "firingTriggerId": [
+                    "96"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "tagId": "108",
+                "name": "cHTML - clear_stayntouch_cart",
+                "type": "html",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "html",
+                        "value": "<script>\n  try {\n    sessionStorage.removeItem('st_ibe_cart');\n  } catch(e) {}\n</script>"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "supportDocumentWrite",
+                        "value": "false"
+                    }
+                ],
+                "fingerprint": "1780312769914",
+                "firingTriggerId": [
+                    "98"
+                ],
+                "tagFiringOption": "ONCE_PER_EVENT",
+                "monitoringMetadata": {
+                    "type": "MAP"
+                },
+                "consentSettings": {
+                    "consentStatus": "NOT_SET"
+                }
+            }
+        ],
+        "trigger": [
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "10",
+                "name": "Safara - Reservation Completed",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "Reservation Completed"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802157",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "26",
+                "name": "Safara Events",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "MATCH_REGEX",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "Open Booking Engine|Select Check In Date|Select Check Out Date|Submit Search Form|Select Room Details|Select Room Rate|Book Room|Reservation Completed"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952995227",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "31",
+                "name": "Safara - Guest Detail Start Click",
+                "type": "CLICK",
+                "filter": [
+                    {
+                        "type": "MATCH_REGEX",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{Safara - DLV - gtm.elementId}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "firstname-"
+                            },
+                            {
+                                "type": "BOOLEAN",
+                                "key": "ignore_case",
+                                "value": "true"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802232",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "35",
+                "name": "Page View - from_safara",
+                "type": "PAGEVIEW",
+                "filter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{URL - Query - from_safara}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "true"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "36",
+                "name": "Safara - Start Add. Guest Details",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "Start Add. Guest Details"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "38",
+                "name": "Safara - Add to Cart",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "add_to_cart"
+                            }
+                        ]
+                    }
+                ],
+                "filter": [
+                    {
+                        "type": "MATCH_REGEX",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{Safara - DLV - booking_engine}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "safara"
+                            },
+                            {
+                                "type": "BOOLEAN",
+                                "key": "ignore_case",
+                                "value": "true"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "41",
+                "name": "Safara - Submit Guest Details",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "Submit Guest Details"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "44",
+                "name": "Safara - Book Room",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "Book Room"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "45",
+                "name": "All Links",
+                "type": "LINK_CLICK",
+                "waitForTags": {
+                    "type": "BOOLEAN",
+                    "value": "false"
+                },
+                "checkValidation": {
+                    "type": "BOOLEAN",
+                    "value": "false"
+                },
+                "waitForTagsTimeout": {
+                    "type": "TEMPLATE",
+                    "value": "2000"
+                },
+                "uniqueTriggerId": {
+                    "type": "TEMPLATE"
+                },
+                "fingerprint": "1750952802233"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "52",
+                "name": "Safara - Open Booking Engine",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "Open Booking Engine"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802234",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "53",
+                "name": "Safara - Begin Checkout",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "begin_checkout"
+                            }
+                        ]
+                    }
+                ],
+                "filter": [
+                    {
+                        "type": "MATCH_REGEX",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{Safara - DLV - booking_engine}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "safara"
+                            },
+                            {
+                                "type": "BOOLEAN",
+                                "key": "ignore_case",
+                                "value": "true"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1750952802234",
+                "parentFolderId": "7"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "54",
+                "name": "All Forms",
+                "type": "FORM_SUBMISSION",
+                "waitForTags": {
+                    "type": "TEMPLATE"
+                },
+                "checkValidation": {
+                    "type": "TEMPLATE"
+                },
+                "waitForTagsTimeout": {
+                    "type": "TEMPLATE",
+                    "value": "2000"
+                },
+                "uniqueTriggerId": {
+                    "type": "TEMPLATE"
+                },
+                "fingerprint": "1750952802234"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "56",
+                "name": "All Clicks",
+                "type": "CLICK",
+                "fingerprint": "1750952802234"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "61",
+                "name": "Namastay Events",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "MATCH_REGEX",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "(purchase|begin_checkout|add_payment_info|view_item|view_item_list|select_date_range)"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1768490663092"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "96",
+                "name": "CE - Stayntouch Standard Ecommerce",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "MATCH_REGEX",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "^(search|view_item_list|view_item|add_to_cart|remove_from_cart|begin_checkout|add_payment_info)$"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1778873494207"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "97",
+                "name": "CE - IBE Page View",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "IBE Page View"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1778873565500"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "98",
+                "name": "CE - IBE Booking",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "IBE Booking"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1778873629555"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "99",
+                "name": "CE - cart_item_modified",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "cart_item_modified"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1778873657745"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "triggerId": "100",
+                "name": "CE - payment_failure",
+                "type": "CUSTOM_EVENT",
+                "customEventFilter": [
+                    {
+                        "type": "EQUALS",
+                        "parameter": [
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg0",
+                                "value": "{{_event}}"
+                            },
+                            {
+                                "type": "TEMPLATE",
+                                "key": "arg1",
+                                "value": "payment_failure"
+                            }
+                        ]
+                    }
+                ],
+                "fingerprint": "1778873687193"
+            }
+        ],
+        "variable": [
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "8",
+                "name": "Safara - GA4 Measurement ID - G-LNJ4X33X5P",
+                "type": "c",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "value",
+                        "value": "G-LNJ4X33X5P"
+                    }
+                ],
+                "fingerprint": "1750952823766",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "9",
+                "name": "Safara - DLV - rate_name",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "rate_name"
+                    }
+                ],
+                "fingerprint": "1750952802157",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "11",
+                "name": "Safara - DLV - payment_type",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "payment_type"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "12",
+                "name": "Safara - DLV - room_name",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "room_name"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "13",
+                "name": "Safara - DLV - transactionId",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "transactionId"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "14",
+                "name": "Safara - DLV - display_type",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "display_type"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "15",
+                "name": "Safara - DLV - transactionTax",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "transactionTax"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "16",
+                "name": "Safara - DLV - hotelId",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "hotelId"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "17",
+                "name": "Safara - DLV - transactionProducts",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "transactionProducts"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "18",
+                "name": "Safara - DLV - subtotal",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "subtotal"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "19",
+                "name": "Safara - DLV - lead_time",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "lead_time"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "20",
+                "name": "Safara - DLV - transaction_date",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "created_at"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "21",
+                "name": "Safara - DLV - checkout_date",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "checkout_date"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "22",
+                "name": "Safara - DLV - room_nights",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "transactionProducts.0.quantity"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "23",
+                "name": "Safara - DLV - checkin_date",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "checkin_date"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "24",
+                "name": "Safara - DLV - guest_count",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "guest_count"
+                    }
+                ],
+                "fingerprint": "1750952802158",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "27",
+                "name": "Safara - DLV - price",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "price"
+                    }
+                ],
+                "fingerprint": "1750952802159",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "28",
+                "name": "Safara - DLV - room_id",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "room_id"
+                    }
+                ],
+                "fingerprint": "1750952802159",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "29",
+                "name": "Safara - DLV - room_count",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "room_count"
+                    }
+                ],
+                "fingerprint": "1750952802232",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "30",
+                "name": "Safara - DLV - gtm.elementId",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "gtm.elementId"
+                    }
+                ],
+                "fingerprint": "1750952802232",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "32",
+                "name": "Safara - DLV - coupon_code",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "coupon_code"
+                    }
+                ],
+                "fingerprint": "1750952802232",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "34",
+                "name": "URL - Query - from_safara",
+                "type": "u",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "component",
+                        "value": "QUERY"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "queryKey",
+                        "value": "from_safara"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "37",
+                "name": "Safara - DLV - booking_engine",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "booking_engine"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "39",
+                "name": "Safara - DLV - items",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "items"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "46",
+                "name": "Safara - DLV - phoneNumber",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "message.phoneNumber"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "48",
+                "name": "Safara - DLV - transactionTotal",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "transactionTotal"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "49",
+                "name": "Safara - JS - Extract Phone Number",
+                "type": "jsm",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "javascript",
+                        "value": "function() {\n  try {\n    var raw = {{Safara - DLV - phoneNumber}};\n    var parsed = JSON.parse(raw);\n    return parsed.phoneNumber;\n  } catch(e) {\n    return undefined;\n  }\n}"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "50",
+                "name": "Safara - DLV - email",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "message.email"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "51",
+                "name": "Safara - User-Provided Data",
+                "type": "awec",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "mode",
+                        "value": "MANUAL"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "phone_number",
+                        "value": "{{Safara - JS - Extract Phone Number}}"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "email",
+                        "value": "{{Safara - DLV - email}}"
+                    }
+                ],
+                "fingerprint": "1750952802233",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "57",
+                "name": "Cookie - from_safara",
+                "type": "k",
+                "parameter": [
+                    {
+                        "type": "BOOLEAN",
+                        "key": "decodeCookie",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "from_safara"
+                    }
+                ],
+                "fingerprint": "1750952802234",
+                "parentFolderId": "7",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "60",
+                "name": "GA4 measurement ID",
+                "type": "c",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "value",
+                        "value": "G-LNJ4X33X5P"
+                    }
+                ],
+                "fingerprint": "1768490750730",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "63",
+                "name": "Namastay - Amount Before Tax",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.gross"
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "64",
+                "name": "Namastay - rooms",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.rooms"
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "65",
+                "name": "Namastay - Coupon",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.coupon"
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "66",
+                "name": "Namastay - Payment Type",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.payment_type"
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "67",
+                "name": "Namastay - Currency",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.currency"
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "68",
+                "name": "Namastay - roomsNights",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.rooms_nights"
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "70",
+                "name": "Namastay - Start Date",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.startDate"
+                    }
+                ],
+                "fingerprint": "1768490663093",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "71",
+                "name": "Namastay - Amount After Tax",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.value"
+                    }
+                ],
+                "fingerprint": "1768490663094",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "72",
+                "name": "Namastay - Reservation ID",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.transaction_id"
+                    }
+                ],
+                "fingerprint": "1768490663094",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "73",
+                "name": "Namastay - Tax",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.tax"
+                    }
+                ],
+                "fingerprint": "1768490663094",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "74",
+                "name": "Namastay - End Date",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.endDate"
+                    }
+                ],
+                "fingerprint": "1768490663094",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "77",
+                "name": "DLV - hotelId",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "hotelId"
+                    }
+                ],
+                "fingerprint": "1778872978103",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "78",
+                "name": "DLV - hotel_id",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "hotel_id"
+                    }
+                ],
+                "fingerprint": "1778873006151",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "79",
+                "name": "DLV - pageType",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "pageType"
+                    }
+                ],
+                "fingerprint": "1778873031788",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "80",
+                "name": "DLV - transactionId",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "transactionId"
+                    }
+                ],
+                "fingerprint": "1778873094280",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "81",
+                "name": "DLV - transactionTotal",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "transactionTotal"
+                    }
+                ],
+                "fingerprint": "1778873115724",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "82",
+                "name": "DLV - currency",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "currency"
+                    }
+                ],
+                "fingerprint": "1778873143212",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "83",
+                "name": "DLV - ecommerce.currency",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.currency"
+                    }
+                ],
+                "fingerprint": "1778873173968",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "84",
+                "name": "DLV - ecommerce.value",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.value"
+                    }
+                ],
+                "fingerprint": "1778873194514",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "85",
+                "name": "DLV - ecommerce.items",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.items"
+                    }
+                ],
+                "fingerprint": "1778873217716",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "86",
+                "name": "DLV - ecommerce.check_in_date",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.check_in_date"
+                    }
+                ],
+                "fingerprint": "1778873239164",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "87",
+                "name": "DLV - ecommerce.check_out_date",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.check_out_date"
+                    }
+                ],
+                "fingerprint": "1778873259730",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "88",
+                "name": "DLV - ecommerce.adults",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.adults"
+                    }
+                ],
+                "fingerprint": "1778873280120",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "89",
+                "name": "DLV - ecommerce.kids",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.kids"
+                    }
+                ],
+                "fingerprint": "1778873302049",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "90",
+                "name": "DLV - ecommerce.available_room_count",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.available_room_count"
+                    }
+                ],
+                "fingerprint": "1778873325764",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "91",
+                "name": "DLV - ecommerce.room_id",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.room_id"
+                    }
+                ],
+                "fingerprint": "1778873344930",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "92",
+                "name": "DLV - ecommerce.room_name",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.room_name"
+                    }
+                ],
+                "fingerprint": "1778873365289",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "93",
+                "name": "DLV - ecommerce.booking_type",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.booking_type"
+                    }
+                ],
+                "fingerprint": "1778873386941",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "94",
+                "name": "DLV - ecommerce.failure_type",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.failure_type"
+                    }
+                ],
+                "fingerprint": "1778873408812",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "95",
+                "name": "DLV - ecommerce.error_code",
+                "type": "v",
+                "parameter": [
+                    {
+                        "type": "INTEGER",
+                        "key": "dataLayerVersion",
+                        "value": "2"
+                    },
+                    {
+                        "type": "BOOLEAN",
+                        "key": "setDefaultValue",
+                        "value": "false"
+                    },
+                    {
+                        "type": "TEMPLATE",
+                        "key": "name",
+                        "value": "ecommerce.error_code"
+                    }
+                ],
+                "fingerprint": "1778873431281",
+                "formatValue": {}
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "variableId": "107",
+                "name": "CJS - stayntouch_saved_items",
+                "type": "jsm",
+                "parameter": [
+                    {
+                        "type": "TEMPLATE",
+                        "key": "javascript",
+                        "value": "function() {\n  try {\n    var cachedItems = sessionStorage.getItem('st_ibe_cart');\n    if (cachedItems) {\n      return JSON.parse(cachedItems);\n    }\n    return undefined;\n  } catch(e) {\n    return undefined;\n  }\n}"
+                    }
+                ],
+                "fingerprint": "1780312262164",
+                "formatValue": {}
+            }
+        ],
+        "folder": [
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "folderId": "7",
+                "name": "Safara",
+                "fingerprint": "1750952802157"
+            }
+        ],
+        "builtInVariable": [
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "PAGE_URL",
+                "name": "Page URL"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "PAGE_HOSTNAME",
+                "name": "Page Hostname"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "PAGE_PATH",
+                "name": "Page Path"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "REFERRER",
+                "name": "Referrer"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "EVENT",
+                "name": "Event"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "CLICK_ELEMENT",
+                "name": "Click Element"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "CLICK_CLASSES",
+                "name": "Click Classes"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "CLICK_ID",
+                "name": "Click ID"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "CLICK_TARGET",
+                "name": "Click Target"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "CLICK_URL",
+                "name": "Click URL"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "CLICK_TEXT",
+                "name": "Click Text"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "FORM_ELEMENT",
+                "name": "Form Element"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "FORM_CLASSES",
+                "name": "Form Classes"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "FORM_ID",
+                "name": "Form ID"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "FORM_TARGET",
+                "name": "Form Target"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "FORM_URL",
+                "name": "Form URL"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "FORM_TEXT",
+                "name": "Form Text"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "SCROLL_DEPTH_THRESHOLD",
+                "name": "Scroll Depth Threshold"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "SCROLL_DEPTH_UNITS",
+                "name": "Scroll Depth Units"
+            },
+            {
+                "accountId": "6301140598",
+                "containerId": "223375028",
+                "type": "SCROLL_DEPTH_DIRECTION",
+                "name": "Scroll Direction"
+            }
+        ],
+        "fingerprint": "1781780264871",
+        "tagManagerUrl": "https://tagmanager.google.com/#/versions/accounts/6301140598/containers/223375028/versions/0?apiLink=version"
+    }
+}

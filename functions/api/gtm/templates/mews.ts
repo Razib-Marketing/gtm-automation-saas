@@ -1,0 +1,288 @@
+export const template = {
+  "variables": [
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "variableId": "4",
+      "name": "GA4 Pageview title",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "page_title"
+        }
+      ],
+      "fingerprint": "1703134567603",
+      "formatValue": {}
+    },
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "variableId": "5",
+      "name": "GA4 Pageview location",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "page_location"
+        }
+      ],
+      "fingerprint": "1703134621321",
+      "formatValue": {}
+    },
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "variableId": "9",
+      "name": "GA4 Event Name",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "eventName"
+        }
+      ],
+      "fingerprint": "1704312282233",
+      "formatValue": {}
+    },
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "variableId": "16",
+      "name": "Ecommerce Object",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "ecommerce"
+        }
+      ],
+      "fingerprint": "1705618177394",
+      "formatValue": {}
+    }
+  ],
+  "triggers": [
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "triggerId": "3",
+      "name": "All Mews GA4 Events",
+      "type": "CUSTOM_EVENT",
+      "customEventFilter": [
+        {
+          "type": "MATCH_REGEX",
+          "parameter": [
+            {
+              "type": "TEMPLATE",
+              "key": "arg0",
+              "value": "{{_event}}"
+            },
+            {
+              "type": "TEMPLATE",
+              "key": "arg1",
+              "value": "^ga4"
+            }
+          ]
+        }
+      ],
+      "fingerprint": "1713301576639"
+    },
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "triggerId": "10",
+      "name": "All Mews GA4 E-Commerce Events",
+      "type": "CUSTOM_EVENT",
+      "customEventFilter": [
+        {
+          "type": "MATCH_REGEX",
+          "parameter": [
+            {
+              "type": "TEMPLATE",
+              "key": "arg0",
+              "value": "{{_event}}"
+            },
+            {
+              "type": "TEMPLATE",
+              "key": "arg1",
+              "value": "^view_item|^view_item_list|^select_promotion|^add_to_cart|^remove_from_cart|^begin_checkout|^add_payment_info|^purchase"
+            }
+          ]
+        }
+      ],
+      "fingerprint": "1713301612123"
+    }
+  ],
+  "tags": [
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "tagId": "6",
+      "name": "Mews GA4",
+      "type": "gaawe",
+      "parameter": [
+        {
+          "type": "BOOLEAN",
+          "key": "sendEcommerceData",
+          "value": "false"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "enhancedUserId",
+          "value": "false"
+        },
+        {
+          "type": "LIST",
+          "key": "userProperties",
+          "list": [
+            {
+              "type": "MAP",
+              "map": [
+                {
+                  "type": "TEMPLATE",
+                  "key": "name",
+                  "value": "page_title"
+                },
+                {
+                  "type": "TEMPLATE",
+                  "key": "value",
+                  "value": "{{GA4 Pageview title}}"
+                }
+              ]
+            },
+            {
+              "type": "MAP",
+              "map": [
+                {
+                  "type": "TEMPLATE",
+                  "key": "name",
+                  "value": "page_location"
+                },
+                {
+                  "type": "TEMPLATE",
+                  "key": "value",
+                  "value": "{{GA4 Pageview location}}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "eventName",
+          "value": "{{GA4 Event Name}}"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "measurementIdOverride",
+          "value": "{{MEASUREMENT_ID_OVERRIDE}}"
+        }
+      ],
+      "fingerprint": "1713301558101",
+      "firingTriggerId": [
+        "3"
+      ],
+      "tagFiringOption": "ONCE_PER_EVENT",
+      "monitoringMetadata": {
+        "type": "MAP"
+      },
+      "consentSettings": {
+        "consentStatus": "NOT_SET"
+      }
+    },
+    {
+      "accountId": "6210202861",
+      "containerId": "173612340",
+      "tagId": "11",
+      "name": "Mews GA4 E-Commerce",
+      "type": "gaawe",
+      "parameter": [
+        {
+          "type": "TEMPLATE",
+          "key": "ecommerceMacroData",
+          "value": "{{Ecommerce Object}}"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "sendEcommerceData",
+          "value": "true"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "getEcommerceDataFrom",
+          "value": "customObject"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "enhancedUserId",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "eventName",
+          "value": "{{Event}}"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "measurementIdOverride",
+          "value": "{{MEASUREMENT_ID_OVERRIDE}}"
+        }
+      ],
+      "fingerprint": "1713301545910",
+      "firingTriggerId": [
+        "10"
+      ],
+      "tagFiringOption": "ONCE_PER_EVENT",
+      "monitoringMetadata": {
+        "type": "MAP"
+      },
+      "consentSettings": {
+        "consentStatus": "NOT_SET"
+      }
+    }
+  ]
+};

@@ -1,0 +1,321 @@
+{
+  "tags": [],
+  "triggers": [
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "triggerId": "133",
+      "name": "synxis.com",
+      "type": "PAGEVIEW",
+      "filter": [
+        {
+          "type": "MATCH_REGEX",
+          "parameter": [
+            {
+              "type": "TEMPLATE",
+              "key": "arg0",
+              "value": "{{url}}"
+            },
+            {
+              "type": "TEMPLATE",
+              "key": "arg1",
+              "value": ".*synxis\\.com.*"
+            }
+          ]
+        }
+      ],
+      "fingerprint": "1592219114755",
+      "parentFolderId": "118"
+    }
+  ],
+  "variables": [
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "2",
+      "name": "Synxis View Name",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "ViewName"
+        }
+      ],
+      "fingerprint": "1686773406758",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "3",
+      "name": "Synxis Hotel ID",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "HOTEL_ID"
+        }
+      ],
+      "fingerprint": "1686773406760",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "10",
+      "name": "Synxis Arrival Search",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "ArrivalDtMMDDYYYY"
+        }
+      ],
+      "fingerprint": "1686773406763",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "34",
+      "name": "Synxis Departure Search",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "DepartDtMMDDYYYY"
+        }
+      ],
+      "fingerprint": "1686773406776",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "74",
+      "name": "Synxis - Chain Name",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "ChainNm"
+        }
+      ],
+      "fingerprint": "1686773406765",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "75",
+      "name": "Synxis Arrival Search YYYYMMDD",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "ArrivalDtYYYYMMDD"
+        }
+      ],
+      "fingerprint": "1686773406803",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "76",
+      "name": "Synxis Chain ID",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "CHAIN_ID"
+        }
+      ],
+      "fingerprint": "1686773406762",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "77",
+      "name": "Synxis Days to Arrival",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "DaysToCheckIn"
+        }
+      ],
+      "fingerprint": "1686773406768",
+      "parentFolderId": "140",
+      "formatValue": {}
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "78",
+      "name": "Synxis Departure Search YYYYMMDD",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "DepartDtYYYYMMDD"
+        }
+      ],
+      "fingerprint": "1686773406763",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "79",
+      "name": "Synxis Hotel Name",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "HName"
+        }
+      ],
+      "fingerprint": "1686773406767",
+      "parentFolderId": "140"
+    },
+    {
+      "accountId": "2841819166",
+      "containerId": "8723234",
+      "variableId": "80",
+      "name": "Synxis Language",
+      "type": "v",
+      "parameter": [
+        {
+          "type": "INTEGER",
+          "key": "dataLayerVersion",
+          "value": "2"
+        },
+        {
+          "type": "BOOLEAN",
+          "key": "setDefaultValue",
+          "value": "false"
+        },
+        {
+          "type": "TEMPLATE",
+          "key": "name",
+          "value": "LangCode"
+        }
+      ],
+      "fingerprint": "1686773406873",
+      "parentFolderId": "140",
+      "formatValue": {}
+    }
+  ]
+}

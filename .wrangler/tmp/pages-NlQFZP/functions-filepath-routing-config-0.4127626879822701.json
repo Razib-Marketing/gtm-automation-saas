@@ -1,0 +1,77 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/auth/google/callback",
+      "mountPath": "/api/auth/google",
+      "method": "",
+      "module": [
+        "api/auth/google/callback.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/auth/google/login",
+      "mountPath": "/api/auth/google",
+      "method": "",
+      "module": [
+        "api/auth/google/login.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/gtm/accounts",
+      "mountPath": "/api/gtm",
+      "method": "",
+      "module": [
+        "api/gtm/accounts.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/gtm/audit",
+      "mountPath": "/api/gtm",
+      "method": "",
+      "module": [
+        "api/gtm/audit.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/gtm/containers",
+      "mountPath": "/api/gtm",
+      "method": "",
+      "module": [
+        "api/gtm/containers.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/gtm/deploy-item",
+      "mountPath": "/api/gtm",
+      "method": "",
+      "module": [
+        "api/gtm/deploy-item.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/gtm/generate",
+      "mountPath": "/api/gtm",
+      "method": "",
+      "module": [
+        "api/gtm/generate.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/gtm/workspaces",
+      "mountPath": "/api/gtm",
+      "method": "",
+      "module": [
+        "api/gtm/workspaces.ts:onRequest"
+      ]
+    },
+    {
+      "routePath": "/api/contact",
+      "mountPath": "/api",
+      "method": "",
+      "module": [
+        "api/contact.ts:onRequest"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

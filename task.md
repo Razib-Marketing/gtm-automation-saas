@@ -1,0 +1,11 @@
+- [ ] UI & Configuration (`src/pages/Dashboard.tsx`)
+  - [ ] Add state for `fbPixelId` and `googleAdsId` (persist in localStorage).
+  - [ ] Add UI inputs for the global IDs.
+  - [ ] Update `moduleConfigs` state to handle `enableFb`, `enableAds`, and `adsLabel`.
+  - [ ] Add checkboxes and label inputs to the module cards.
+  - [ ] Pass the new data in the `/api/gtm/generate` payload.
+- [ ] Backend Generator (`functions/api/gtm/generate.ts`)
+  - [ ] Read `fbPixelId`, `googleAdsId`, and `moduleConfigs` from payload.
+  - [ ] Inject `base_config` module for Base FB Pixel & Conversion Linker.
+  - [ ] Update `getModulePayloads()` to generate FB HTML tag and `awct` Google Ads tags when enabled.
+- [ ] Verify deployment functionality

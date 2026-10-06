@@ -1,0 +1,92 @@
+:root {
+  font-family: 'Outfit', 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.9);
+  background-color: #030308;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top center, #101026 0%, #030308 100%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+/* Glassmorphic Feature Card */
+.feature-card-wrapper {
+  position: relative;
+  padding: 1px;
+  border-radius: 1rem;
+  overflow: hidden;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+  cursor: pointer;
+}
+
+.feature-card-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, rgba(0, 240, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.feature-card-wrapper:hover .feature-card-glow {
+  opacity: 1;
+}
+
+.feature-card-content {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(16px);
+  padding: 2rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.feature-card-icon {
+  color: #00F0FF;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.feature-card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin: 0 0 0.5rem 0;
+  color: white;
+}
+
+.feature-card-description {
+  font-size: 0.875rem;
+  color: #9CA3AF;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Background Mesh Grid */
+.mesh-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h40v40H0V0zm1 1h38v38H1V1z" fill="rgba(255,255,255,0.02)" fill-rule="evenodd"/></svg>');
+  mask-image: linear-gradient(180deg, white, transparent);
+  -webkit-mask-image: linear-gradient(180deg, white, transparent);
+}

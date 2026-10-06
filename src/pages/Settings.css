@@ -1,0 +1,362 @@
+.settings-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8rem 2rem 4rem 2rem;
+  min-height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .settings-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+/* Sidebar Styling */
+.settings-sidebar {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+@media (min-width: 768px) {
+  .settings-sidebar {
+    width: 280px;
+    position: sticky;
+    top: 8rem;
+  }
+}
+
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  color: #9CA3AF;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.sidebar-link.active {
+  background-color: rgba(0, 240, 255, 0.1);
+  color: #00F0FF;
+}
+
+/* Main Content Area */
+.settings-main {
+  flex: 1;
+  width: 100%;
+}
+
+.settings-panel {
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 2.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.settings-panel.no-padding {
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  backdrop-filter: none;
+}
+
+.panel-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.panel-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.panel-header p {
+  color: #9CA3AF;
+  margin: 0;
+}
+
+.panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Subscription Card */
+.subscription-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 240, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 2rem;
+}
+
+.subscription-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.plan-badge {
+  display: inline-block;
+  background-color: rgba(0, 240, 255, 0.1);
+  color: #00F0FF;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.plan-info h3 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin: 0;
+}
+
+.plan-features-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .plan-features-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #D1D5DB;
+  font-size: 0.95rem;
+}
+
+/* Usage Card */
+.usage-card {
+  background-color: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  padding: 2rem;
+}
+
+.usage-card h3 {
+  font-size: 1.25rem;
+  color: white;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.usage-card p {
+  color: #9CA3AF;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+
+.usage-progress-container {
+  margin-bottom: 1.5rem;
+}
+
+.usage-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.usage-count {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+}
+
+.usage-limit {
+  font-size: 1.1rem;
+  color: #9CA3AF;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.limit-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #F87171;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Buttons */
+.btn-upgrade {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(90deg, #00F0FF, #0080FF);
+  color: #0A0A0A;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+}
+
+.btn-upgrade:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 240, 255, 0.4);
+}
+
+.btn-upgrade:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 0;
+}
+
+/* Clerk UserProfile Overrides */
+.cl-userProfile-root {
+  background-color: #121212 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 1rem !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  margin: 0 !important;
+}
+
+.cl-navbar {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.cl-navbarButton {
+  color: #9CA3AF !important;
+}
+
+.cl-navbarButton[data-active="true"] {
+  background-color: rgba(0, 240, 255, 0.1) !important;
+  color: #00F0FF !important;
+}
+
+.cl-navbarButton:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.cl-pageScrollBox {
+  background-color: transparent !important;
+}
+
+.cl-profileSection__profile {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.cl-actionCard {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.cl-badge {
+  background-color: rgba(0, 240, 255, 0.1) !important;
+  color: #00F0FF !important;
+  border: 1px solid rgba(0, 240, 255, 0.2) !important;
+}
+
+.cl-formButtonPrimary {
+  background-color: rgba(0, 240, 255, 0.1) !important;
+  color: #00F0FF !important;
+  border: 1px solid rgba(0, 240, 255, 0.2) !important;
+  border-radius: 9999px !important;
+}
+
+.cl-formButtonPrimary:hover {
+  background-color: rgba(0, 240, 255, 0.2) !important;
+}
+
+.cl-formFieldInput {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  border-radius: 9999px !important;
+}
+
+.cl-formFieldInput:focus {
+  border-color: #00F0FF !important;
+  box-shadow: 0 0 0 2px rgba(0, 240, 255, 0.2) !important;
+}
+
+.cl-cardBox {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}

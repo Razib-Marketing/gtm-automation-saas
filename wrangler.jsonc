@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gtm-automation-saas",
+  "main": "src/worker.ts",
+  "compatibility_date": "2024-04-05",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gtm_automation_d1",
+      "database_id": "3e29a56f-8e68-4aa5-99c6-1b9a5677e2cd"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "0 8 * * *"
+    ]
+  }
+}

@@ -1,0 +1,87 @@
+.clients-section {
+  padding: 4rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+  margin-top: 5rem;
+  overflow: hidden;
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}
+
+.clients-label {
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6B7280;
+  letter-spacing: 0.1em;
+  margin-bottom: 2.5rem;
+}
+
+.marquee-container {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+}
+
+.marquee-container::before,
+.marquee-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 150px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.marquee-container::before {
+  left: 0;
+  background: linear-gradient(to right, #030308, transparent);
+}
+
+.marquee-container::after {
+  right: 0;
+  background: linear-gradient(to left, #030308, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  gap: 4rem;
+  align-items: center;
+  padding-left: 4rem;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-container:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+.client-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #4B5563;
+  transition: color 0.3s ease;
+  white-space: nowrap;
+}
+
+.client-logo:hover {
+  color: #9CA3AF;
+}
+
+.client-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}

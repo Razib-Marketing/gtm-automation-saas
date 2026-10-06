@@ -1,0 +1,507 @@
+
+--- GTM-5DW3B9HN_workspace10.json ---
+TAGS:
+  Integration - AW
+  ads_conversion_purchase
+  Integration - GA4
+  GA4 - Event - Safara - Purchase
+  cHTML - dL Push Event - Safara - Start Add. Guest Details
+  GA4 - Event - Safara - Add to Cart
+  cHTML - dL Push Event - Safara - Begin Checkout
+  GA4 - Event - Safara - BE Events
+  cHTML - dL Push Event - Safara - Add to Cart
+  GA4 - Event - Safara - Booking Entrance
+  GA4 - Event - Safara - Begin Checkout
+  ads_conversion_linker
+  Namastay GA4 Events
+  Google Analytics GA4 Configuration
+  Namastay Script
+  stayntouch_ecommerce
+  purchase
+  page_view_ibe
+  cart_item_modified
+  payment_failure
+  cHTML - save_stayntouch_items
+  cHTML - clear_stayntouch_cart
+TRIGGERS:
+  Safara - Reservation Completed
+  Safara Events
+  Safara - Guest Detail Start Click
+  Page View - from_safara
+  Safara - Start Add. Guest Details
+  Safara - Add to Cart
+  Safara - Submit Guest Details
+  Safara - Book Room
+  All Links
+  Safara - Open Booking Engine
+  Safara - Begin Checkout
+  All Forms
+  All Clicks
+  Namastay Events
+  CE - Stayntouch Standard Ecommerce
+  CE - IBE Page View
+  CE - IBE Booking
+  CE - cart_item_modified
+  CE - payment_failure
+VARIABLES:
+  Safara - GA4 Measurement ID - G-LNJ4X33X5P
+  Safara - DLV - rate_name
+  Safara - DLV - payment_type
+  Safara - DLV - room_name
+  Safara - DLV - transactionId
+  Safara - DLV - display_type
+  Safara - DLV - transactionTax
+  Safara - DLV - hotelId
+  Safara - DLV - transactionProducts
+  Safara - DLV - subtotal
+  Safara - DLV - lead_time
+  Safara - DLV - transaction_date
+  Safara - DLV - checkout_date
+  Safara - DLV - room_nights
+  Safara - DLV - checkin_date
+  Safara - DLV - guest_count
+  Safara - DLV - price
+  Safara - DLV - room_id
+  Safara - DLV - room_count
+  Safara - DLV - gtm.elementId
+  Safara - DLV - coupon_code
+  URL - Query - from_safara
+  Safara - DLV - booking_engine
+  Safara - DLV - items
+  Safara - DLV - phoneNumber
+  Safara - DLV - transactionTotal
+  Safara - JS - Extract Phone Number
+  Safara - DLV - email
+  Safara - User-Provided Data
+  Cookie - from_safara
+  GA4 measurement ID
+  Namastay - Amount Before Tax
+  Namastay - rooms
+  Namastay - Coupon
+  Namastay - Payment Type
+  Namastay - Currency
+  Namastay - roomsNights
+  Namastay - Start Date
+  Namastay - Amount After Tax
+  Namastay - Reservation ID
+  Namastay - Tax
+  Namastay - End Date
+  DLV - hotelId
+  DLV - hotel_id
+  DLV - pageType
+  DLV - transactionId
+  DLV - transactionTotal
+  DLV - currency
+  DLV - ecommerce.currency
+  DLV - ecommerce.value
+  DLV - ecommerce.items
+  DLV - ecommerce.check_in_date
+  DLV - ecommerce.check_out_date
+  DLV - ecommerce.adults
+  DLV - ecommerce.kids
+  DLV - ecommerce.available_room_count
+  DLV - ecommerce.room_id
+  DLV - ecommerce.room_name
+  DLV - ecommerce.booking_type
+  DLV - ecommerce.failure_type
+  DLV - ecommerce.error_code
+  CJS - stayntouch_saved_items
+
+--- GTM-5CDR8C6_workspace1000024.json ---
+TAGS:
+  Conversion Linker
+  GA4 - SBE Master Configuration Tag
+  GA4 page_view
+  GA4 Retail Products attribute filter
+  GA4 Retail Products select_item
+  GA4 - engagement event - phone clicks
+  GA4 Retail Products view_item
+  GA4 Rooms add_to_cart
+  GA4 Purchase
+  GA4 Retail Products category filter
+  GA4 Rooms view_item
+  GA4 Addons add_to_cart
+  GA4 remove_from_cart
+  GA4 Retail Products search filter
+  GA4 - engagement event - all clicks
+  GA4 begin_checkout
+  GA4 Addons view_item_list
+  GA4 Retail Products add_to_cart
+  GA4 - engagement event - social links
+  GA4 Rooms view_item_list
+  GA4 Retail Products view_item_list
+  GA4 - engagement event - email clicks
+  FB Pixel Pageview
+  FB- Pixel Purchase
+  FB- Pixel Begin Checkout
+TRIGGERS:
+  Website - All pages
+  Page View Add Ons
+  Page View Checkout
+  Page View Confirmation
+  Page View Landing
+  Page View Review
+  Page View Rooms
+  Page View Hotel List
+  Empty Analytics ID Exception
+  Block Transaction
+  All Pages Not SBE
+  All SBE Steps
+  synxis.com
+  GA4 - Retail Offers - view_item_list
+  SBE app trigger
+  GA4 - Retail Offers - attribute filter
+  GA4 - engagement event - social links
+  GA4 - Retail Offers - select_item
+  GA4 - engagement event - all clicks
+  GA4 remove_from_cart
+  GA4 - engagement event - phone call clicks
+  GA4 - Retail Offers - category filter
+  GA4 - Retail Offers - view_item
+  GA4 Rooms add_to_cart
+  GA4 - Retail Offers - add_to_cart
+  GA4 purchase
+  GA4 View Item Rooms
+  GA4 - Addons view_item_list
+  GA4 Addons add_to_cart
+  GA4 begin_checkout
+  GA4 - Retail Offers - search filter
+  GA4 - engagement event - mailto clicks
+  Page View Retail Studio Offers
+  GA4 select item
+  GA4 - Rooms view_item_list
+VARIABLES:
+  Checkout Step
+  Synxis View Name
+  Synxis Hotel ID
+  Booking Engine Step
+  url
+  element url
+  AdultQty
+  Synxis Arrival Search
+  Arrival Day of Week Search
+  Arrival Month of Year Search
+  ArrivalDt
+  ArrivalDtDDMMYYYY
+  ArrivalDtMMDDYYYY
+  ArrivalDtYYYYMMDD
+  Auto Link - BE Domain
+  Auto Link - Hotel Domain
+  CancelConfirmNo
+  ChildQty
+  ConfirmNo
+  CurrCode
+  CurrentDateMMDDYYYY
+  DailyRate
+  DailyRateWithTax
+  DaysToCheckIn
+  DepartDt
+  DepartDtDDMMYYYY
+  DepartDtMMDDYYYY
+  DepartDtYYYYMMDD
+  Synxis Departure Search
+  Departure Day of Week Search
+  Google Analytics Property ID
+  GroupCode
+  GroupName
+  GuestQty
+  Transaction ID
+  Transaction User Cookie
+  ItineraryNo
+  NightsQty
+  Parse RT Param
+  Product Impressions
+  PromoCode
+  PromoName
+  Random Number
+  RateCode
+  RateName
+  ResvStatus
+  RmQty
+  RoomCode
+  RoomName
+  RoomNightsQty
+  Search Length Of Stay
+  SelectedCurrCode
+  Sub Source Code
+  Synxis - Chain Name
+  Synxis Arrival Search YYYYMMDD
+  Synxis Chain ID
+  Synxis Days to Arrival
+  Synxis Departure Search YYYYMMDD
+  Synxis Hotel Name
+  Synxis Language
+  Taxes
+  Test if Transaction ID in Cookie
+  TotalCost
+  TotalCostWithTax
+  Transaction ADR
+  Transaction Affiliation
+  Transaction Currency
+  Transaction Group Code
+  Transaction Group Name
+  Transaction Nights Qty
+  Transaction Rate Name
+  Transaction Room Name
+  Transaction Room Quantity
+  Transaction Total
+  element
+  element classes
+  element id
+  element target
+  element text
+  event
+  url hostname
+  url path
+  DLV Cart
+  ConfirmNo Array
+  Rate Code Array
+  Rate Name Array
+  Room Code Array
+  Room Name Array
+  SBE Booking Engine Step
+  transactions
+  JS Transaction Cookie Checker
+  JS Cookie Transaction Set Tag
+  ConfirmNo roomPurchase
+  Page Title
+  GA4 Measurement ID
+  element type
+  Coupon Code
+  Retail Product Attribute Filter Groups
+  Retail Product Attribute Filter Names
+  Retail Product Attribute Filter Codes
+  SBE Config Code
+  SBE Theme Code
+  GA4 - items
+  ProfileID
+  GA4 - items array - boolean test
+  GA4 purchase days to check-in
+  DLV Event
+  GA4 purchase adult qty
+  GA4 promo code
+  GA4 purchase guest qty
+  GA4 purchase child qty
+  GA4 transaction currency
+  SBE - Hotel City
+  GA4 transaction tax
+  GA4 purchase depart date
+  GA4 purchase rate code
+  GA4 purchase book date
+  GA4 transaction value
+  SBE - Hotel Region
+  GA4 purchase room code
+  GA4 purchase arrival date
+  SBE - Hotel Country
+  GA4 purchase room name
+  GA4 purchase group code
+  GA4 purchase rate name
+  GA4 purchase confirmation number
+  Retail Product Filter Category
+  GA4 purchase chain ID
+  GA4 purchase hotel id
+  GA4 purchase hotel name
+  Retail Product Filter Search
+  SBE - ProfileID Logged In
+  SBE - src code
+  Available Rooms
+  GA4 purchase chain name
+
+--- GTM-57BMZT4_workspace28.json ---
+TAGS:
+  Push eCommerce Data
+  CookieYes Consent
+  GA4 - Rooms - Tag
+  Page View
+  GA4 Base Tag
+  BE- Purchase Tag
+  View Item
+  Begin Checkout
+TRIGGERS:
+  All BE Pages excl. Booking Confirmation
+  BE Landing Page
+  BE Url
+  Confirmation Page View
+  Event Trigger
+  Page View Event
+  Search - Rooms Page
+  Checkout Page
+  Sojern Home Page
+  Sojern Search Trigger
+  tc - trigger - tc-pageview
+  Shopping Cart Total
+  Search - Rooms (Sojern)
+  Confirmation Page (Sojern)
+  Sojern Website Tag Trigger
+  Begin checkout
+  GA4 - Rooms - Trigger
+  tc - trigger - ga4 event - purchase
+  View Item
+  View Item V2
+VARIABLES:
+  Page Name
+  BE - Event Action
+  BE - Event Category
+  BE - Event Interaction Type
+  BE - Event Value
+  BE - Event label
+  Event Action
+  Event Category
+  Event Interaction Type
+  Event Value
+  Event label
+  URL - _ga
+  WEB - CE - BE urls
+  Web - DL - BE
+  Web - DL - fullURL
+  clientId from URL
+  content-name
+  gaCrossDomains
+  ihAccessCode
+  ihAdults
+  ihAmount
+  ihTaxes
+  ihAmountAfterTax
+  ihAmountBeforeTax
+  ihChannelRef
+  ihChildren
+  ihConfirmID
+  ihCurrency
+  ihDate
+  ihDateOut
+  ihDestination
+  ihDiscountCode
+  ihFilters
+  ihFromRate
+  ihGroupCode
+  ihHotelID
+  ihHotelName
+  ihLanguage
+  ihNights
+  ihPackageID
+  ihRatePlanID
+  ihRatePlanName
+  ihRatePlanType
+  ihRoomType
+  ihRooms
+  ihSubChan
+  ihTACode
+  transactionId
+  ihCountry
+  ihState
+  ihCity
+  ihIsoLanguageCode
+  ihLanguageCode
+  ihHotelIsModify
+  ihRoomTypeId
+  ihEmail
+  tc - dl - hotel.id
+  ihBookedConfirmID
+  tc - dl - ecommerce.value
+  tc - dl - ecommerce.transaction_id
+  tc - dl - ecommerce.items
+  property_name Constant
+  GA4 - Code
+  property_country Constant
+  Sojern Website PT Variable
+  property_city Constant
+  property_state Constant
+  tc - dl - ecommerce.affiliation
+  tc - dl - ecommerce.tax
+  tc - constant - GA4 ID
+  tc - dl - ecommerce
+  tc - dl - ecommerce.currency
+  tc - dl - ecommerce.coupon
+  view_item_room_type
+  item_view_price
+  item_variable
+
+--- GTM-5LMP4TC_workspace8.json ---
+TAGS:
+  add-to-cart
+  social_link_click
+  purchase
+  newsletter_submission
+  phone_call_click
+  view_item_list
+  begin-checkout
+  contact_form_submission
+  email_click
+  view-item
+TRIGGERS:
+  Brand-social_click
+  begin-checkout
+  Brand-newsletter-subscription
+  view-item-list
+  Brand-contact_form_submission
+  add-to-cart
+  purchase
+  social-click
+  view-item
+  contact_form_submission
+  newsletter-submission
+  Brand-init
+  Brand-mail-click
+  phone-call-click
+  email-click
+  Brand-phone_click
+VARIABLES:
+  ecommerce-list-items
+  WsVars.HotelID
+  be-step
+  ecommerce-taxes
+  be-view-class-on-body
+  Brand- Measurement ID
+  rate-view-class-name
+  js.WsVars
+  ecommerce-value
+  ecommerce-cart-items
+  ecommerce-currency
+  check-out-date
+  Measurement ID
+  check-in-date
+  cjs.PrimaryRmID
+  ecommerce-item-view-value
+  number-of-rooms
+  ecommerce-reservation-id
+  ecommerce-coupon
+  ecommerce-item-view-items
+  ecommerce-discount
+  room-view-class-name
+  number-of-nights
+
+--- GTM-Mews.json ---
+TAGS:
+  Mews GA4
+  Google Tag
+  Mews GA4 E-Commerce
+TRIGGERS:
+  All Mews GA4 Events
+  All Mews GA4 E-Commerce Events
+VARIABLES:
+  GA4 Pageview title
+  GA4 Pageview location
+  GA4 Event Name
+  Ecommerce Object
+
+--- GTM-KPRN9JKR_workspace5.json ---
+TAGS:
+  facebook_click
+  booking_entrance
+  page_view
+  G-C20KG1RMZ3
+  instagram_click
+  phone_click
+  direction_click
+  gmb_click
+  email_click
+TRIGGERS:
+  facebook_click
+  booking_engine_link_click
+  phone_click
+  instagram_click
+  direction_click
+  gmb_click
+  email_click
+VARIABLES:
+  GTAG
