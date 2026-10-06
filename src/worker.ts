@@ -10,6 +10,7 @@ import * as route_5 from '../functions/api/ga4/cron.ts';
 import * as route_6 from '../functions/api/ga4/monitors.ts';
 import * as route_7 from '../functions/api/ga4/properties.ts';
 import * as route_8 from '../functions/api/ga4/report.ts';
+import * as route_test from '../functions/api/ga4/test.ts';
 import * as route_9 from '../functions/api/gtm/accounts.ts';
 import * as route_10 from '../functions/api/gtm/audit-logs.ts';
 import * as route_11 from '../functions/api/gtm/audit.ts';
@@ -40,6 +41,7 @@ const routes = {
   '/api/ga4/monitors': route_6,
   '/api/ga4/properties': route_7,
   '/api/ga4/report': route_8,
+  '/api/ga4/test': route_test,
   '/api/gtm/accounts': route_9,
   '/api/gtm/audit-logs': route_10,
   '/api/gtm/audit': route_11,
