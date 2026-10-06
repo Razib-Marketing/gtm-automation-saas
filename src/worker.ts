@@ -89,6 +89,16 @@ for (const [route, module] of Object.entries(routes)) {
   app.all(route, handler);
 }
 
+
+app.get('*', async (c) => {
+  if (c.req.path.startsWith('/api/')) {
+    return c.json({ error: 'API route not found' }, 404);
+  }
+  const url = new URL(c.req.url);
+  url.pathname = '/';
+  return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
+});
+
 export default {
   fetch: app.fetch,
   async scheduled(event, env, ctx) {
