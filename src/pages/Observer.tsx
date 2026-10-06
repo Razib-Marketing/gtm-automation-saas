@@ -15,6 +15,8 @@ export const Observer = () => {
   
   const [selectedProperty, setSelectedProperty] = useState('');
   const [metric, setMetric] = useState('sessions');
+  const [conditionType, setConditionType] = useState('drops_below');
+  const [actionType, setActionType] = useState('email');
   const [threshold, setThreshold] = useState('-20');
   const [period, setPeriod] = useState('daily');
   const [alertEmail, setAlertEmail] = useState('');
@@ -78,6 +80,7 @@ export const Observer = () => {
           metric,
           thresholdPercentage: parseFloat(threshold),
           comparisonPeriod: period,
+        conditionType: conditionType,
           alertEmail
         })
       });
@@ -150,86 +153,145 @@ export const Observer = () => {
             <div className="selection-header">
               <h3 className="section-title" style={{ margin: 0 }}>Create New Monitor</h3>
             </div>
-            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1.5rem' }}>
+            
+            <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginTop: '1.5rem' }}>
               
-              <div>
-                <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>GA4 Property</label>
-                <select 
-                  value={selectedProperty} 
-                  onChange={e => setSelectedProperty(e.target.value)}
-                  className="module-input"
-                  style={{ paddingLeft: '1rem' }}
-                  required
-                >
-                  <option value="">Select a property...</option>
-                  {properties.map(p => (
-                    <option key={p.name} value={p.name}>{p.displayName} ({p.name})</option>
-                  ))}
-                </select>
-                {errorMsg && <div style={{ color: '#EF4444', marginTop: '0.5rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
-              </div>
-
-              <div>
-                <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Metric to Monitor</label>
-                <select 
-                  value={metric} 
-                  onChange={e => setMetric(e.target.value)}
-                  className="module-input"
-                  style={{ paddingLeft: '1rem' }}
-                >
-                  <option value="sessions">Sessions</option>
-                  <option value="conversions">Conversions</option>
-                  <option value="totalRevenue">Total Revenue</option>
-                  <option value="activeUsers">Active Users</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Condition</label>
-                  <select className="module-input" style={{ paddingLeft: '1rem' }} disabled>
-                    <option>Drops below</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Threshold (%)</label>
-                  <input 
-                    type="number" 
-                    value={threshold}
-                    onChange={e => setThreshold(e.target.value)}
-                    className="module-input"
-                    style={{ paddingLeft: '1rem' }}
-                    placeholder="-20"
-                    required
-                  />
+              {/* TRIGGER SECTION */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ color: 'white', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Activity size={18} style={{ color: '#6366F1' }}/> Trigger
+                </h4>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Evaluation Schedule</label>
+                    <select className="module-input" style={{ paddingLeft: '1rem', opacity: 0.7 }} disabled>
+                      <option>Daily at 8:00 AM (UTC)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Comparison Period</label>
+                    <select 
+                      value={period} 
+                      onChange={e => setPeriod(e.target.value)}
+                      className="module-input"
+                      style={{ paddingLeft: '1rem' }}
+                    >
+                      <option value="daily">Previous Day</option>
+                      <option value="weekly">Previous Week (Same Day)</option>
+                      <option value="monthly">Previous Month (Same Date)</option>
+                      <option value="yearly">Previous Year (Same Date)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Comparison Period</label>
-                <select 
-                  value={period} 
-                  onChange={e => setPeriod(e.target.value)}
-                  className="module-input"
-                  style={{ paddingLeft: '1rem' }}
-                >
-                  <option value="daily">Previous Day</option>
-                  <option value="weekly">Previous Week (Same Day)</option>
-                </select>
+              {/* CONDITION SECTION */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ color: 'white', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ShieldAlert size={18} style={{ color: '#F59E0B' }}/> Condition
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>GA4 Property</label>
+                    <select 
+                      value={selectedProperty} 
+                      onChange={e => setSelectedProperty(e.target.value)}
+                      className="module-input"
+                      style={{ paddingLeft: '1rem' }}
+                      required
+                    >
+                      <option value="">Select a property...</option>
+                      {properties.map(p => (
+                        <option key={p.name} value={p.name}>{p.displayName} ({p.name})</option>
+                      ))}
+                    </select>
+                    {errorMsg && <div style={{ color: '#EF4444', marginTop: '0.5rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Metric</label>
+                      <select 
+                        value={metric} 
+                        onChange={e => setMetric(e.target.value)}
+                        className="module-input"
+                        style={{ paddingLeft: '1rem' }}
+                      >
+                        <option value="sessions">Sessions</option>
+                        <option value="conversions">Conversions</option>
+                        <option value="totalRevenue">Total Revenue</option>
+                        <option value="activeUsers">Active Users</option>
+                        <option value="newUsers">New Users</option>
+                        <option value="eventCount">Event Count</option>
+                        <option value="bounceRate">Bounce Rate</option>
+                        <option value="engagementRate">Engagement Rate</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Operator</label>
+                      <select 
+                        value={conditionType}
+                        onChange={e => setConditionType(e.target.value)}
+                        className="module-input" 
+                        style={{ paddingLeft: '1rem' }}
+                      >
+                        <option value="drops_below">Drops below</option>
+                        <option value="spikes_above">Spikes above</option>
+                        <option value="changes_by">Changes by (±)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Threshold (%)</label>
+                      <input 
+                        type="number" 
+                        value={threshold}
+                        onChange={e => setThreshold(e.target.value)}
+                        className="module-input"
+                        style={{ paddingLeft: '1rem' }}
+                        placeholder="20"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Alert Email</label>
-                <div className="input-wrapper">
-                  <Mail className="input-icon" />
-                  <input 
-                    type="email" 
-                    value={alertEmail}
-                    onChange={e => setAlertEmail(e.target.value)}
-                    className="module-input"
-                    placeholder="alerts@example.com"
-                    required
-                  />
+              {/* ACTION SECTION */}
+              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h4 style={{ color: 'white', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Mail size={18} style={{ color: '#10B981' }}/> Action
+                </h4>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                  <div>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Action Type</label>
+                    <select 
+                      value={actionType}
+                      onChange={e => setActionType(e.target.value)}
+                      className="module-input" 
+                      style={{ paddingLeft: '1rem' }}
+                    >
+                      <option value="email">Send Email Alert</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Alert Email</label>
+                    <div className="input-wrapper">
+                      <Mail className="input-icon" />
+                      <input 
+                        type="email" 
+                        value={alertEmail}
+                        onChange={e => setAlertEmail(e.target.value)}
+                        className="module-input"
+                        placeholder="alerts@example.com"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -237,7 +299,7 @@ export const Observer = () => {
                 type="submit" 
                 disabled={creating || !selectedProperty}
                 className="btn-deploy-bulk"
-                style={{ alignSelf: 'flex-start', marginTop: '1rem' }}
+                style={{ alignSelf: 'flex-start' }}
               >
                 {creating ? 'Creating...' : (
                   <>
@@ -246,6 +308,7 @@ export const Observer = () => {
                 )}
               </button>
             </form>
+
           </div>
 
           {/* Active Monitors */}
@@ -288,7 +351,7 @@ export const Observer = () => {
                         <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <Activity size={14} /> {m.metric} 
                           <span style={{ color: '#4B5563' }}>•</span>
-                          Drops {m.threshold_percentage}% ({m.comparison_period})
+                          {m.condition_type === 'spikes_above' ? 'Spikes > ' : m.condition_type === 'changes_by' ? 'Changes ± ' : 'Drops < '}{Math.abs(m.threshold_percentage)}% ({m.comparison_period})
                         </p>
                       </div>
                       

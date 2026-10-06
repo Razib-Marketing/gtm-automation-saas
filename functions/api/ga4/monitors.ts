@@ -39,7 +39,7 @@ export async function onRequest(context: any) {
 
   if (request.method === 'POST') {
     try {
-      const { propertyId, propertyName, metric, thresholdPercentage, comparisonPeriod, alertEmail } = await request.json();
+      const { propertyId, propertyName, metric, thresholdPercentage, comparisonPeriod, alertEmail, conditionType } = await request.json();
       
       if (!propertyId || !metric || !thresholdPercentage || !alertEmail) {
         return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400 });
@@ -49,9 +49,9 @@ export async function onRequest(context: any) {
       
       await env.DB.prepare(
         `INSERT INTO ga4_monitors 
-        (id, user_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-      ).bind(id, userId, propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'daily', alertEmail).run();
+        (id, user_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(id, userId, propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'daily', alertEmail, conditionType || 'drops_below').run();
 
       return new Response(JSON.stringify({ success: true, id }), { status: 200 });
     } catch (e: any) {

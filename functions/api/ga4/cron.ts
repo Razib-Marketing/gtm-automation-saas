@@ -50,6 +50,23 @@ export async function onRequestGet(context: any) {
             { startDate: 'today', endDate: 'today' },
             { startDate: '7daysAgo', endDate: '7daysAgo' }
           ];
+        } else if (monitor.comparison_period === 'monthly') {
+          dateRanges = [
+            { startDate: 'today', endDate: 'today' },
+            { startDate: '28daysAgo', endDate: '28daysAgo' }
+          ];
+        } else if (monitor.comparison_period === 'yearly') {
+          dateRanges = [
+            { startDate: 'today', endDate: 'today' },
+            { startDate: '365daysAgo', endDate: '365daysAgo' }
+          ];
+        }
+
+        if (monitor.comparison_period === 'weekly') {
+          dateRanges = [
+            { startDate: 'today', endDate: 'today' },
+            { startDate: '7daysAgo', endDate: '7daysAgo' }
+          ];
         }
 
         const reportRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${monitor.property_id}:runReport`, {
@@ -75,8 +92,21 @@ export async function onRequestGet(context: any) {
           if (pastVal > 0) {
             const percentChange = ((currentVal - pastVal) / pastVal) * 100;
 
-            if (percentChange <= monitor.threshold_percentage) {
-              // 5. Send Alert (Requires RESEND_API_KEY in env)
+            let isTriggered = false;
+            let actionText = '';
+            
+            if (monitor.condition_type === 'drops_below' && percentChange <= -Math.abs(monitor.threshold_percentage)) {
+                isTriggered = true;
+                actionText = 'dropped by';
+            } else if (monitor.condition_type === 'spikes_above' && percentChange >= Math.abs(monitor.threshold_percentage)) {
+                isTriggered = true;
+                actionText = 'spiked by';
+            } else if (monitor.condition_type === 'changes_by' && Math.abs(percentChange) >= Math.abs(monitor.threshold_percentage)) {
+                isTriggered = true;
+                actionText = percentChange > 0 ? 'increased by' : 'decreased by';
+            }
+
+            if (isTriggered) {
               if (env.RESEND_API_KEY) {
                 await fetch('https://api.resend.com/emails', {
                   method: 'POST',
@@ -87,7 +117,7 @@ export async function onRequestGet(context: any) {
                   body: JSON.stringify({
                     from: 'Observer <onboarding@resend.dev>',
                     to: monitor.alert_email,
-                    subject: `🚨 GA4 Alert: ${monitor.property_name} (${monitor.metric}) dropped by ${Math.abs(percentChange).toFixed(1)}%`,
+                    subject: `🚨 GA4 Alert: ${monitor.property_name} (${monitor.metric}) ${actionText} ${Math.abs(percentChange).toFixed(1)}%`,
                     html: `<p>Your monitor for <strong>${monitor.property_name}</strong> triggered an alert.</p>
                            <p><strong>Metric:</strong> ${monitor.metric}</p>
                            <p><strong>Current:</strong> ${currentVal}</p>
@@ -96,7 +126,7 @@ export async function onRequestGet(context: any) {
                   })
                 });
               }
-              logs.push(`Alerted ${monitor.alert_email} for ${monitor.property_name} (Drop: ${percentChange.toFixed(1)}%)`);
+              logs.push(`Alerted ${monitor.alert_email} for ${monitor.property_name} (${actionText} ${percentChange.toFixed(1)}%)`);
             }
           }
         }
