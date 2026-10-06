@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut } from 'lucide-react';
+import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -11,6 +11,8 @@ export const Observer = () => {
   const { getToken, signOut } = useAuth();
   const [properties, setProperties] = useState<any[]>([]);
   const [monitors, setMonitors] = useState<any[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
   const [selectedProperty, setSelectedProperty] = useState('');
@@ -55,6 +57,7 @@ export const Observer = () => {
       if (res.ok) {
         const data = await res.json();
         setMonitors(data.monitors || []);
+        if (data.alerts) setAlerts(data.alerts);
       }
     } finally {
       setLoading(false);
@@ -64,41 +67,57 @@ export const Observer = () => {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
+    setErrorMsg('');
     try {
-      const token = await getToken();
-      const propName = properties.find(p => p.name === selectedProperty)?.displayName || 'Unknown Property';
-      
       const res = await fetch('/api/ga4/monitors', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+        headers: { 
+          Authorization: `Bearer ${await getToken()}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          id: editingId,
           propertyId: selectedProperty,
-          propertyName: propName,
+          propertyName: properties.find(p => p.name === selectedProperty)?.displayName,
           metric,
           thresholdPercentage: parseFloat(threshold),
           comparisonPeriod: period,
-        conditionType: conditionType,
+          conditionType: conditionType,
           alertEmail
         })
       });
-
+      
       if (res.ok) {
+        setEditingId(null);
         await fetchMonitors();
-        setSelectedProperty('');
-        setAlertEmail('');
       } else {
-        const err = await res.json();
-        alert(`Error: ${err.error}`);
+        const data = await res.json();
+        setErrorMsg(data.error || 'Failed to save monitor');
       }
-    } catch (err) {
-      alert('Failed to create monitor');
+    } catch (e) {
+      setErrorMsg('An error occurred');
     } finally {
       setCreating(false);
     }
   };
+
+  const handleEdit = (m: any) => {
+    setEditingId(m.id);
+    setSelectedProperty(m.property_id);
+    setMetric(m.metric);
+    setConditionType(m.condition_type || 'drops_below');
+    setThreshold(Math.abs(m.threshold_percentage).toString());
+    setPeriod(m.comparison_period);
+    setAlertEmail(m.alert_email);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setSelectedProperty('');
+    setThreshold('20');
+  };
+
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this monitor?')) return;
@@ -139,6 +158,56 @@ export const Observer = () => {
             <button onClick={() => signOut()} className="btn-home-link" style={{ cursor: 'pointer' }}>
               <LogOut size={14} /> Log out
             </button>
+          </div>
+
+          {/* Recent Alerts Dashboard */}
+          <div className="selection-card" style={{ marginTop: '2rem' }}>
+            <div className="selection-header">
+              <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Bell size={20} style={{ color: '#F59E0B' }}/> Alert History
+              </h3>
+            </div>
+            
+            <div style={{ marginTop: '1.5rem' }}>
+              {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+                  <div className="spinner">Loading...</div>
+                </div>
+              ) : alerts.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 0', color: '#9CA3AF' }}>
+                  <Bell size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} />
+                  <p>No alerts have been triggered yet.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {alerts.map((a: any) => (
+                    <div 
+                      key={a.id} 
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '1rem', 
+                        background: 'rgba(255,255,255,0.02)',
+                        borderLeft: '4px solid #EF4444',
+                        borderRadius: '0 8px 8px 0'
+                      }}
+                    >
+                      <div>
+                        <h5 style={{ margin: '0 0 0.25rem 0', color: 'white', fontSize: '0.9rem' }}>{a.property_name}</h5>
+                        <div style={{ display: 'flex', gap: '1rem', color: '#9CA3AF', fontSize: '0.8rem' }}>
+                          <span>{a.metric}</span>
+                          <span>{a.condition_type === 'spikes_above' ? 'Spiked by' : a.condition_type === 'changes_by' ? 'Changed by' : 'Dropped by'} {Math.abs(a.percent_change).toFixed(1)}%</span>
+                        </div>
+                      </div>
+                      <div style={{ color: '#6B7280', fontSize: '0.8rem' }}>
+                        {new Date(a.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
 
@@ -295,18 +364,31 @@ export const Observer = () => {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
-                disabled={creating || !selectedProperty}
-                className="btn-deploy-bulk"
-                style={{ alignSelf: 'flex-start' }}
-              >
-                {creating ? 'Creating...' : (
-                  <>
-                    <Plus size={18} style={{ marginRight: '0.5rem' }} /> Add Monitor
-                  </>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button 
+                  type="submit" 
+                  disabled={creating || !selectedProperty}
+                  className="btn-deploy-bulk"
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  {creating ? 'Saving...' : (
+                    <>
+                      {editingId ? <Pencil size={18} style={{ marginRight: '0.5rem' }} /> : <Plus size={18} style={{ marginRight: '0.5rem' }} />}
+                      {editingId ? 'Update Monitor' : 'Add Monitor'}
+                    </>
+                  )}
+                </button>
+                {editingId && (
+                  <button 
+                    type="button" 
+                    onClick={cancelEdit}
+                    className="btn-deploy-bulk"
+                    style={{ alignSelf: 'flex-start', background: 'transparent', border: '1px solid #4B5563', color: '#D1D5DB' }}
+                  >
+                    Cancel
+                  </button>
                 )}
-              </button>
+              </div>
             </form>
 
           </div>
@@ -367,25 +449,96 @@ export const Observer = () => {
                         }}>
                           <Mail size={14} style={{ marginRight: '0.5rem' }} /> {m.alert_email}
                         </div>
-                        <button 
-                          onClick={() => handleDelete(m.id)}
-                          style={{ 
-                            background: 'none', 
-                            border: 'none', 
-                            color: '#9CA3AF',
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            transition: 'color 0.2s'
-                          }}
-                          onMouseOver={(e) => e.currentTarget.style.color = '#EF4444'}
-                          onMouseOut={(e) => e.currentTarget.style.color = '#9CA3AF'}
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            onClick={() => handleEdit(m)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              color: '#9CA3AF',
+                              cursor: 'pointer',
+                              padding: '0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              transition: 'color 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.color = '#3B82F6'}
+                            onMouseOut={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                            title="Edit Monitor"
+                          >
+                            <Pencil size={18} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(m.id)}
+                            style={{ 
+                              background: 'none', 
+                              border: 'none', 
+                              color: '#9CA3AF',
+                              cursor: 'pointer',
+                              padding: '0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              transition: 'color 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.color = '#EF4444'}
+                            onMouseOut={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                            title="Delete Monitor"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Alerts Dashboard */}
+          <div className="selection-card" style={{ marginTop: '2rem' }}>
+            <div className="selection-header">
+              <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Bell size={20} style={{ color: '#F59E0B' }}/> Alert History
+              </h3>
+            </div>
+            
+            <div style={{ marginTop: '1.5rem' }}>
+              {loading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+                  <div className="spinner">Loading...</div>
+                </div>
+              ) : alerts.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 0', color: '#9CA3AF' }}>
+                  <Bell size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} />
+                  <p>No alerts have been triggered yet.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {alerts.map((a: any) => (
+                    <div 
+                      key={a.id} 
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center', 
+                        padding: '1rem', 
+                        background: 'rgba(255,255,255,0.02)',
+                        borderLeft: '4px solid #EF4444',
+                        borderRadius: '0 8px 8px 0'
+                      }}
+                    >
+                      <div>
+                        <h5 style={{ margin: '0 0 0.25rem 0', color: 'white', fontSize: '0.9rem' }}>{a.property_name}</h5>
+                        <div style={{ display: 'flex', gap: '1rem', color: '#9CA3AF', fontSize: '0.8rem' }}>
+                          <span>{a.metric}</span>
+                          <span>{a.condition_type === 'spikes_above' ? 'Spiked by' : a.condition_type === 'changes_by' ? 'Changed by' : 'Dropped by'} {Math.abs(a.percent_change).toFixed(1)}%</span>
+                        </div>
+                      </div>
+                      <div style={{ color: '#6B7280', fontSize: '0.8rem' }}>
+                        {new Date(a.created_at).toLocaleString()}
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

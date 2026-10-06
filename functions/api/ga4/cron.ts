@@ -129,6 +129,12 @@ export async function onRequestGet(context: any) {
                 });
               }
               logs.push(`Alerted ${monitor.alert_email} for ${monitor.property_name} (${actionText} ${percentChange.toFixed(1)}%)`);
+              
+              // Log to Database
+              const alertId = 'alt_' + Date.now() + Math.random().toString(36).substring(2, 9);
+              await env.DB.prepare(
+                "INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change) VALUES (?, ?, ?, ?, ?, ?, ?)"
+              ).bind(alertId, monitor.id, monitor.user_id, monitor.property_name, monitor.metric, monitor.condition_type, percentChange).run();
             }
           }
         }

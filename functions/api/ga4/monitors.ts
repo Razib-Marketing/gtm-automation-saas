@@ -27,11 +27,15 @@ export async function onRequest(context: any) {
 
   if (request.method === 'GET') {
     try {
-      const { results } = await env.DB.prepare(
+      const { results: monitors } = await env.DB.prepare(
         'SELECT * FROM ga4_monitors WHERE user_id = ? ORDER BY created_at DESC'
       ).bind(userId).all();
       
-      return new Response(JSON.stringify({ monitors: results }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      const { results: alerts } = await env.DB.prepare(
+        'SELECT * FROM ga4_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 50'
+      ).bind(userId).all();
+
+      return new Response(JSON.stringify({ monitors, alerts }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     } catch (e: any) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500 });
     }
@@ -39,21 +43,31 @@ export async function onRequest(context: any) {
 
   if (request.method === 'POST') {
     try {
-      const { propertyId, propertyName, metric, thresholdPercentage, comparisonPeriod, alertEmail, conditionType } = await request.json();
+      const { id, propertyId, propertyName, metric, thresholdPercentage, comparisonPeriod, alertEmail, conditionType } = await request.json();
       
       if (!propertyId || !metric || !thresholdPercentage || !alertEmail) {
         return new Response(JSON.stringify({ error: 'Missing fields' }), { status: 400 });
       }
 
-      const id = 'mon_' + Date.now() + Math.random().toString(36).substring(2, 9);
-      
-      await env.DB.prepare(
-        `INSERT INTO ga4_monitors 
-        (id, user_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).bind(id, userId, propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'daily', alertEmail, conditionType || 'drops_below').run();
+      let monitorId = id;
+      if (id) {
+        // Update existing
+        await env.DB.prepare(
+          `UPDATE ga4_monitors 
+          SET property_id = ?, property_name = ?, metric = ?, threshold_percentage = ?, comparison_period = ?, alert_email = ?, condition_type = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ? AND user_id = ?`
+        ).bind(propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'daily', alertEmail, conditionType || 'drops_below', id, userId).run();
+      } else {
+        // Create new
+        monitorId = 'mon_' + Date.now() + Math.random().toString(36).substring(2, 9);
+        await env.DB.prepare(
+          `INSERT INTO ga4_monitors 
+          (id, user_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(monitorId, userId, propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'daily', alertEmail, conditionType || 'drops_below').run();
+      }
 
-      return new Response(JSON.stringify({ success: true, id }), { status: 200 });
+      return new Response(JSON.stringify({ success: true, id: monitorId }), { status: 200 });
     } catch (e: any) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500 });
     }
