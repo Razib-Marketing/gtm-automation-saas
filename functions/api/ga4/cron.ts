@@ -155,8 +155,10 @@ export async function onRequestGet(context: any) {
               </div>
             `;
 
+            let emailSent = false;
             if (env.RESEND_API_KEY) {
-                await fetch('https://api.resend.com/emails', {
+              try {
+                const resendRes = await fetch('https://api.resend.com/emails', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${env.RESEND_API_KEY}`,
@@ -169,6 +171,26 @@ export async function onRequestGet(context: any) {
                     html: htmlBody
                   })
                 });
+                if (resendRes.ok) emailSent = true;
+              } catch (_) {}
+            }
+
+            if (!emailSent) {
+              try {
+                await fetch('https://api.mailchannels.net/tx/v1/send', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    personalizations: [{ to: [{ email: monitor.alert_email }] }],
+                    from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
+                    subject: `🚨 GA4 Alert: ${monitor.property_name} (${monitor.metric}) ${actionText} ${Math.abs(percentChange).toFixed(1)}%`,
+                    content: [
+                      { type: 'text/html', value: htmlBody },
+                      { type: 'text/plain', value: `GA4 Alert: ${monitor.property_name} ${actionText} ${Math.abs(percentChange).toFixed(1)}%` }
+                    ]
+                  })
+                });
+              } catch (_) {}
             }
             logs.push(`Alerted ${monitor.alert_email} for ${monitor.property_name} (${actionText} ${percentChange.toFixed(1)}%)`);
               

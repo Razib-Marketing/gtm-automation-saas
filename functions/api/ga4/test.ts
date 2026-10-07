@@ -203,22 +203,66 @@ export async function onRequest(context: any) {
       </div>
     `;
 
+    const subject = isTriggered 
+      ? `🚨 GA4 Alert: ${monitor.property_name} ${actionText} ${Math.abs(percentChange).toFixed(1)}%`
+      : `✅ Health Check: ${monitor.property_name} is stable (${percentChange > 0 ? '+' : ''}${percentChange.toFixed(1)}%)`;
+
+    let emailStatus = 'Not sent';
+    let emailError: string | null = null;
+
+    // 1. Try Resend if configured
     if (env.RESEND_API_KEY) {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'Observer <onboarding@resend.dev>',
-          to: monitor.alert_email,
-          subject: isTriggered 
-            ? `🚨 GA4 Alert: ${monitor.property_name} ${actionText} ${Math.abs(percentChange).toFixed(1)}%`
-            : `✅ Health Check: ${monitor.property_name} is stable (${percentChange > 0 ? '+' : ''}${percentChange.toFixed(1)}%)`,
-          html: htmlBody
-        })
-      });
+      try {
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Observer <onboarding@resend.dev>',
+            to: monitor.alert_email,
+            subject: subject,
+            html: htmlBody
+          })
+        });
+        const resendData: any = await resendRes.json().catch(() => ({}));
+        if (resendRes.ok) {
+          emailStatus = 'Sent via Resend';
+        } else {
+          emailError = `Resend (${resendRes.status}): ${resendData.message || resendData.error || resendRes.statusText}`;
+        }
+      } catch (err: any) {
+        emailError = `Resend error: ${err.message}`;
+      }
+    }
+
+    // 2. Cloudflare MailChannels relay (if Resend failed or not configured)
+    if (emailStatus !== 'Sent via Resend') {
+      try {
+        const mcRes = await fetch('https://api.mailchannels.net/tx/v1/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            personalizations: [{ to: [{ email: monitor.alert_email }] }],
+            from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
+            subject: subject,
+            content: [
+              { type: 'text/html', value: htmlBody },
+              { type: 'text/plain', value: `GA4 Observer: ${monitor.property_name} status update.` }
+            ]
+          })
+        });
+        if (mcRes.ok) {
+          emailStatus = 'Sent via Cloudflare (MailChannels)';
+          emailError = null;
+        } else {
+          const mcErr = await mcRes.text().catch(() => '');
+          if (!emailError) emailError = `Cloudflare relay error: ${mcErr || mcRes.statusText}`;
+        }
+      } catch (mcErr: any) {
+        if (!emailError) emailError = `Cloudflare relay failed: ${mcErr.message}`;
+      }
     }
 
     return new Response(JSON.stringify({ 
@@ -226,7 +270,9 @@ export async function onRequest(context: any) {
       isTriggered, 
       percentChange,
       currentVal,
-      pastVal
+      pastVal,
+      emailStatus,
+      emailError
     }), { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
