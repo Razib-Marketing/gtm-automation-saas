@@ -323,35 +323,24 @@ export async function onRequest(context: any) {
     let emailStatus = 'Not sent';
     let emailError: string | null = null;
 
-    // 1. Try Resend if configured
-    if (env.RESEND_API_KEY) {
+    // 1. Try Cloudflare Native Email binding (send_email) if configured
+    if (env.EMAIL && typeof env.EMAIL.send === 'function') {
       try {
-        const resendRes = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: 'Observer <onboarding@resend.dev>',
-            to: monitor.alert_email,
-            subject: subject,
-            html: htmlBody
-          })
+        await env.EMAIL.send({
+          to: monitor.alert_email,
+          from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
+          subject: subject,
+          html: htmlBody,
+          text: `GA4 Observer: ${monitor.property_name} status update.`
         });
-        const resendData: any = await resendRes.json().catch(() => ({}));
-        if (resendRes.ok) {
-          emailStatus = 'Sent via Resend';
-        } else {
-          emailError = `Resend (${resendRes.status}): ${resendData.message || resendData.error || resendRes.statusText}`;
-        }
+        emailStatus = 'Sent via Cloudflare Email Service';
       } catch (err: any) {
-        emailError = `Resend error: ${err.message}`;
+        emailError = `Cloudflare Email Service: ${err.message}`;
       }
     }
 
-    // 2. Cloudflare MailChannels relay (if Resend failed or not configured)
-    if (emailStatus !== 'Sent via Resend') {
+    // 2. Cloudflare MailChannels outbound relay (default Cloudflare Workers outbound email)
+    if (emailStatus === 'Not sent') {
       try {
         const mcRes = await fetch('https://api.mailchannels.net/tx/v1/send', {
           method: 'POST',
@@ -367,14 +356,14 @@ export async function onRequest(context: any) {
           })
         });
         if (mcRes.ok) {
-          emailStatus = 'Sent via Cloudflare (MailChannels)';
+          emailStatus = 'Sent via Cloudflare (MailChannels Relay)';
           emailError = null;
         } else {
           const mcErr = await mcRes.text().catch(() => '');
-          if (!emailError) emailError = `Cloudflare relay error: ${mcErr || mcRes.statusText}`;
+          emailError = `Cloudflare Relay (${mcRes.status}): ${mcErr || mcRes.statusText}`;
         }
       } catch (mcErr: any) {
-        if (!emailError) emailError = `Cloudflare relay failed: ${mcErr.message}`;
+        emailError = `Cloudflare Relay failed: ${mcErr.message}`;
       }
     }
 

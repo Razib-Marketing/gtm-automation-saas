@@ -270,28 +270,25 @@ export async function onRequestGet(context: any) {
           }
 
           let emailSent = false;
-          if (env.RESEND_API_KEY) {
+
+          // 1. Try Cloudflare Email Service binding if available
+          if (env.EMAIL && typeof env.EMAIL.send === 'function') {
             try {
-              const resendRes = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  from: 'Observer <onboarding@resend.dev>',
-                  to: monitor.alert_email,
-                  subject: subject,
-                  html: htmlBody
-                })
+              await env.EMAIL.send({
+                to: monitor.alert_email,
+                from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
+                subject: subject,
+                html: htmlBody,
+                text: `GA4 Alert: ${monitor.property_name}`
               });
-              if (resendRes.ok) emailSent = true;
+              emailSent = true;
             } catch (_) {}
           }
 
+          // 2. Cloudflare MailChannels outbound relay (default Cloudflare Workers outbound email)
           if (!emailSent) {
             try {
-              await fetch('https://api.mailchannels.net/tx/v1/send', {
+              const mcRes = await fetch('https://api.mailchannels.net/tx/v1/send', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -304,6 +301,7 @@ export async function onRequestGet(context: any) {
                   ]
                 })
               });
+              if (mcRes.ok) emailSent = true;
             } catch (_) {}
           }
 

@@ -481,22 +481,28 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                           display: 'grid', 
                           gridTemplateColumns: '2fr 2fr 1.5fr auto', 
                           gap: '0.75rem', 
-                          alignItems: 'center',
+                          alignItems: 'flex-end',
                           background: 'rgba(255, 255, 255, 0.015)',
                           border: '1px solid rgba(255, 255, 255, 0.05)',
-                          padding: '0.75rem',
+                          padding: '0.85rem',
                           borderRadius: '8px'
                         }}
                       >
                         <div>
-                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>
+                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>
                             {index > 0 ? (matchType === 'ALL' ? 'AND Metric' : 'OR Metric') : 'Metric'}
                           </label>
                           <select
                             value={c.metric}
                             onChange={e => updateCondition(c.id, 'metric', e.target.value)}
                             className="module-input"
-                            style={{ paddingLeft: '0.75rem', height: '38px', fontSize: '0.875rem' }}
+                            style={{ 
+                              padding: '0.65rem 0.85rem', 
+                              height: '44px', 
+                              fontSize: '0.875rem', 
+                              lineHeight: '1.4', 
+                              boxSizing: 'border-box' 
+                            }}
                           >
                             <option value="sessions">Sessions</option>
                             <option value="activeUsers">Active Users</option>
@@ -510,12 +516,18 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                         </div>
 
                         <div>
-                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Operator</label>
+                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>Operator</label>
                           <select
                             value={c.conditionType}
                             onChange={e => updateCondition(c.id, 'conditionType', e.target.value as any)}
                             className="module-input"
-                            style={{ paddingLeft: '0.75rem', height: '38px', fontSize: '0.875rem' }}
+                            style={{ 
+                              padding: '0.65rem 0.85rem', 
+                              height: '44px', 
+                              fontSize: '0.875rem', 
+                              lineHeight: '1.4', 
+                              boxSizing: 'border-box' 
+                            }}
                           >
                             <option value="drops_below">Drops below</option>
                             <option value="spikes_above">Spikes above</option>
@@ -524,35 +536,52 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                         </div>
 
                         <div>
-                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>Threshold (%)</label>
+                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>Threshold (%)</label>
                           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                             <input
                               type="number"
                               value={c.thresholdPercentage}
                               onChange={e => updateCondition(c.id, 'thresholdPercentage', e.target.value)}
                               className="module-input"
-                              style={{ paddingLeft: '0.75rem', paddingRight: '1.75rem', height: '38px', fontSize: '0.875rem' }}
+                              style={{ 
+                                padding: '0.65rem 2rem 0.65rem 0.85rem', 
+                                height: '44px', 
+                                fontSize: '0.875rem', 
+                                lineHeight: '1.4', 
+                                boxSizing: 'border-box' 
+                              }}
                               placeholder="20"
                               required
                             />
-                            <span style={{ position: 'absolute', right: '0.65rem', color: '#6B7280', fontSize: '0.8rem', pointerEvents: 'none' }}>%</span>
+                            <span style={{ 
+                              position: 'absolute', 
+                              right: '0.75rem', 
+                              top: '50%', 
+                              transform: 'translateY(-50%)', 
+                              color: '#6B7280', 
+                              fontSize: '0.85rem', 
+                              pointerEvents: 'none' 
+                            }}>%</span>
                           </div>
                         </div>
 
-                        <div style={{ paddingTop: '1.25rem' }}>
+                        <div>
                           <button
                             type="button"
                             onClick={() => removeCondition(c.id)}
                             disabled={conditions.length <= 1}
                             style={{
-                              background: 'none',
-                              border: 'none',
+                              height: '44px',
+                              width: '42px',
+                              background: conditions.length <= 1 ? 'transparent' : 'rgba(239, 68, 68, 0.08)',
+                              border: conditions.length <= 1 ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(239, 68, 68, 0.2)',
                               color: conditions.length <= 1 ? '#4B5563' : '#EF4444',
                               cursor: conditions.length <= 1 ? 'not-allowed' : 'pointer',
-                              padding: '0.4rem',
                               display: 'flex',
                               alignItems: 'center',
-                              borderRadius: '4px'
+                              justifyContent: 'center',
+                              borderRadius: '6px',
+                              transition: 'all 0.2s'
                             }}
                             title={conditions.length <= 1 ? 'At least one condition required' : 'Remove condition'}
                           >
