@@ -104,7 +104,7 @@ export async function onRequest(context: any) {
     }
 
     // Parse monitor conditions
-    let parsedConditions: Array<{ metric: string; conditionType: string; thresholdPercentage: number }> = [];
+    let parsedConditions: Array<{ metric: string; source?: string; medium?: string; conditionType: string; thresholdPercentage: number }> = [];
     if (monitor.conditions) {
       try {
         parsedConditions = JSON.parse(monitor.conditions);
@@ -114,6 +114,8 @@ export async function onRequest(context: any) {
       parsedConditions = [
         {
           metric: monitor.metric || 'sessions',
+          source: 'all',
+          medium: 'all',
           conditionType: monitor.condition_type || 'drops_below',
           thresholdPercentage: monitor.threshold_percentage || -20
         }
@@ -123,73 +125,134 @@ export async function onRequest(context: any) {
 
     // Map metrics for GA4 API (conversions -> keyEvents)
     const mapMetricName = (m: string) => (m === 'conversions' ? 'keyEvents' : m);
-    const uniqueGa4Metrics = Array.from(new Set(parsedConditions.map(c => mapMetricName(c.metric))));
+
+    // Group conditions by source and medium filters
+    const getFilterKey = (c: { source?: string; medium?: string }) => {
+      const s = (c.source && c.source !== 'all') ? c.source.trim().toLowerCase() : '';
+      const m = (c.medium && c.medium !== 'all') ? c.medium.trim().toLowerCase() : '';
+      return `${s}:::${m}`;
+    };
+
+    const groups: Record<string, { source: string; medium: string; metrics: Set<string> }> = {};
+    for (const cond of parsedConditions) {
+      const key = getFilterKey(cond);
+      const s = (cond.source && cond.source !== 'all') ? cond.source.trim() : '';
+      const m = (cond.medium && cond.medium !== 'all') ? cond.medium.trim() : '';
+      if (!groups[key]) {
+        groups[key] = { source: s, medium: m, metrics: new Set() };
+      }
+      groups[key].metrics.add(mapMetricName(cond.metric));
+    }
+
+    const buildReportBody = (dateRange: any, metricNames: string[], source: string, medium: string) => {
+      const expressions: any[] = [];
+      if (source) {
+        expressions.push({
+          filter: {
+            fieldName: 'sessionSource',
+            stringFilter: {
+              matchType: 'CONTAINS',
+              value: source,
+              caseSensitive: false
+            }
+          }
+        });
+      }
+      if (medium) {
+        expressions.push({
+          filter: {
+            fieldName: 'sessionMedium',
+            stringFilter: {
+              matchType: 'CONTAINS',
+              value: medium,
+              caseSensitive: false
+            }
+          }
+        });
+      }
+
+      const body: any = {
+        dateRanges: [dateRange],
+        metrics: metricNames.map(name => ({ name }))
+      };
+
+      if (expressions.length === 1) {
+        body.dimensionFilter = expressions[0];
+      } else if (expressions.length > 1) {
+        body.dimensionFilter = {
+          andGroup: { expressions }
+        };
+      }
+      return body;
+    };
 
     const propertyId = monitor.property_id.startsWith('properties/')
       ? monitor.property_id
       : `properties/${monitor.property_id}`;
 
-    // 4. Query Current Window (batch all unique metrics)
-    const currentRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        dateRanges: [currentRange],
-        metrics: uniqueGa4Metrics.map(name => ({ name }))
-      })
-    });
+    // Query Current & Previous Windows for each dimension filter group
+    const currentValLookup: Record<string, Record<string, number>> = {};
+    const pastValLookup: Record<string, Record<string, number>> = {};
 
-    const currentReport = await currentRes.json();
-    if (!currentRes.ok) {
-      return new Response(JSON.stringify({ 
-        error: currentReport.error?.message || `Google Analytics Data API error (${currentRes.status})` 
-      }), { status: currentRes.status, headers: { 'Content-Type': 'application/json' } });
+    for (const key of Object.keys(groups)) {
+      const group = groups[key];
+      const metricList = Array.from(group.metrics);
+
+      const [currentRes, prevRes] = await Promise.all([
+        fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(buildReportBody(currentRange, metricList, group.source, group.medium))
+        }),
+        fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(buildReportBody(previousRange, metricList, group.source, group.medium))
+        })
+      ]);
+
+      const currentReport = await currentRes.json();
+      if (!currentRes.ok) {
+        return new Response(JSON.stringify({ 
+          error: currentReport.error?.message || `Google Analytics Data API error (${currentRes.status})` 
+        }), { status: currentRes.status, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      const prevReport = await prevRes.json();
+      if (!prevRes.ok) {
+        return new Response(JSON.stringify({ 
+          error: prevReport.error?.message || `Google Analytics Data API error (${prevRes.status})` 
+        }), { status: prevRes.status, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      currentValLookup[key] = {};
+      pastValLookup[key] = {};
+
+      if (currentReport.metricHeaders && currentReport.rows?.[0]?.metricValues) {
+        currentReport.metricHeaders.forEach((header: any, index: number) => {
+          currentValLookup[key][header.name] = parseFloat(currentReport.rows[0].metricValues[index]?.value || '0');
+        });
+      }
+
+      if (prevReport.metricHeaders && prevReport.rows?.[0]?.metricValues) {
+        prevReport.metricHeaders.forEach((header: any, index: number) => {
+          pastValLookup[key][header.name] = parseFloat(prevReport.rows[0].metricValues[index]?.value || '0');
+        });
+      }
     }
 
-    // 5. Query Previous Window (batch all unique metrics)
-    const prevRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        dateRanges: [previousRange],
-        metrics: uniqueGa4Metrics.map(name => ({ name }))
-      })
-    });
-
-    const prevReport = await prevRes.json();
-    if (!prevRes.ok) {
-      return new Response(JSON.stringify({ 
-        error: prevReport.error?.message || `Google Analytics Data API error (${prevRes.status})` 
-      }), { status: prevRes.status, headers: { 'Content-Type': 'application/json' } });
-    }
-
-    // Build metric value maps from GA4 responses
-    const currentValMap: Record<string, number> = {};
-    const pastValMap: Record<string, number> = {};
-
-    if (currentReport.metricHeaders && currentReport.rows?.[0]?.metricValues) {
-      currentReport.metricHeaders.forEach((header: any, index: number) => {
-        currentValMap[header.name] = parseFloat(currentReport.rows[0].metricValues[index]?.value || '0');
-      });
-    }
-
-    if (prevReport.metricHeaders && prevReport.rows?.[0]?.metricValues) {
-      prevReport.metricHeaders.forEach((header: any, index: number) => {
-        pastValMap[header.name] = parseFloat(prevReport.rows[0].metricValues[index]?.value || '0');
-      });
-    }
-
-    // 6. Evaluate Each Condition
+    // Evaluate Each Condition
     const evaluatedConditions = parsedConditions.map(cond => {
+      const key = getFilterKey(cond);
       const ga4Name = mapMetricName(cond.metric);
-      const currentVal = currentValMap[ga4Name] ?? 0;
-      const pastVal = pastValMap[ga4Name] ?? 0;
+      const currentVal = currentValLookup[key]?.[ga4Name] ?? 0;
+      const pastVal = pastValLookup[key]?.[ga4Name] ?? 0;
 
       let percentChange = 0;
       if (pastVal > 0) {
@@ -214,8 +277,13 @@ export async function onRequest(context: any) {
         actionText = percentChange > 0 ? 'increased by' : 'decreased by';
       }
 
+      const sLabel = (cond.source && cond.source !== 'all') ? cond.source : 'All';
+      const mLabel = (cond.medium && cond.medium !== 'all') ? cond.medium : 'All';
+
       return {
         metric: cond.metric,
+        source: sLabel,
+        medium: mLabel,
         conditionType: cType,
         thresholdPercentage: cond.thresholdPercentage,
         currentVal,
@@ -255,9 +323,16 @@ export async function onRequest(context: any) {
         : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`
         : `Drops < -${Math.abs(c.thresholdPercentage)}%`;
 
+      const segmentBadge = (c.source !== 'All' || c.medium !== 'All')
+        ? `<div style="font-size: 11px; color: #6366F1; font-weight: 500; margin-top: 2px;">${c.source} / ${c.medium}</div>`
+        : `<div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">All Traffic</div>`;
+
       return `
         <tr style="border-bottom: 1px solid #E5E7EB;">
-          <td style="padding: 10px 12px; font-weight: 600; color: #111827;">${c.metric}</td>
+          <td style="padding: 10px 12px; font-weight: 600; color: #111827;">
+            ${c.metric}
+            ${segmentBadge}
+          </td>
           <td style="padding: 10px 12px; color: #6B7280; font-size: 12px;">${opText}</td>
           <td style="padding: 10px 12px; color: #374151;">${c.pastVal.toLocaleString()}</td>
           <td style="padding: 10px 12px; color: #374151; font-weight: 600;">${c.currentVal.toLocaleString()}</td>
