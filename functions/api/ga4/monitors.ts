@@ -56,7 +56,7 @@ export async function onRequest(context: any) {
           `UPDATE ga4_monitors 
           SET property_id = ?, property_name = ?, metric = ?, threshold_percentage = ?, comparison_period = ?, alert_email = ?, condition_type = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND user_id = ?`
-        ).bind(propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'daily', alertEmail, conditionType || 'drops_below', id, userId).run();
+        ).bind(propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'yesterday_vs_last_week', alertEmail, conditionType || 'drops_below', id, userId).run();
       } else {
         // Create new
         monitorId = 'mon_' + Date.now() + Math.random().toString(36).substring(2, 9);
@@ -64,7 +64,7 @@ export async function onRequest(context: any) {
           `INSERT INTO ga4_monitors 
           (id, user_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(monitorId, userId, propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'daily', alertEmail, conditionType || 'drops_below').run();
+        ).bind(monitorId, userId, propertyId, propertyName || propertyId, metric, thresholdPercentage, comparisonPeriod || 'yesterday_vs_last_week', alertEmail, conditionType || 'drops_below').run();
       }
 
       return new Response(JSON.stringify({ success: true, id: monitorId }), { status: 200 });

@@ -20,7 +20,7 @@ export const Observer = () => {
   const [conditionType, setConditionType] = useState('drops_below');
   const [actionType, setActionType] = useState('email');
   const [threshold, setThreshold] = useState('-20');
-  const [period, setPeriod] = useState('daily');
+  const [period, setPeriod] = useState('yesterday_vs_last_week');
   const [alertEmail, setAlertEmail] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -114,17 +114,19 @@ export const Observer = () => {
         },
         body: JSON.stringify({ monitorId: id })
       });
-      const data = await res.json();
-      if (res.ok) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data) {
         alert(`Test Email Sent!
 
 Result: ${data.percentChange > 0 ? '+' : ''}${data.percentChange.toFixed(2)}%
+Current Window: ${data.currentVal !== undefined ? data.currentVal : 'N/A'}
+Previous Window: ${data.pastVal !== undefined ? data.pastVal : 'N/A'}
 Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
       } else {
-        alert(`Test failed: ${data.error}`);
+        alert(`Test failed: ${data?.error || `Server returned status ${res.status}`}`);
       }
-    } catch (e) {
-      alert('An error occurred during test');
+    } catch (e: any) {
+      alert(`An error occurred during test: ${e.message || e}`);
     } finally {
       setTestingId(null);
     }
@@ -277,10 +279,14 @@ Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
                       className="module-input"
                       style={{ paddingLeft: '1rem' }}
                     >
-                      <option value="daily">Previous Day</option>
+                      <option value="yesterday_vs_last_week">Yesterday vs Same Day Last Week (Recommended)</option>
+                      <option value="last_7_vs_previous_7">Last 7 Days vs Previous 7 Days</option>
+                      <option value="last_28_vs_previous_28">Last 28 Days vs Previous 28 Days</option>
+                      <option value="last_30_vs_previous_30">Last 30 Days vs Previous 30 Days</option>
+                      <option value="daily">Previous Day (Yesterday vs 2 Days Ago)</option>
                       <option value="weekly">Previous Week (Same Day)</option>
-                      <option value="monthly">Previous Month (Same Date)</option>
-                      <option value="yearly">Previous Year (Same Date)</option>
+                      <option value="monthly">Previous Month (Last 30 Days)</option>
+                      <option value="yearly">Previous Year</option>
                     </select>
                   </div>
                 </div>
@@ -320,9 +326,10 @@ Triggered Alert: ${data.isTriggered ? 'YES' : 'NO'}`);
                         style={{ paddingLeft: '1rem' }}
                       >
                         <option value="sessions">Sessions</option>
-                        <option value="conversions">Conversions</option>
-                        <option value="totalRevenue">Total Revenue</option>
                         <option value="activeUsers">Active Users</option>
+                        <option value="keyEvents">Key Events (Conversions)</option>
+                        <option value="conversions">Conversions (Legacy)</option>
+                        <option value="totalRevenue">Total Revenue</option>
                         <option value="newUsers">New Users</option>
                         <option value="eventCount">Event Count</option>
                         <option value="bounceRate">Bounce Rate</option>

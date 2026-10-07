@@ -46,17 +46,24 @@ export const GA4Dashboard = () => {
 
   const fetchReport = async (propertyId: string) => {
     setLoading(true);
+    setErrorMsg('');
     try {
       const token = await getToken();
-      const res = await fetch(`/api/ga4/report?propertyId=${propertyId}`, {
+      const res = await fetch(`/api/ga4/report?propertyId=${encodeURIComponent(propertyId)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      const d = await res.json().catch(() => ({}));
       if (res.ok) {
-        const d = await res.json();
         setData(d);
+        setErrorMsg('');
+      } else {
+        setErrorMsg(d.error || `Failed to fetch report from GA4 (${res.status})`);
+        setData(null);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setErrorMsg(e.message || 'Failed to fetch report from GA4');
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -98,7 +105,19 @@ export const GA4Dashboard = () => {
             <option key={p.name} value={p.name}>{p.displayName} ({p.name})</option>
           ))}
         </select>
-        {errorMsg && <div style={{ color: '#EF4444', marginBottom: '2rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
+        {errorMsg && (
+          <div style={{ 
+            color: '#EF4444', 
+            background: 'rgba(239, 68, 68, 0.1)', 
+            border: '1px solid rgba(239, 68, 68, 0.2)', 
+            padding: '1rem', 
+            borderRadius: '8px', 
+            marginBottom: '2rem', 
+            fontSize: '0.875rem' 
+          }}>
+            <strong>Google Analytics Error:</strong> {errorMsg}
+          </div>
+        )}
 
         {loading ? (
           <div style={{ padding: '4rem 0', textAlign: 'center', color: '#9CA3AF' }}>Loading analytics data...</div>

@@ -30,8 +30,8 @@ export async function getGoogleAccessToken(env: any, request: Request) {
     ORDER BY created_at DESC LIMIT 1
   `).bind(clerkUserId).first();
 
-  if (!dbResult || !dbResult.encrypted_refresh_token) {
-    throw new Error('Google OAuth connection not found for user');
+  if (!dbResult || !dbResult.encrypted_refresh_token || dbResult.encrypted_refresh_token === 'no_refresh_token_provided') {
+    throw new Error('Google account not connected or missing refresh token. Please re-authenticate Google on the Dashboard.');
   }
 
   const refreshToken = dbResult.encrypted_refresh_token;
@@ -49,7 +49,8 @@ export async function getGoogleAccessToken(env: any, request: Request) {
 
   const tokenData = await tokenResponse.json();
   if (!tokenResponse.ok) {
-    throw new Error(`Failed to refresh Google token: ${JSON.stringify(tokenData)}`);
+    const detail = tokenData.error_description || tokenData.error || JSON.stringify(tokenData);
+    throw new Error(`Failed to refresh Google token (${detail}). Please re-authenticate your Google account on the Dashboard.`);
   }
 
   return tokenData.access_token;

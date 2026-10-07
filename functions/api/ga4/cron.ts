@@ -39,74 +39,100 @@ export async function onRequestGet(context: any) {
         const accessToken = tokenData.access_token;
         if (!accessToken) continue;
 
-        // 3. Query GA4 Data API for Selected Date Range
-        let dateRanges = [
-          { startDate: 'yesterday', endDate: 'yesterday' },
-          { startDate: '2daysAgo', endDate: '2daysAgo' }
-        ];
+        // 3. Configure Date Windows
+        let currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+        let previousRange = { startDate: '2daysAgo', endDate: '2daysAgo' };
 
         switch (monitor.comparison_period) {
           case 'yesterday_vs_last_week':
-            dateRanges = [
-              { startDate: 'yesterday', endDate: 'yesterday' },
-              { startDate: '8daysAgo', endDate: '8daysAgo' }
-            ];
+          case 'weekly':
+            currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+            previousRange = { startDate: '8daysAgo', endDate: '8daysAgo' };
             break;
           case 'last_7_vs_previous_7':
-            dateRanges = [
-              { startDate: '7daysAgo', endDate: 'yesterday' },
-              { startDate: '14daysAgo', endDate: '8daysAgo' }
-            ];
+            currentRange = { startDate: '7daysAgo', endDate: 'yesterday' };
+            previousRange = { startDate: '14daysAgo', endDate: '8daysAgo' };
             break;
           case 'last_28_vs_previous_28':
-            dateRanges = [
-              { startDate: '28daysAgo', endDate: 'yesterday' },
-              { startDate: '56daysAgo', endDate: '29daysAgo' }
-            ];
+            currentRange = { startDate: '28daysAgo', endDate: 'yesterday' };
+            previousRange = { startDate: '56daysAgo', endDate: '29daysAgo' };
             break;
           case 'last_30_vs_previous_30':
-            dateRanges = [
-              { startDate: '30daysAgo', endDate: 'yesterday' },
-              { startDate: '60daysAgo', endDate: '31daysAgo' }
-            ];
+          case 'monthly':
+            currentRange = { startDate: '30daysAgo', endDate: 'yesterday' };
+            previousRange = { startDate: '60daysAgo', endDate: '31daysAgo' };
+            break;
+          case 'yearly':
+            currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+            previousRange = { startDate: '365daysAgo', endDate: '365daysAgo' };
+            break;
+          case 'daily':
+          default:
+            currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+            previousRange = { startDate: '2daysAgo', endDate: '2daysAgo' };
             break;
         }
 
-        const reportRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${monitor.property_id}:runReport`, {
+        const metricName = monitor.metric === 'conversions' ? 'keyEvents' : monitor.metric;
+        const propertyId = monitor.property_id.startsWith('properties/')
+          ? monitor.property_id
+          : `properties/${monitor.property_id}`;
+
+        // Query Current Window
+        const currentRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            dateRanges: dateRanges,
-            metrics: [{ name: monitor.metric }]
+            dateRanges: [currentRange],
+            metrics: [{ name: metricName }]
           })
         });
 
-        const report = await reportRes.json();
+        const currentReport = await currentRes.json();
+        if (!currentRes.ok) continue;
 
-        // 4. Calculate Difference
-        if (report.rows && report.rows.length >= 2) {
-          const currentVal = parseFloat(report.rows[0].metricValues[0].value);
-          const pastVal = parseFloat(report.rows[1].metricValues[0].value);
+        // Query Previous Window
+        const prevRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            dateRanges: [previousRange],
+            metrics: [{ name: metricName }]
+          })
+        });
 
-          if (pastVal > 0) {
-            const percentChange = ((currentVal - pastVal) / pastVal) * 100;
+        const prevReport = await prevRes.json();
+        if (!prevRes.ok) continue;
 
-            let isTriggered = false;
-            let actionText = '';
-            
-            if (monitor.condition_type === 'drops_below' && percentChange <= -Math.abs(monitor.threshold_percentage)) {
-                isTriggered = true;
-                actionText = 'dropped by';
-            } else if (monitor.condition_type === 'spikes_above' && percentChange >= Math.abs(monitor.threshold_percentage)) {
-                isTriggered = true;
-                actionText = 'spiked by';
-            } else if (monitor.condition_type === 'changes_by' && Math.abs(percentChange) >= Math.abs(monitor.threshold_percentage)) {
-                isTriggered = true;
-                actionText = percentChange > 0 ? 'increased by' : 'decreased by';
-            }
+        const currentVal = parseFloat(currentReport.rows?.[0]?.metricValues?.[0]?.value || '0');
+        const pastVal = parseFloat(prevReport.rows?.[0]?.metricValues?.[0]?.value || '0');
+
+        let percentChange = 0;
+        if (pastVal > 0) {
+          percentChange = ((currentVal - pastVal) / pastVal) * 100;
+        } else if (currentVal > 0) {
+          percentChange = 100;
+        }
+
+        let isTriggered = false;
+        let actionText = '';
+        
+        if (monitor.condition_type === 'drops_below' && percentChange <= -Math.abs(monitor.threshold_percentage)) {
+            isTriggered = true;
+            actionText = 'dropped by';
+        } else if (monitor.condition_type === 'spikes_above' && percentChange >= Math.abs(monitor.threshold_percentage)) {
+            isTriggered = true;
+            actionText = 'spiked by';
+        } else if (monitor.condition_type === 'changes_by' && Math.abs(percentChange) >= Math.abs(monitor.threshold_percentage)) {
+            isTriggered = true;
+            actionText = percentChange > 0 ? 'increased by' : 'decreased by';
+        }
 
             if (isTriggered) {
               

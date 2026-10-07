@@ -4,29 +4,49 @@ export async function onRequest(context: any) {
   // Verify Auth
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
+      status: 405,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
     const { monitorId } = await request.json();
-    if (!monitorId) return new Response(JSON.stringify({ error: 'Missing monitorId' }), { status: 400 });
+    if (!monitorId) {
+      return new Response(JSON.stringify({ error: 'Missing monitorId' }), { 
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const monitor = await env.DB.prepare(
       "SELECT * FROM ga4_monitors WHERE id = ?"
     ).bind(monitorId).first();
 
-    if (!monitor) return new Response(JSON.stringify({ error: 'Monitor not found' }), { status: 404 });
+    if (!monitor) {
+      return new Response(JSON.stringify({ error: 'Monitor not found' }), { 
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // 1. Get User's Refresh Token
     const userConn = await env.DB.prepare(
       "SELECT encrypted_refresh_token FROM gtm_connections WHERE user_id = ? ORDER BY created_at DESC LIMIT 1"
     ).bind(monitor.user_id).first();
 
-    if (!userConn) return new Response(JSON.stringify({ error: 'Google connection not found' }), { status: 400 });
+    if (!userConn || !userConn.encrypted_refresh_token || userConn.encrypted_refresh_token === 'no_refresh_token_provided') {
+      return new Response(JSON.stringify({ 
+        error: 'Google account not connected or missing refresh token. Please re-authenticate Google on the Dashboard.' 
+      }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
 
     // 2. Exchange for Access Token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -41,64 +61,97 @@ export async function onRequest(context: any) {
     });
     
     const tokenData = await tokenRes.json();
+    if (!tokenRes.ok || !tokenData.access_token) {
+      const detail = tokenData.error_description || tokenData.error || JSON.stringify(tokenData);
+      return new Response(JSON.stringify({ 
+        error: `Failed to refresh Google token (${detail}). Please re-authenticate your Google account.` 
+      }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
     const accessToken = tokenData.access_token;
-    if (!accessToken) return new Response(JSON.stringify({ error: 'Failed to refresh Google token' }), { status: 400 });
 
-    // 3. Query GA4 Data API
-    let dateRanges = [
-      { startDate: 'yesterday', endDate: 'yesterday' },
-      { startDate: '2daysAgo', endDate: '2daysAgo' }
-    ];
+    // 3. Configure Date Windows
+    let currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+    let previousRange = { startDate: '2daysAgo', endDate: '2daysAgo' };
 
     switch (monitor.comparison_period) {
       case 'yesterday_vs_last_week':
-        dateRanges = [
-          { startDate: 'yesterday', endDate: 'yesterday' },
-          { startDate: '8daysAgo', endDate: '8daysAgo' }
-        ];
+      case 'weekly':
+        currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+        previousRange = { startDate: '8daysAgo', endDate: '8daysAgo' };
         break;
       case 'last_7_vs_previous_7':
-        dateRanges = [
-          { startDate: '7daysAgo', endDate: 'yesterday' },
-          { startDate: '14daysAgo', endDate: '8daysAgo' }
-        ];
+        currentRange = { startDate: '7daysAgo', endDate: 'yesterday' };
+        previousRange = { startDate: '14daysAgo', endDate: '8daysAgo' };
         break;
       case 'last_28_vs_previous_28':
-        dateRanges = [
-          { startDate: '28daysAgo', endDate: 'yesterday' },
-          { startDate: '56daysAgo', endDate: '29daysAgo' }
-        ];
+        currentRange = { startDate: '28daysAgo', endDate: 'yesterday' };
+        previousRange = { startDate: '56daysAgo', endDate: '29daysAgo' };
         break;
       case 'last_30_vs_previous_30':
-        dateRanges = [
-          { startDate: '30daysAgo', endDate: 'yesterday' },
-          { startDate: '60daysAgo', endDate: '31daysAgo' }
-        ];
+      case 'monthly':
+        currentRange = { startDate: '30daysAgo', endDate: 'yesterday' };
+        previousRange = { startDate: '60daysAgo', endDate: '31daysAgo' };
+        break;
+      case 'yearly':
+        currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+        previousRange = { startDate: '365daysAgo', endDate: '365daysAgo' };
+        break;
+      case 'daily':
+      default:
+        currentRange = { startDate: 'yesterday', endDate: 'yesterday' };
+        previousRange = { startDate: '2daysAgo', endDate: '2daysAgo' };
         break;
     }
 
-    const reportRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${monitor.property_id}:runReport`, {
+    const metricName = monitor.metric === 'conversions' ? 'keyEvents' : monitor.metric;
+    const propertyId = monitor.property_id.startsWith('properties/')
+      ? monitor.property_id
+      : `properties/${monitor.property_id}`;
+
+    // 4. Query Current Window
+    const currentRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        dateRanges: dateRanges,
-        metrics: [{ name: monitor.metric }]
+        dateRanges: [currentRange],
+        metrics: [{ name: metricName }]
       })
     });
 
-    const report = await reportRes.json();
-
-    if (!report.rows || report.rows.length < 2) {
-      return new Response(JSON.stringify({ error: 'Not enough data in GA4 to compare' }), { status: 400 });
+    const currentReport = await currentRes.json();
+    if (!currentRes.ok) {
+      return new Response(JSON.stringify({ 
+        error: currentReport.error?.message || `Google Analytics Data API error (${currentRes.status})` 
+      }), { status: currentRes.status, headers: { 'Content-Type': 'application/json' } });
     }
 
-    const currentVal = parseFloat(report.rows[0].metricValues[0].value);
-    const pastVal = parseFloat(report.rows[1].metricValues[0].value);
-    let percentChange = 0;
+    // 5. Query Previous Window
+    const prevRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        dateRanges: [previousRange],
+        metrics: [{ name: metricName }]
+      })
+    });
 
+    const prevReport = await prevRes.json();
+    if (!prevRes.ok) {
+      return new Response(JSON.stringify({ 
+        error: prevReport.error?.message || `Google Analytics Data API error (${prevRes.status})` 
+      }), { status: prevRes.status, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const currentVal = parseFloat(currentReport.rows?.[0]?.metricValues?.[0]?.value || '0');
+    const pastVal = parseFloat(prevReport.rows?.[0]?.metricValues?.[0]?.value || '0');
+
+    let percentChange = 0;
     if (pastVal > 0) {
       percentChange = ((currentVal - pastVal) / pastVal) * 100;
     } else if (currentVal > 0) {
@@ -110,14 +163,14 @@ export async function onRequest(context: any) {
     const color = percentChange > 0 ? '#10B981' : '#EF4444'; // Green if up, Red if down
     
     if (monitor.condition_type === 'drops_below' && percentChange <= -Math.abs(monitor.threshold_percentage)) {
-        isTriggered = true;
-        actionText = 'dropped by';
+      isTriggered = true;
+      actionText = 'dropped by';
     } else if (monitor.condition_type === 'spikes_above' && percentChange >= Math.abs(monitor.threshold_percentage)) {
-        isTriggered = true;
-        actionText = 'spiked by';
+      isTriggered = true;
+      actionText = 'spiked by';
     } else if (monitor.condition_type === 'changes_by' && Math.abs(percentChange) >= Math.abs(monitor.threshold_percentage)) {
-        isTriggered = true;
-        actionText = percentChange > 0 ? 'increased by' : 'decreased by';
+      isTriggered = true;
+      actionText = percentChange > 0 ? 'increased by' : 'decreased by';
     }
 
     // Build Email HTML
@@ -168,9 +221,21 @@ export async function onRequest(context: any) {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, isTriggered, percentChange }), { status: 200 });
+    return new Response(JSON.stringify({ 
+      success: true, 
+      isTriggered, 
+      percentChange,
+      currentVal,
+      pastVal
+    }), { 
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
 
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
