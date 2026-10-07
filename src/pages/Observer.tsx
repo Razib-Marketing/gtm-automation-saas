@@ -13,7 +13,6 @@ interface ConditionItem {
   source?: string;
   medium?: string;
   customSource?: string;
-  customMedium?: string;
   conditionType: 'drops_below' | 'spikes_above' | 'changes_by';
   thresholdPercentage: number;
 }
@@ -25,8 +24,8 @@ const PRESETS = [
     matchType: 'ALL' as const,
     period: 'yesterday_vs_last_week',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'all', medium: 'all', conditionType: 'spikes_above' as const, thresholdPercentage: 60 },
-      { id: '2', metric: 'engagementRate', source: 'all', medium: 'all', conditionType: 'drops_below' as const, thresholdPercentage: 30 }
+      { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'spikes_above' as const, thresholdPercentage: 60 },
+      { id: '2', metric: 'engagementRate', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 30 }
     ]
   },
   {
@@ -35,28 +34,28 @@ const PRESETS = [
     matchType: 'ANY' as const,
     period: 'yesterday_vs_last_week',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'all', medium: 'all', conditionType: 'drops_below' as const, thresholdPercentage: 40 },
-      { id: '2', metric: 'activeUsers', source: 'all', medium: 'all', conditionType: 'drops_below' as const, thresholdPercentage: 40 }
+      { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 40 },
+      { id: '2', metric: 'activeUsers', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 40 }
     ]
   },
   {
-    name: '📉 Google Organic Drop',
-    description: 'Dip in Google organic search traffic or conversions',
+    name: '📉 Organic Search Drop',
+    description: 'Dip in GA4 Organic Search traffic or conversions',
     matchType: 'ANY' as const,
     period: 'yesterday_vs_last_week',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'google', medium: 'organic', conditionType: 'drops_below' as const, thresholdPercentage: 30 },
-      { id: '2', metric: 'keyEvents', source: 'google', medium: 'organic', conditionType: 'drops_below' as const, thresholdPercentage: 25 }
+      { id: '1', metric: 'sessions', source: 'Organic Search', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 30 },
+      { id: '2', metric: 'keyEvents', source: 'Organic Search', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 25 }
     ]
   },
   {
-    name: '📉 Paid Ads (CPC) Slump',
-    description: 'Drop in paid traffic conversions or revenue',
+    name: '📉 Paid Search (CPC) Slump',
+    description: 'Drop in Paid Search traffic or conversions',
     matchType: 'ANY' as const,
     period: 'last_7_vs_previous_7',
     conditions: [
-      { id: '1', metric: 'keyEvents', source: 'all', medium: 'cpc', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
-      { id: '2', metric: 'totalRevenue', source: 'all', medium: 'cpc', conditionType: 'drops_below' as const, thresholdPercentage: 25 }
+      { id: '1', metric: 'sessions', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
+      { id: '2', metric: 'keyEvents', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below' as const, thresholdPercentage: 25 }
     ]
   },
   {
@@ -65,15 +64,36 @@ const PRESETS = [
     matchType: 'ANY' as const,
     period: 'yesterday_vs_last_week',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'all', medium: 'all', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
-      { id: '2', metric: 'keyEvents', source: 'all', medium: 'all', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
-      { id: '3', metric: 'bounceRate', source: 'all', medium: 'all', conditionType: 'spikes_above' as const, thresholdPercentage: 35 }
+      { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
+      { id: '2', metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
+      { id: '3', metric: 'bounceRate', source: 'all', medium: '', conditionType: 'spikes_above' as const, thresholdPercentage: 35 }
     ]
   }
 ];
 
-const KNOWN_SOURCES = ['all', 'google', 'direct', 'facebook', 'instagram', 'tiktok', 'youtube', 'linkedin', 'bing', 'email'];
-const KNOWN_MEDIUMS = ['all', 'organic', 'cpc', 'referral', '(none)', 'email', 'social', 'paid', 'affiliate'];
+const KNOWN_SOURCES = [
+  'all',
+  'Direct',
+  'Cross-network',
+  'Organic Search',
+  'Paid Search',
+  'Organic Social',
+  'Paid Social',
+  'Referral',
+  'Email',
+  'Affiliates',
+  'Display',
+  'Unassigned',
+  'google',
+  'direct',
+  'facebook',
+  'instagram',
+  'tiktok',
+  'youtube',
+  'linkedin',
+  'bing',
+  'twitter'
+];
 
 export const Observer = () => {
   const { getToken, signOut } = useAuth();
@@ -85,7 +105,7 @@ export const Observer = () => {
   
   const [selectedProperty, setSelectedProperty] = useState('');
   const [conditions, setConditions] = useState<ConditionItem[]>([
-    { id: '1', metric: 'sessions', source: 'all', medium: 'all', conditionType: 'drops_below', thresholdPercentage: 20 }
+    { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 20 }
   ]);
   const [matchType, setMatchType] = useState<'ANY' | 'ALL'>('ANY');
   const [actionType, setActionType] = useState('email');
@@ -146,7 +166,7 @@ export const Observer = () => {
         id: String(Date.now()),
         metric: 'keyEvents',
         source: 'all',
-        medium: 'all',
+        medium: '',
         conditionType: 'drops_below',
         thresholdPercentage: 20
       }
@@ -182,7 +202,7 @@ export const Observer = () => {
           matchType,
           conditions: conditions.map(c => {
             const finalSource = c.source === 'custom' ? (c.customSource?.trim() || 'all') : (c.source || 'all');
-            const finalMedium = c.medium === 'custom' ? (c.customMedium?.trim() || 'all') : (c.medium || 'all');
+            const finalMedium = c.medium?.trim() ? c.medium.trim() : 'all';
             return {
               metric: c.metric,
               source: finalSource,
@@ -227,10 +247,17 @@ export const Observer = () => {
             const statusSymbol = c.isTriggered ? '🚨 TRIGGERED' : '✅ OK';
             const changeStr = `${c.percentChange > 0 ? '+' : ''}${c.percentChange.toFixed(1)}%`;
             const opSymbol = c.conditionType === 'spikes_above' ? '>' : c.conditionType === 'changes_by' ? '±' : '< -';
-            const segmentTag = (c.source && c.source !== 'All' && c.source !== 'all') || (c.medium && c.medium !== 'All' && c.medium !== 'all')
-              ? ` [${c.source} / ${c.medium}]`
-              : '';
-            return `• ${c.metric}${segmentTag} (${opSymbol}${Math.abs(c.thresholdPercentage)}%): Prev ${c.pastVal.toLocaleString()} → Curr ${c.currentVal.toLocaleString()} (${changeStr}) [${statusSymbol}]`;
+            const hasSource = c.source && c.source !== 'All' && c.source !== 'all';
+            const hasMedium = c.medium && c.medium !== 'All' && c.medium !== 'all';
+            let segTag = '';
+            if (hasSource && hasMedium) {
+              segTag = ` [${c.source} / ${c.medium}]`;
+            } else if (hasSource) {
+              segTag = ` [${c.source}]`;
+            } else if (hasMedium) {
+              segTag = ` [Medium: ${c.medium}]`;
+            }
+            return `• ${c.metric}${segTag} (${opSymbol}${Math.abs(c.thresholdPercentage)}%): Prev ${c.pastVal.toLocaleString()} → Curr ${c.currentVal.toLocaleString()} (${changeStr}) [${statusSymbol}]`;
           }).join('\n');
         } else {
           conditionLines = `Evaluation: ${data.percentChange > 0 ? '+' : ''}${data.percentChange?.toFixed(2)}%`;
@@ -269,13 +296,10 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
       setConditions(m.conditions.map((c: any, idx: number) => {
         const rawSource = c.source || 'all';
         const isKnownSource = KNOWN_SOURCES.includes(rawSource);
-        const source = isKnownSource ? rawSource : 'custom';
-        const customSource = isKnownSource ? '' : rawSource;
+        const source = isKnownSource ? rawSource : (rawSource === 'all' ? 'all' : 'custom');
+        const customSource = isKnownSource ? '' : (rawSource === 'all' ? '' : rawSource);
 
-        const rawMedium = c.medium || 'all';
-        const isKnownMedium = KNOWN_MEDIUMS.includes(rawMedium);
-        const medium = isKnownMedium ? rawMedium : 'custom';
-        const customMedium = isKnownMedium ? '' : rawMedium;
+        const medium = (c.medium && c.medium !== 'all') ? c.medium : '';
 
         return {
           id: String(idx + 1),
@@ -283,7 +307,6 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
           source,
           medium,
           customSource,
-          customMedium,
           conditionType: c.conditionType || c.condition_type || 'drops_below',
           thresholdPercentage: Math.abs(c.thresholdPercentage ?? c.threshold_percentage ?? 20)
         };
@@ -293,7 +316,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
         id: '1',
         metric: m.metric || 'sessions',
         source: 'all',
-        medium: 'all',
+        medium: '',
         conditionType: m.condition_type || 'drops_below',
         thresholdPercentage: Math.abs(m.threshold_percentage || 20)
       }]);
@@ -304,7 +327,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
   const cancelEdit = () => {
     setEditingId(null);
     setSelectedProperty('');
-    setConditions([{ id: '1', metric: 'sessions', source: 'all', medium: 'all', conditionType: 'drops_below', thresholdPercentage: 20 }]);
+    setConditions([{ id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 20 }]);
     setMatchType('ANY');
   };
 
@@ -577,24 +600,39 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                               boxSizing: 'border-box' 
                             }}
                           >
-                            <option value="all">All Sources</option>
-                            <option value="google">google</option>
-                            <option value="direct">direct / (direct)</option>
-                            <option value="facebook">facebook</option>
-                            <option value="instagram">instagram</option>
-                            <option value="tiktok">tiktok</option>
-                            <option value="youtube">youtube</option>
-                            <option value="linkedin">linkedin</option>
-                            <option value="bing">bing</option>
-                            <option value="email">email</option>
-                            <option value="custom">Custom...</option>
+                            <option value="all">All Traffic (All Sources)</option>
+                            <optgroup label="GA4 Channel Groups (Acquisition)">
+                              <option value="Direct">Direct</option>
+                              <option value="Cross-network">Cross-network</option>
+                              <option value="Organic Search">Organic Search</option>
+                              <option value="Paid Search">Paid Search</option>
+                              <option value="Organic Social">Organic Social</option>
+                              <option value="Paid Social">Paid Social</option>
+                              <option value="Referral">Referral</option>
+                              <option value="Email">Email</option>
+                              <option value="Affiliates">Affiliates</option>
+                              <option value="Display">Display</option>
+                              <option value="Unassigned">Unassigned</option>
+                            </optgroup>
+                            <optgroup label="Popular Sources">
+                              <option value="google">google</option>
+                              <option value="direct">direct / (direct)</option>
+                              <option value="facebook">facebook</option>
+                              <option value="instagram">instagram</option>
+                              <option value="tiktok">tiktok</option>
+                              <option value="youtube">youtube</option>
+                              <option value="linkedin">linkedin</option>
+                              <option value="bing">bing</option>
+                              <option value="twitter">twitter / x</option>
+                            </optgroup>
+                            <option value="custom">Custom Source...</option>
                           </select>
                           {c.source === 'custom' && (
                             <input
                               type="text"
                               value={c.customSource || ''}
                               onChange={e => updateCondition(c.id, 'customSource', e.target.value)}
-                              placeholder="e.g. twitter, newsletter"
+                              placeholder="e.g. reddit, newsletter"
                               className="module-input"
                               style={{
                                 marginTop: '0.4rem',
@@ -610,11 +648,13 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
 
                         <div>
                           <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>
-                            Medium
+                            Medium (Custom)
                           </label>
-                          <select
-                            value={c.medium || 'all'}
+                          <input
+                            type="text"
+                            value={c.medium || ''}
                             onChange={e => updateCondition(c.id, 'medium', e.target.value)}
+                            placeholder="e.g. cpc, organic, email (optional)"
                             className="module-input"
                             style={{ 
                               padding: '0.65rem 0.85rem', 
@@ -623,35 +663,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                               lineHeight: '1.4', 
                               boxSizing: 'border-box' 
                             }}
-                          >
-                            <option value="all">All Mediums</option>
-                            <option value="organic">organic</option>
-                            <option value="cpc">cpc (paid search)</option>
-                            <option value="referral">referral</option>
-                            <option value="(none)">(none)</option>
-                            <option value="email">email</option>
-                            <option value="social">social</option>
-                            <option value="paid">paid</option>
-                            <option value="affiliate">affiliate</option>
-                            <option value="custom">Custom...</option>
-                          </select>
-                          {c.medium === 'custom' && (
-                            <input
-                              type="text"
-                              value={c.customMedium || ''}
-                              onChange={e => updateCondition(c.id, 'customMedium', e.target.value)}
-                              placeholder="e.g. cpm, blog"
-                              className="module-input"
-                              style={{
-                                marginTop: '0.4rem',
-                                padding: '0.5rem 0.75rem',
-                                height: '38px',
-                                fontSize: '0.8rem',
-                                boxSizing: 'border-box'
-                              }}
-                              required
-                            />
-                          )}
+                          />
                         </div>
 
                         <div>
@@ -882,18 +894,28 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                                     gap: '0.35rem'
                                   }}>
                                     <strong>{c.metric}</strong>
-                                    {((c.source && c.source !== 'all' && c.source !== 'All') || (c.medium && c.medium !== 'all' && c.medium !== 'All')) && (
-                                      <span style={{ 
-                                        color: '#A5B4FC', 
-                                        fontSize: '0.7rem',
-                                        background: 'rgba(99, 102, 241, 0.18)',
-                                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                                        padding: '1px 5px',
-                                        borderRadius: '4px'
-                                      }}>
-                                        {(c.source && c.source !== 'all' && c.source !== 'All') ? c.source : 'all'} / {(c.medium && c.medium !== 'all' && c.medium !== 'All') ? c.medium : 'all'}
-                                      </span>
-                                    )}
+                                    {(() => {
+                                      const hasSource = c.source && c.source !== 'all' && c.source !== 'All';
+                                      const hasMedium = c.medium && c.medium !== 'all' && c.medium !== 'All';
+                                      if (!hasSource && !hasMedium) return null;
+                                      const segText = (hasSource && hasMedium)
+                                        ? `${c.source} / ${c.medium}`
+                                        : hasSource
+                                        ? c.source
+                                        : `Medium: ${c.medium}`;
+                                      return (
+                                        <span style={{ 
+                                          color: '#A5B4FC', 
+                                          fontSize: '0.7rem',
+                                          background: 'rgba(99, 102, 241, 0.18)',
+                                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                                          padding: '1px 5px',
+                                          borderRadius: '4px'
+                                        }}>
+                                          {segText}
+                                        </span>
+                                      );
+                                    })()}
                                     <span>{op} {Math.abs(c.thresholdPercentage || c.threshold_percentage || 0)}%</span>
                                   </span>
                                 </React.Fragment>

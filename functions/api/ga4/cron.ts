@@ -114,12 +114,33 @@ export async function onRequestGet(context: any) {
           groups[key].metrics.add(mapMetricName(cond.metric));
         }
 
+        const GA4_CHANNEL_GROUPS = [
+          'direct',
+          'cross-network',
+          'organic search',
+          'paid search',
+          'organic social',
+          'paid social',
+          'referral',
+          'email',
+          'affiliates',
+          'display',
+          'unassigned'
+        ];
+
+        const isChannelGroup = (val: string) => {
+          if (!val) return false;
+          if (val === 'direct') return false;
+          return GA4_CHANNEL_GROUPS.includes(val.trim().toLowerCase());
+        };
+
         const buildReportBody = (dateRange: any, metricNames: string[], source: string, medium: string) => {
           const expressions: any[] = [];
           if (source) {
+            const fieldName = isChannelGroup(source) ? 'sessionDefaultChannelGroup' : 'sessionSource';
             expressions.push({
               filter: {
-                fieldName: 'sessionSource',
+                fieldName,
                 stringFilter: {
                   matchType: 'CONTAINS',
                   value: source,
@@ -279,8 +300,17 @@ export async function onRequestGet(context: any) {
               : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`
               : `Drops < -${Math.abs(c.thresholdPercentage)}%`;
 
-            const segmentBadge = (c.source !== 'All' || c.medium !== 'All')
-              ? `<div style="font-size: 11px; color: #6366F1; font-weight: 500; margin-top: 2px;">${c.source} / ${c.medium}</div>`
+            let segmentText = '';
+            if (c.source !== 'All' && c.medium !== 'All') {
+              segmentText = `${c.source} / ${c.medium}`;
+            } else if (c.source !== 'All') {
+              segmentText = c.source;
+            } else if (c.medium !== 'All') {
+              segmentText = `Medium: ${c.medium}`;
+            }
+
+            const segmentBadge = segmentText
+              ? `<div style="font-size: 11px; color: #6366F1; font-weight: 500; margin-top: 2px;">${segmentText}</div>`
               : `<div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">All Traffic</div>`;
 
             return `
@@ -346,7 +376,14 @@ export async function onRequestGet(context: any) {
             subject = `🚨 GA4 Compound Alert: ${monitor.property_name} (ALL Conditions Matched)`;
           } else {
             const topTrigger = triggeredConditions[0] || evaluatedConditions[0];
-            const segStr = (topTrigger.source !== 'All' || topTrigger.medium !== 'All') ? ` [${topTrigger.source}/${topTrigger.medium}]` : '';
+            let segStr = '';
+            if (topTrigger.source !== 'All' && topTrigger.medium !== 'All') {
+              segStr = ` [${topTrigger.source} / ${topTrigger.medium}]`;
+            } else if (topTrigger.source !== 'All') {
+              segStr = ` [${topTrigger.source}]`;
+            } else if (topTrigger.medium !== 'All') {
+              segStr = ` [Medium: ${topTrigger.medium}]`;
+            }
             subject = `🚨 GA4 Alert: ${monitor.property_name} (${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
           }
 
@@ -391,9 +428,14 @@ export async function onRequestGet(context: any) {
           // Log each triggered condition to Database
           for (const cond of triggeredConditions) {
             const alertId = 'alt_' + Date.now() + Math.random().toString(36).substring(2, 9);
-            const metricDisplay = (cond.source !== 'All' || cond.medium !== 'All')
-              ? `${cond.metric} [${cond.source} / ${cond.medium}]`
-              : cond.metric;
+            let metricDisplay = cond.metric;
+            if (cond.source !== 'All' && cond.medium !== 'All') {
+              metricDisplay = `${cond.metric} [${cond.source} / ${cond.medium}]`;
+            } else if (cond.source !== 'All') {
+              metricDisplay = `${cond.metric} [${cond.source}]`;
+            } else if (cond.medium !== 'All') {
+              metricDisplay = `${cond.metric} [Medium: ${cond.medium}]`;
+            }
             await env.DB.prepare(
               "INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change) VALUES (?, ?, ?, ?, ?, ?, ?)"
             ).bind(alertId, monitor.id, monitor.user_id, monitor.property_name, metricDisplay, cond.conditionType, cond.percentChange).run();

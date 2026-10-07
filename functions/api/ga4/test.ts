@@ -144,12 +144,33 @@ export async function onRequest(context: any) {
       groups[key].metrics.add(mapMetricName(cond.metric));
     }
 
+    const GA4_CHANNEL_GROUPS = [
+      'direct',
+      'cross-network',
+      'organic search',
+      'paid search',
+      'organic social',
+      'paid social',
+      'referral',
+      'email',
+      'affiliates',
+      'display',
+      'unassigned'
+    ];
+
+    const isChannelGroup = (val: string) => {
+      if (!val) return false;
+      if (val === 'direct') return false;
+      return GA4_CHANNEL_GROUPS.includes(val.trim().toLowerCase());
+    };
+
     const buildReportBody = (dateRange: any, metricNames: string[], source: string, medium: string) => {
       const expressions: any[] = [];
       if (source) {
+        const fieldName = isChannelGroup(source) ? 'sessionDefaultChannelGroup' : 'sessionSource';
         expressions.push({
           filter: {
-            fieldName: 'sessionSource',
+            fieldName,
             stringFilter: {
               matchType: 'CONTAINS',
               value: source,
@@ -323,8 +344,17 @@ export async function onRequest(context: any) {
         : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`
         : `Drops < -${Math.abs(c.thresholdPercentage)}%`;
 
-      const segmentBadge = (c.source !== 'All' || c.medium !== 'All')
-        ? `<div style="font-size: 11px; color: #6366F1; font-weight: 500; margin-top: 2px;">${c.source} / ${c.medium}</div>`
+      let segmentText = '';
+      if (c.source !== 'All' && c.medium !== 'All') {
+        segmentText = `${c.source} / ${c.medium}`;
+      } else if (c.source !== 'All') {
+        segmentText = c.source;
+      } else if (c.medium !== 'All') {
+        segmentText = `Medium: ${c.medium}`;
+      }
+
+      const segmentBadge = segmentText
+        ? `<div style="font-size: 11px; color: #6366F1; font-weight: 500; margin-top: 2px;">${segmentText}</div>`
         : `<div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">All Traffic</div>`;
 
       return `
@@ -389,7 +419,15 @@ export async function onRequest(context: any) {
         subject = `🚨 GA4 Compound Alert: ${monitor.property_name} (ALL Conditions Matched)`;
       } else {
         const topTrigger = triggeredConditions[0];
-        subject = `🚨 GA4 Alert: ${monitor.property_name} (${topTrigger.metric} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
+        let segStr = '';
+        if (topTrigger.source !== 'All' && topTrigger.medium !== 'All') {
+          segStr = ` [${topTrigger.source} / ${topTrigger.medium}]`;
+        } else if (topTrigger.source !== 'All') {
+          segStr = ` [${topTrigger.source}]`;
+        } else if (topTrigger.medium !== 'All') {
+          segStr = ` [Medium: ${topTrigger.medium}]`;
+        }
+        subject = `🚨 GA4 Alert: ${monitor.property_name} (${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
       }
     } else {
       subject = `✅ Health Check: ${monitor.property_name} is stable`;
