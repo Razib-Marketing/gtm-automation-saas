@@ -178,12 +178,10 @@ export async function onRequestGet(context: any) {
                 "INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change) VALUES (?, ?, ?, ?, ?, ?, ?)"
               ).bind(alertId, monitor.id, monitor.user_id, monitor.property_name, monitor.metric, monitor.condition_type, percentChange).run();
             }
-          }
-        }
-        
-        await env.DB.prepare("UPDATE ga4_monitors SET last_checked_at = CURRENT_TIMESTAMP WHERE id = ?").bind(monitor.id).run();
 
-      } catch (err) {
+            await env.DB.prepare("UPDATE ga4_monitors SET last_checked_at = CURRENT_TIMESTAMP WHERE id = ?").bind(monitor.id).run();
+
+          } catch (err) {
         logs.push(`Error checking monitor ${monitor.id}: ${err.message}`);
       }
     }
