@@ -103,12 +103,33 @@ export async function onRequest(context: any) {
         break;
     }
 
-    const metricName = monitor.metric === 'conversions' ? 'keyEvents' : monitor.metric;
+    // Parse monitor conditions
+    let parsedConditions: Array<{ metric: string; conditionType: string; thresholdPercentage: number }> = [];
+    if (monitor.conditions) {
+      try {
+        parsedConditions = JSON.parse(monitor.conditions);
+      } catch (_) {}
+    }
+    if (!parsedConditions || parsedConditions.length === 0) {
+      parsedConditions = [
+        {
+          metric: monitor.metric || 'sessions',
+          conditionType: monitor.condition_type || 'drops_below',
+          thresholdPercentage: monitor.threshold_percentage || -20
+        }
+      ];
+    }
+    const matchType: 'ALL' | 'ANY' = monitor.match_type === 'ALL' ? 'ALL' : 'ANY';
+
+    // Map metrics for GA4 API (conversions -> keyEvents)
+    const mapMetricName = (m: string) => (m === 'conversions' ? 'keyEvents' : m);
+    const uniqueGa4Metrics = Array.from(new Set(parsedConditions.map(c => mapMetricName(c.metric))));
+
     const propertyId = monitor.property_id.startsWith('properties/')
       ? monitor.property_id
       : `properties/${monitor.property_id}`;
 
-    // 4. Query Current Window
+    // 4. Query Current Window (batch all unique metrics)
     const currentRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
       method: 'POST',
       headers: {
@@ -117,7 +138,7 @@ export async function onRequest(context: any) {
       },
       body: JSON.stringify({
         dateRanges: [currentRange],
-        metrics: [{ name: metricName }]
+        metrics: uniqueGa4Metrics.map(name => ({ name }))
       })
     });
 
@@ -128,7 +149,7 @@ export async function onRequest(context: any) {
       }), { status: currentRes.status, headers: { 'Content-Type': 'application/json' } });
     }
 
-    // 5. Query Previous Window
+    // 5. Query Previous Window (batch all unique metrics)
     const prevRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {
       method: 'POST',
       headers: {
@@ -137,7 +158,7 @@ export async function onRequest(context: any) {
       },
       body: JSON.stringify({
         dateRanges: [previousRange],
-        metrics: [{ name: metricName }]
+        metrics: uniqueGa4Metrics.map(name => ({ name }))
       })
     });
 
@@ -148,64 +169,156 @@ export async function onRequest(context: any) {
       }), { status: prevRes.status, headers: { 'Content-Type': 'application/json' } });
     }
 
-    const currentVal = parseFloat(currentReport.rows?.[0]?.metricValues?.[0]?.value || '0');
-    const pastVal = parseFloat(prevReport.rows?.[0]?.metricValues?.[0]?.value || '0');
+    // Build metric value maps from GA4 responses
+    const currentValMap: Record<string, number> = {};
+    const pastValMap: Record<string, number> = {};
 
-    let percentChange = 0;
-    if (pastVal > 0) {
-      percentChange = ((currentVal - pastVal) / pastVal) * 100;
-    } else if (currentVal > 0) {
-      percentChange = 100; // went from 0 to something
+    if (currentReport.metricHeaders && currentReport.rows?.[0]?.metricValues) {
+      currentReport.metricHeaders.forEach((header: any, index: number) => {
+        currentValMap[header.name] = parseFloat(currentReport.rows[0].metricValues[index]?.value || '0');
+      });
     }
 
-    let isTriggered = false;
-    let actionText = '';
-    const color = percentChange > 0 ? '#10B981' : '#EF4444'; // Green if up, Red if down
-    
-    if (monitor.condition_type === 'drops_below' && percentChange <= -Math.abs(monitor.threshold_percentage)) {
-      isTriggered = true;
-      actionText = 'dropped by';
-    } else if (monitor.condition_type === 'spikes_above' && percentChange >= Math.abs(monitor.threshold_percentage)) {
-      isTriggered = true;
-      actionText = 'spiked by';
-    } else if (monitor.condition_type === 'changes_by' && Math.abs(percentChange) >= Math.abs(monitor.threshold_percentage)) {
-      isTriggered = true;
-      actionText = percentChange > 0 ? 'increased by' : 'decreased by';
+    if (prevReport.metricHeaders && prevReport.rows?.[0]?.metricValues) {
+      prevReport.metricHeaders.forEach((header: any, index: number) => {
+        pastValMap[header.name] = parseFloat(prevReport.rows[0].metricValues[index]?.value || '0');
+      });
     }
 
-    // Build Email HTML
-    const statusHeader = isTriggered 
-      ? `<div style="background-color: ${color}; color: white; padding: 20px; text-align: center;"><h2>🚨 GA4 Anomaly Detected</h2></div>`
-      : `<div style="background-color: #3B82F6; color: white; padding: 20px; text-align: center;"><h2>✅ GA4 Monitor Health Check</h2></div>`;
+    // 6. Evaluate Each Condition
+    const evaluatedConditions = parsedConditions.map(cond => {
+      const ga4Name = mapMetricName(cond.metric);
+      const currentVal = currentValMap[ga4Name] ?? 0;
+      const pastVal = pastValMap[ga4Name] ?? 0;
 
-    const statusMessage = isTriggered
-      ? `<p>Your Observer monitor for <strong>${monitor.property_name}</strong> has detected significant movement.</p>`
-      : `<p>You requested a manual test of your Observer monitor for <strong>${monitor.property_name}</strong>. Everything is running smoothly and no anomalies were detected at this time.</p>`;
+      let percentChange = 0;
+      if (pastVal > 0) {
+        percentChange = ((currentVal - pastVal) / pastVal) * 100;
+      } else if (currentVal > 0) {
+        percentChange = 100;
+      }
+
+      const threshold = Math.abs(cond.thresholdPercentage);
+      let isTriggered = false;
+      let actionText = '';
+      const cType = cond.conditionType || 'drops_below';
+
+      if (cType === 'drops_below' && percentChange <= -threshold) {
+        isTriggered = true;
+        actionText = 'dropped by';
+      } else if (cType === 'spikes_above' && percentChange >= threshold) {
+        isTriggered = true;
+        actionText = 'spiked by';
+      } else if (cType === 'changes_by' && Math.abs(percentChange) >= threshold) {
+        isTriggered = true;
+        actionText = percentChange > 0 ? 'increased by' : 'decreased by';
+      }
+
+      return {
+        metric: cond.metric,
+        conditionType: cType,
+        thresholdPercentage: cond.thresholdPercentage,
+        currentVal,
+        pastVal,
+        percentChange,
+        isTriggered,
+        actionText
+      };
+    });
+
+    // 7. Compound Trigger Evaluation (ALL / ANY)
+    const isTriggered = matchType === 'ALL'
+      ? evaluatedConditions.every(c => c.isTriggered)
+      : evaluatedConditions.some(c => c.isTriggered);
+
+    const triggeredConditions = evaluatedConditions.filter(c => c.isTriggered);
+    const primaryCond = evaluatedConditions[0] || { percentChange: 0, currentVal: 0, pastVal: 0 };
+
+    // 8. Build Rich Email HTML
+    const headerBg = isTriggered ? '#DC2626' : '#2563EB';
+    const headerTitle = isTriggered ? '🚨 GA4 Anomaly Detected' : '✅ GA4 Monitor Health Check';
+    const statusNote = isTriggered
+      ? `<p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
+          Your Observer monitor for <strong>${monitor.property_name}</strong> triggered an alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
+        </p>`
+      : `<p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
+          This is a manual health check for <strong>${monitor.property_name}</strong>. All evaluated conditions are within expected parameters.
+        </p>`;
+
+    const rowsHtml = evaluatedConditions.map(c => {
+      const changeColor = c.percentChange > 0 ? '#059669' : '#DC2626';
+      const statusBadge = c.isTriggered
+        ? '<span style="background: #FEE2E2; color: #991B1B; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700;">TRIGGERED</span>'
+        : '<span style="background: #D1FAE5; color: #065F46; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700;">OK</span>';
+      
+      const opText = c.conditionType === 'spikes_above' ? `Spikes > ${Math.abs(c.thresholdPercentage)}%`
+        : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`
+        : `Drops < -${Math.abs(c.thresholdPercentage)}%`;
+
+      return `
+        <tr style="border-bottom: 1px solid #E5E7EB;">
+          <td style="padding: 10px 12px; font-weight: 600; color: #111827;">${c.metric}</td>
+          <td style="padding: 10px 12px; color: #6B7280; font-size: 12px;">${opText}</td>
+          <td style="padding: 10px 12px; color: #374151;">${c.pastVal.toLocaleString()}</td>
+          <td style="padding: 10px 12px; color: #374151; font-weight: 600;">${c.currentVal.toLocaleString()}</td>
+          <td style="padding: 10px 12px; font-weight: 700; color: ${changeColor};">
+            ${c.percentChange > 0 ? '+' : ''}${c.percentChange.toFixed(1)}%
+          </td>
+          <td style="padding: 10px 12px; text-align: right;">${statusBadge}</td>
+        </tr>
+      `;
+    }).join('');
 
     const htmlBody = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-        ${statusHeader}
-        <div style="padding: 20px;">
-          ${statusMessage}
-          <div style="background: #F3F4F6; padding: 15px; border-radius: 6px; margin-top: 20px;">
-            <table style="width: 100%; text-align: left;">
-              <tr><th style="padding-bottom: 8px;">Metric:</th><td style="padding-bottom: 8px;">${monitor.metric}</td></tr>
-              <tr><th style="padding-bottom: 8px;">Evaluation:</th><td style="padding-bottom: 8px;">${monitor.comparison_period.replace(/_/g, ' ')}</td></tr>
-              <tr><th style="padding-bottom: 8px;">Current Window:</th><td style="padding-bottom: 8px;"><strong>${currentVal}</strong></td></tr>
-              <tr><th style="padding-bottom: 8px;">Previous Window:</th><td style="padding-bottom: 8px;"><strong>${pastVal}</strong></td></tr>
-              <tr><th>Change:</th><td><strong style="color: ${color}">${percentChange > 0 ? '+' : ''}${percentChange.toFixed(2)}%</strong></td></tr>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; background-color: #FFFFFF;">
+        <div style="background-color: ${headerBg}; color: #FFFFFF; padding: 24px; text-align: center;">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.025em;">${headerTitle}</h2>
+          <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Property: ${monitor.property_name}</p>
+        </div>
+        <div style="padding: 24px;">
+          ${statusNote}
+
+          <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: #4B5563; display: flex; justify-content: space-between;">
+            <div><strong>Rule Logic:</strong> Match ${matchType === 'ALL' ? 'ALL conditions (AND)' : 'ANY condition (OR)'}</div>
+            <div><strong>Comparison Period:</strong> ${monitor.comparison_period.replace(/_/g, ' ')}</div>
+          </div>
+
+          <div style="border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; margin-top: 12px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead>
+                <tr style="background-color: #F3F4F6; border-bottom: 1px solid #E5E7EB; color: #4B5563; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">
+                  <th style="padding: 8px 12px;">Metric</th>
+                  <th style="padding: 8px 12px;">Rule</th>
+                  <th style="padding: 8px 12px;">Prev</th>
+                  <th style="padding: 8px 12px;">Curr</th>
+                  <th style="padding: 8px 12px;">Change</th>
+                  <th style="padding: 8px 12px; text-align: right;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
             </table>
           </div>
-          <p style="margin-top: 20px; font-size: 12px; color: #6B7280; text-align: center;">
-            This is an automated message from GTM & Analytics Automation SaaS.
+
+          <p style="margin-top: 24px; font-size: 11px; color: #9CA3AF; text-align: center;">
+            Automated monitoring by <strong>GTM & Analytics Automation SaaS</strong> • Real-time Anomaly Observer
           </p>
         </div>
       </div>
     `;
 
-    const subject = isTriggered 
-      ? `🚨 GA4 Alert: ${monitor.property_name} ${actionText} ${Math.abs(percentChange).toFixed(1)}%`
-      : `✅ Health Check: ${monitor.property_name} is stable (${percentChange > 0 ? '+' : ''}${percentChange.toFixed(1)}%)`;
+    let subject = '';
+    if (isTriggered) {
+      if (matchType === 'ALL') {
+        subject = `🚨 GA4 Compound Alert: ${monitor.property_name} (ALL Conditions Matched)`;
+      } else {
+        const topTrigger = triggeredConditions[0];
+        subject = `🚨 GA4 Alert: ${monitor.property_name} (${topTrigger.metric} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
+      }
+    } else {
+      subject = `✅ Health Check: ${monitor.property_name} is stable`;
+    }
 
     let emailStatus = 'Not sent';
     let emailError: string | null = null;
@@ -268,9 +381,11 @@ export async function onRequest(context: any) {
     return new Response(JSON.stringify({ 
       success: true, 
       isTriggered, 
-      percentChange,
-      currentVal,
-      pastVal,
+      matchType,
+      conditions: evaluatedConditions,
+      percentChange: primaryCond.percentChange,
+      currentVal: primaryCond.currentVal,
+      pastVal: primaryCond.pastVal,
       emailStatus,
       emailError
     }), { 
