@@ -219,11 +219,6 @@ export const Observer = () => {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<TestReportResult | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [domainInfo, setDomainInfo] = useState<any>(null);
-  const [verifyingDomain, setVerifyingDomain] = useState(false);
-  const [showDnsGuide, setShowDnsGuide] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -237,55 +232,7 @@ export const Observer = () => {
   useEffect(() => {
     fetchProperties();
     fetchMonitors();
-    fetchDomainInfo();
   }, []);
-
-  const fetchDomainInfo = async () => {
-    try {
-      const token = await getToken();
-      const res = await fetch('/api/resend/domain', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDomainInfo(data);
-      }
-    } catch (_) {}
-  };
-
-  const handleVerifyDomain = async () => {
-    setVerifyingDomain(true);
-    try {
-      const token = await getToken();
-      const res = await fetch('/api/resend/domain', {
-        method: 'POST',
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ domainId: domainInfo?.domain?.id || '6aab0c94-6a3b-44db-975a-c008300fbda3' })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDomainInfo(data);
-        if (data.isVerified) {
-          alert('🎉 Domain verified successfully! All external team members will now receive incident emails.');
-        } else {
-          alert('DNS propagation in progress. Hostinger/DNS changes typically take 5–30 minutes to propagate. Please verify that all 4 DNS records are saved in your DNS settings.');
-        }
-      }
-    } catch (e: any) {
-      alert('Domain verification check failed: ' + e.message);
-    } finally {
-      setVerifyingDomain(false);
-    }
-  };
-
-  const copyToClipboard = (text: string, key: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(key);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
 
   const fetchProperties = async () => {
     try {
@@ -1122,137 +1069,26 @@ export const Observer = () => {
                         </button>
                       )}
                     </div>
-                    <p style={{ margin: '0.45rem 0 0 0', fontSize: '0.75rem', color: '#6B7280' }}>
+                    <div style={{ margin: '0.45rem 0 0 0', fontSize: '0.75rem', color: '#6B7280' }}>
                       ⚡ Automatic alerts are sent to all recipients whenever an anomaly or incident occurs.
-                    </p>
-
-                    {/* Domain Verification Notice for External Recipients */}
-                    <div className="domain-alert-banner">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Info size={15} style={{ color: domainInfo?.isVerified ? '#34D399' : '#F59E0B', flexShrink: 0 }} />
-                        <span>
-                          {domainInfo?.isVerified ? (
-                            <><strong>Domain Verified:</strong> Alerts will be sent from <code>alerts@razibmarketing.net</code> to all recipients.</>
-                          ) : (
-                            <>External emails require <strong>razibmarketing.net</strong> DNS verification. (<code>ovi@razibmarketing.net</code> receives alerts now).</>
-                          )}
-                        </span>
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={() => setShowDnsGuide(!showDnsGuide)}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          color: '#FFFFFF',
+                      {alertEmails.some((e: string) => e.toLowerCase() !== 'ovi@razibmarketing.net') && (
+                        <div style={{
+                          marginTop: '0.5rem',
+                          padding: '0.45rem 0.75rem',
+                          background: 'rgba(0, 191, 165, 0.05)',
+                          border: '1px solid rgba(0, 191, 165, 0.2)',
                           borderRadius: '6px',
-                          padding: '0.25rem 0.6rem',
-                          fontSize: '0.72rem',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {showDnsGuide ? 'Hide DNS Records' : 'View DNS Records'}
-                      </button>
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          fontSize: '0.75rem',
+                          color: '#9CA3AF'
+                        }}>
+                          <Info size={14} style={{ color: '#00BFA5', flexShrink: 0 }} />
+                          <span>In testing mode, alerts deliver to <strong>ovi@razibmarketing.net</strong>. When your production domain is connected, all recipients will receive alerts automatically.</span>
+                        </div>
+                      )}
                     </div>
-
-                    {showDnsGuide && (
-                      <div className="dns-guide-card" style={{ marginTop: '0.75rem' }}>
-                        <div className="dns-guide-header">
-                          <ShieldAlert size={18} style={{ color: '#F59E0B', flexShrink: 0 }} />
-                          <div>
-                            <h5 style={{ margin: 0, color: '#FCD34D', fontSize: '0.825rem', fontWeight: 700 }}>
-                              Add 4 DNS Records for razibmarketing.net
-                            </h5>
-                            <p style={{ margin: '0.2rem 0 0', color: '#9CA3AF', fontSize: '0.75rem' }}>
-                              Add these records to your domain DNS (e.g. Hostinger) to allow sending alerts to all team members and clients:
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="dns-records-container">
-                          <table className="dns-table">
-                            <thead>
-                              <tr>
-                                <th>Type</th>
-                                <th>Host / Name</th>
-                                <th>Value</th>
-                                <th>Action</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td><span className="dns-type-tag">TXT</span></td>
-                                <td><code>resend._domainkey</code></td>
-                                <td><span className="dns-val-text">p=MIGfMA0GCSqGSIb...</span></td>
-                                <td>
-                                  <button 
-                                    type="button" 
-                                    onClick={() => copyToClipboard('p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDrcbz86EIqmeoAEU0p5L6ntc7LOKeyQg7FcJEltqkQYI2VAhh8lhqT1+xJE6+/6fgy5cXHJEnPP8+ymz//Z2DjwRyBGGLsln96jy9iMWbn63V+Huocoat2YMxEMO7NlfAFcJoamRmo+o2cgGT/Eouvkst/ilUfxbKeIut4L9Q60QIDAQAB', 'dkim_form')}
-                                    className="btn-copy-dns"
-                                  >
-                                    {copiedKey === 'dkim_form' ? '✓ Copied' : 'Copy'}
-                                  </button>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td><span className="dns-type-tag">MX</span></td>
-                                <td><code>send</code></td>
-                                <td><span className="dns-val-text">feedback-smtp.us-east-1.amazonses.com (Priority 10)</span></td>
-                                <td>
-                                  <button 
-                                    type="button" 
-                                    onClick={() => copyToClipboard('feedback-smtp.us-east-1.amazonses.com', 'mx_form')}
-                                    className="btn-copy-dns"
-                                  >
-                                    {copiedKey === 'mx_form' ? '✓ Copied' : 'Copy'}
-                                  </button>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td><span className="dns-type-tag">TXT</span></td>
-                                <td><code>send</code></td>
-                                <td><span className="dns-val-text">v=spf1 include:amazonses.com ~all</span></td>
-                                <td>
-                                  <button 
-                                    type="button" 
-                                    onClick={() => copyToClipboard('v=spf1 include:amazonses.com ~all', 'spf_form')}
-                                    className="btn-copy-dns"
-                                  >
-                                    {copiedKey === 'spf_form' ? '✓ Copied' : 'Copy'}
-                                  </button>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td><span className="dns-type-tag">CNAME</span></td>
-                                <td><code>rsend</code></td>
-                                <td><span className="dns-val-text">send.forge.rmta.net</span></td>
-                                <td>
-                                  <button 
-                                    type="button" 
-                                    onClick={() => copyToClipboard('send.forge.rmta.net', 'cname_form')}
-                                    className="btn-copy-dns"
-                                  >
-                                    {copiedKey === 'cname_form' ? '✓ Copied' : 'Copy'}
-                                  </button>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
-                          <button 
-                            type="button"
-                            onClick={handleVerifyDomain} 
-                            disabled={verifyingDomain} 
-                            className="btn-verify-domain"
-                          >
-                            {verifyingDomain ? 'Checking DNS...' : 'Verify DNS Propagation Now'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1644,101 +1480,29 @@ export const Observer = () => {
                         </div>
                       </div>
 
-                      {/* Prominent explanation when sandbox blocks external recipients */}
+                      {/* Delivery note when in testing sandbox mode */}
                       {(testResult.sandboxRestricted || (testResult.failedRecipients && testResult.failedRecipients.length > 0)) && (
-                        <div className="dns-guide-card" style={{ marginTop: '0.5rem' }}>
-                          <div className="dns-guide-header">
-                            <ShieldAlert size={18} style={{ color: '#F59E0B', flexShrink: 0, marginTop: '2px' }} />
-                            <div>
-                              <h5 style={{ margin: '0 0 0.25rem', color: '#FCD34D', fontSize: '0.825rem', fontWeight: 700 }}>
-                                Why did other emails not receive the report?
-                              </h5>
-                              <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.75rem', lineHeight: 1.45 }}>
-                                Resend's test address (<code>onboarding@resend.dev</code>) only permits sending to the account owner (<strong>ovi@razibmarketing.net</strong>). To send to other team members or clients, add these 4 DNS records for <strong>razibmarketing.net</strong> to your DNS provider (Hostinger / DNS):
-                              </p>
+                        <div style={{
+                          marginTop: '0.75rem',
+                          padding: '0.75rem 1rem',
+                          background: 'rgba(0, 191, 165, 0.05)',
+                          border: '1px solid rgba(0, 191, 165, 0.2)',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.65rem'
+                        }}>
+                          <Info size={16} style={{ color: '#00BFA5', flexShrink: 0, marginTop: '2px' }} />
+                          <div style={{ fontSize: '0.775rem', lineHeight: 1.45, color: '#D1D5DB' }}>
+                            <div style={{ fontWeight: 600, color: '#FFFFFF', marginBottom: '0.2rem' }}>
+                              Testing Mode Delivery Notice
                             </div>
-                          </div>
-
-                          <div className="dns-records-container">
-                            <table className="dns-table">
-                              <thead>
-                                <tr>
-                                  <th>Type</th>
-                                  <th>Host / Name</th>
-                                  <th>Value</th>
-                                  <th>Action</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                <tr>
-                                  <td><span className="dns-type-tag">TXT</span></td>
-                                  <td><code>resend._domainkey</code></td>
-                                  <td><span className="dns-val-text">p=MIGfMA0GCSqGSIb...</span></td>
-                                  <td>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => copyToClipboard('p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDrcbz86EIqmeoAEU0p5L6ntc7LOKeyQg7FcJEltqkQYI2VAhh8lhqT1+xJE6+/6fgy5cXHJEnPP8+ymz//Z2DjwRyBGGLsln96jy9iMWbn63V+Huocoat2YMxEMO7NlfAFcJoamRmo+o2cgGT/Eouvkst/ilUfxbKeIut4L9Q60QIDAQAB', 'dkim_modal')}
-                                      className="btn-copy-dns"
-                                    >
-                                      {copiedKey === 'dkim_modal' ? '✓ Copied' : 'Copy'}
-                                    </button>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td><span className="dns-type-tag">MX</span></td>
-                                  <td><code>send</code></td>
-                                  <td><span className="dns-val-text">feedback-smtp.us-east-1.amazonses.com (Priority 10)</span></td>
-                                  <td>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => copyToClipboard('feedback-smtp.us-east-1.amazonses.com', 'mx_modal')}
-                                      className="btn-copy-dns"
-                                    >
-                                      {copiedKey === 'mx_modal' ? '✓ Copied' : 'Copy'}
-                                    </button>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td><span className="dns-type-tag">TXT</span></td>
-                                  <td><code>send</code></td>
-                                  <td><span className="dns-val-text">v=spf1 include:amazonses.com ~all</span></td>
-                                  <td>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => copyToClipboard('v=spf1 include:amazonses.com ~all', 'spf_modal')}
-                                      className="btn-copy-dns"
-                                    >
-                                      {copiedKey === 'spf_modal' ? '✓ Copied' : 'Copy'}
-                                    </button>
-                                  </td>
-                                </tr>
-                                <tr>
-                                  <td><span className="dns-type-tag">CNAME</span></td>
-                                  <td><code>rsend</code></td>
-                                  <td><span className="dns-val-text">send.forge.rmta.net</span></td>
-                                  <td>
-                                    <button 
-                                      type="button" 
-                                      onClick={() => copyToClipboard('send.forge.rmta.net', 'cname_modal')}
-                                      className="btn-copy-dns"
-                                    >
-                                      {copiedKey === 'cname_modal' ? '✓ Copied' : 'Copy'}
-                                    </button>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
-                            <button 
-                              type="button"
-                              onClick={handleVerifyDomain} 
-                              disabled={verifyingDomain} 
-                              className="btn-verify-domain"
-                            >
-                              {verifyingDomain ? 'Checking DNS...' : 'Verify DNS Propagation Now'}
-                            </button>
+                            <div style={{ color: '#9CA3AF' }}>
+                              Report delivered to verified admin (<strong>ovi@razibmarketing.net</strong>).
+                              {testResult.failedRecipients && testResult.failedRecipients.length > 0 && (
+                                <span> Additional recipient(s) ({testResult.failedRecipients.map(f => f.email).join(', ')}) will automatically receive all alerts once your production domain is connected.</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}

@@ -622,7 +622,7 @@ export async function onRequest(context: any) {
             emailStatus = `Delivered to ${successfulRecipients.length}/${recipients.length} recipient(s) via Resend`;
             if (failedRecipients.length > 0) {
               if (sandboxRestricted) {
-                emailError = `Resend Sandbox Restriction: Only ${successfulRecipients.join(', ')} received the email. Other recipients were blocked by Resend because razibmarketing.net is not yet verified on DNS.`;
+                emailError = `Test Mode Restriction: Only ${successfulRecipients.join(', ')} received the email. External recipients will be activated when a custom production domain is connected.`;
               } else {
                 emailError = `Some recipients failed: ${failedRecipients.map(f => `${f.email} (${f.reason})`).join(', ')}`;
               }
@@ -631,7 +631,7 @@ export async function onRequest(context: any) {
             let msg = resendData.message || resendData.error || resendRes.statusText;
             if (resendRes.status === 403 && typeof msg === 'string' && msg.includes('can only send testing emails to your own email address')) {
               sandboxRestricted = true;
-              msg = `Resend Sandbox Restriction: onboarding@resend.dev can only send to ovi@razibmarketing.net. Please verify razibmarketing.net on DNS to send to external recipients.`;
+              msg = `Testing Mode Notice: onboarding@resend.dev delivers to your account email. Connecting a custom production domain will activate external recipients.`;
             }
             emailError = `Resend (${resendRes.status}): ${msg}`;
           }

@@ -36,20 +36,9 @@ export async function onRequest(context: any) {
       });
       const data: any = await res.json();
       
-      let domain = data.data?.find((d: any) => d.name === 'razibmarketing.net') || data.data?.[0];
+      let domain = data.data?.find((d: any) => d.status === 'verified') || data.data?.[0];
 
-      // If no domain exists yet, create razibmarketing.net
-      if (!domain) {
-        const createRes = await fetch('https://api.resend.com/domains', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ name: 'razibmarketing.net' })
-        });
-        domain = await createRes.json();
-      } else {
+      if (domain) {
         // Fetch full domain details including records
         const detailRes = await fetch(`https://api.resend.com/domains/${domain.id}`, {
           headers: { 'Authorization': `Bearer ${resendApiKey}` }
