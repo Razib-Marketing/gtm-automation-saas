@@ -31,6 +31,8 @@ import * as route_25 from '../functions/api/stripe/checkout.ts';
 import * as route_26 from '../functions/api/stripe/webhook.ts';
 import * as route_27 from '../functions/api/user/me.ts';
 import * as route_28 from '../functions/api/user/track-deployment.ts';
+import * as route_polar_checkout from '../functions/api/polar/checkout.ts';
+import * as route_polar_webhook from '../functions/api/polar/webhook.ts';
 
 const routes = {
   '/api/auth/google/callback': route_0,
@@ -60,6 +62,8 @@ const routes = {
   '/api/newsletter': route_24,
   '/api/stripe/checkout': route_25,
   '/api/stripe/webhook': route_26,
+  '/api/polar/checkout': route_polar_checkout,
+  '/api/polar/webhook': route_polar_webhook,
   '/api/user/me': route_27,
   '/api/user/track-deployment': route_28,
 };

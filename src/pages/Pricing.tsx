@@ -24,7 +24,7 @@ export default function Pricing() {
     setCheckoutLoading(true);
     try {
       const token = await getToken();
-      const res = await fetch('/api/stripe/checkout', {
+      const res = await fetch('/api/polar/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ tier, containers })
