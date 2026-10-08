@@ -1,12 +1,13 @@
 // @ts-nocheck
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Share2, ShieldCheck, Target, FileText, Calendar, ShoppingCart, Zap } from 'lucide-react';
+import { Share2, ShieldCheck, Target, FileText, Calendar, ShoppingCart, Zap, Activity } from 'lucide-react';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { Fireflies } from '../components/ui/Fireflies';
 import { FeatureCard } from '../components/ui/FeatureCard';
 import { ClientsSection } from '../components/sections/ClientsSection';
+import { ObserverSection } from '../components/sections/ObserverSection';
 import { ReviewsSection } from '../components/sections/ReviewsSection';
 import { PricingSection } from '../components/sections/PricingSection';
 import { ContactSection } from '../components/sections/ContactSection';
@@ -116,12 +117,20 @@ export const Home = () => {
               description="Automatically detects outbound social links and configures GA4 click event listeners dynamically."
             />
             <FeatureCard 
+              icon={<Activity />}
+              title="Autonomous GA4 Observer"
+              description="24/7 background edge monitoring. Detects tracking crashes, conversion dropoffs, and anomalies with instant multi-email alerts."
+            />
+            <FeatureCard 
               icon={<ShieldCheck />}
               title="Cloudflare Edge Hosted"
               description="Execute API mutations securely at the edge. No central servers, ultimate speed and privacy."
             />
           </div>
         </div>
+
+        {/* GA4 OBSERVER & ANOMALY ALERTING SECTION */}
+        <ObserverSection />
 
         {/* REVIEWS SECTION */}
         <ReviewsSection />

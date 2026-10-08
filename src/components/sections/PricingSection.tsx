@@ -13,6 +13,9 @@ const tiers = [
       'Deploy Base GA4 Config',
       'Basic Full Tracking Access',
       '1 GTM Account Limit',
+      '1 GA4 Observer Active Monitor',
+      'Daily Automated Health Checks',
+      'Single Email Alert Recipient',
       '5 GTM Workspace Audits'
     ],
     buttonText: 'Get Started Free',
@@ -26,8 +29,12 @@ const tiers = [
     features: [
       'Unlimited Module Deployments',
       'Up to 10 GTM Workspaces',
-      'Unlimited GTM Workspace Audits',
-      'All Premium Modules'
+      'Up to 10 GA4 Observer Monitors',
+      'Multi-Email Anomaly Alert Dispatches',
+      'Compound Rules (AND / OR Logic)',
+      'Channel & Campaign Segmentation',
+      'Complete Dual History Audit Trail',
+      'All Premium Modules & Audits'
     ],
     buttonText: 'Upgrade to Pro',
     isPopular: true,
@@ -38,10 +45,12 @@ const tiers = [
     interval: '/mo',
     description: 'Scale to any number of clients with our dynamic pricing. Get 10% off for 15+ accounts!',
     features: [
-      '10 to 100 GTM Accounts',
-      'Unlimited Premium Modules',
-      'Unlimited GTM Workspace Audits',
-      'Priority Support'
+      '10 to 100+ GTM Accounts',
+      '10 to 100+ GA4 Observer Monitors',
+      'Custom White-Label Sender Domains',
+      'Unlimited Multi-Recipient Alert Lists',
+      'Unlimited Premium Modules & Audits',
+      'Priority Anomaly Queue & Support'
     ],
     buttonText: 'Upgrade / Contact Sales',
     isPopular: false,

@@ -59,7 +59,7 @@ export default function Pricing() {
         <div className="pricing-header-text">
           <h1>Simple, Transparent Pricing</h1>
           <p>
-            Automate your Google Tag Manager deployments at any scale. Upgrade to unlock premium tags and multi-account deployments.
+            Automate your Google Tag Manager deployments and monitor GA4 properties for anomalies at any scale. Upgrade to unlock multi-account deployments and advanced incident observer rules.
           </p>
         </div>
 
@@ -77,6 +77,9 @@ export default function Pricing() {
               <li><Check className="feature-icon-active" size={20} /> <span>Deploy Base GA4 Config</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>Basic Full Tracking Access</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>1 GTM Account Limit</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>1 GA4 Observer Active Monitor</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Daily Anomaly Health Checks</span></li>
+              <li className="disabled"><X className="feature-icon-disabled" size={20} /> <span>Multi-Email Anomaly Alerts</span></li>
               <li className="disabled"><X className="feature-icon-disabled" size={20} /> <span>Premium Tracking Modules</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>5 GTM Workspace Audits</span></li>
             </ul>
@@ -106,6 +109,10 @@ export default function Pricing() {
               <li><Check className="feature-icon-active" size={20} /> <span>All Free Features</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>Unlimited Module Deployments</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>Up to 10 GTM Workspaces</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Up to 10 GA4 Observer Monitors</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Multi-Email Anomaly Alert Dispatches</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Compound Rules (AND / OR) & Segments</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Complete Dual History Audit Trail</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>Unlimited GTM Workspace Audits</span></li>
             </ul>
             
@@ -137,7 +144,7 @@ export default function Pricing() {
             </div>
 
             <div className="slider-container">
-              <label className="slider-label">Number of GTM Accounts: <span>{containers}</span></label>
+              <label className="slider-label">Number of GTM Accounts & Monitors: <span>{containers}</span></label>
               <input 
                 type="range" 
                 min="10" max="100" step="1" 
@@ -149,9 +156,11 @@ export default function Pricing() {
             
             <ul className="tier-features-list">
               <li><Check className="feature-icon-active" size={20} /> <span>Unlimited Premium Modules</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>{containers} GTM Accounts</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>{containers} GTM Accounts & GA4 Monitors</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Custom White-Label Sender Domains</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited Multi-Recipient Alerts</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>Unlimited GTM Workspace Audits</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Priority Support</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Priority Support & Dedicated SLAs</span></li>
             </ul>
             
             <button 

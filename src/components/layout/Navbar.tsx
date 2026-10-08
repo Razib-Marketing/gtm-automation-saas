@@ -26,6 +26,7 @@ export const Navbar = () => {
 
         <div className="navbar-links">
           <Link to="/#features">Features</Link>
+          <Link to="/#observer">GA4 Observer</Link>
           <Link to="/#reviews">Testimonials</Link>
           <Link to="/pricing">Pricing</Link>
           <Link to="/#contact">Contact Us</Link>
@@ -60,6 +61,7 @@ export const Navbar = () => {
           >
             <div className="mobile-menu-content">
               <Link to="/#features" onClick={toggleMobileMenu}>Features</Link>
+              <Link to="/#observer" onClick={toggleMobileMenu}>GA4 Observer</Link>
               <Link to="/#reviews" onClick={toggleMobileMenu}>Testimonials</Link>
               <Link to="/pricing" onClick={toggleMobileMenu}>Pricing</Link>
               <Link to="/#contact" onClick={toggleMobileMenu}>Contact Us</Link>
