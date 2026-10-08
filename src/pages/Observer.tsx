@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, Play } from 'lucide-react';
+import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, Send } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -393,7 +393,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                   <Activity size={18} style={{ color: '#6366F1' }}/> Trigger
                 </h4>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
                   <div>
                     <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Evaluation Schedule</label>
                     <select className="module-input" style={{ paddingLeft: '1rem', opacity: 0.7 }} disabled>
@@ -546,16 +546,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                     {conditions.map((c, index) => (
                       <div 
                         key={c.id} 
-                        style={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: 'minmax(140px, 1.4fr) minmax(130px, 1.2fr) minmax(130px, 1.2fr) minmax(130px, 1.2fr) minmax(95px, 0.9fr) auto', 
-                          gap: '0.75rem', 
-                          alignItems: 'flex-start',
-                          background: 'rgba(255, 255, 255, 0.015)',
-                          border: '1px solid rgba(255, 255, 255, 0.05)',
-                          padding: '0.85rem',
-                          borderRadius: '8px'
-                        }}
+                        className="condition-row-grid"
                       >
                         <div>
                           <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>
@@ -749,10 +740,10 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
               {/* ACTION SECTION */}
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h4 style={{ color: 'white', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Mail size={18} style={{ color: '#10B981' }}/> Action
+                  <Mail size={18} style={{ color: '#accf00' }}/> Action
                 </h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
                   <div>
                     <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Action Type</label>
                     <select 
@@ -840,16 +831,15 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         key={m.id} 
-                        className="module-card"
-                        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', cursor: 'default', flexWrap: 'wrap', gap: '1rem' }}
+                        className="module-card observer-monitor-card"
                       >
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minWidth: '260px' }}>
+                        <div className="observer-card-info">
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                             <span style={{ 
                               width: '8px', 
                               height: '8px', 
                               borderRadius: '50%', 
-                              backgroundColor: m.status === 'active' ? '#34D399' : '#F59E0B' 
+                              backgroundColor: m.status === 'active' ? '#accf00' : '#F59E0B' 
                             }} />
                             <h4 style={{ color: 'white', margin: 0, fontWeight: 600 }}>{m.property_name}</h4>
                             <span style={{
@@ -924,73 +914,53 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                           </div>
                         </div>
                         
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                        <div className="observer-card-actions">
                           <div style={{ 
                             fontSize: '0.825rem', 
                             color: '#9CA3AF', 
-                            display: 'flex', 
+                            display: 'inline-flex', 
                             alignItems: 'center', 
                             background: 'rgba(255,255,255,0.05)',
                             padding: '0.35rem 0.75rem',
-                            borderRadius: '9999px'
+                            borderRadius: '9999px',
+                            maxWidth: '240px',
+                            border: '1px solid rgba(255,255,255,0.08)'
                           }}>
-                            <Mail size={13} style={{ marginRight: '0.4rem' }} /> {m.alert_email}
+                            <Mail size={13} style={{ marginRight: '0.4rem', flexShrink: 0, color: '#accf00' }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.alert_email}</span>
                           </div>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <button 
                               onClick={() => handleTest(m.id)}
                               disabled={testingId === m.id}
-                              style={{ 
-                                background: 'none', 
-                                border: 'none', 
-                                color: testingId === m.id ? '#10B981' : '#9CA3AF',
-                                cursor: testingId === m.id ? 'wait' : 'pointer',
-                                padding: '0.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                transition: 'color 0.2s'
-                              }}
-                              onMouseOver={(e) => { if(testingId !== m.id) e.currentTarget.style.color = '#10B981' }}
-                              onMouseOut={(e) => { if(testingId !== m.id) e.currentTarget.style.color = '#9CA3AF' }}
-                              title="Test & Run Health Check"
+                              className="btn-send-report"
+                              title="Send report email and check metrics"
                             >
-                              <Play size={18} />
+                              {testingId === m.id ? (
+                                <>
+                                  <Activity size={13} className="animate-spin" />
+                                  <span>Sending...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Send size={13} />
+                                  <span>Send Report</span>
+                                </>
+                              )}
                             </button>
                             <button 
                               onClick={() => handleEdit(m)}
-                              style={{ 
-                                background: 'none', 
-                                border: 'none', 
-                                color: '#9CA3AF',
-                                cursor: 'pointer',
-                                padding: '0.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                transition: 'color 0.2s'
-                              }}
-                              onMouseOver={(e) => e.currentTarget.style.color = '#3B82F6'}
-                              onMouseOut={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                              className="btn-icon-action edit"
                               title="Edit Monitor"
                             >
-                              <Pencil size={18} />
+                              <Pencil size={16} />
                             </button>
                             <button 
                               onClick={() => handleDelete(m.id)}
-                              style={{ 
-                                background: 'none', 
-                                border: 'none', 
-                                color: '#9CA3AF',
-                                cursor: 'pointer',
-                                padding: '0.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                transition: 'color 0.2s'
-                              }}
-                              onMouseOver={(e) => e.currentTarget.style.color = '#EF4444'}
-                              onMouseOut={(e) => e.currentTarget.style.color = '#9CA3AF'}
+                              className="btn-icon-action delete"
                               title="Delete Monitor"
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
