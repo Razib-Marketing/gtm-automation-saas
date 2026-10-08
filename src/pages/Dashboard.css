@@ -1083,3 +1083,447 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* ==========================================================================
+   Animated Test Report Success / Result Modal
+   ========================================================================== */
+.test-report-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.test-report-modal-card {
+  background: linear-gradient(165deg, rgba(16, 24, 39, 0.96) 0%, rgba(9, 14, 26, 0.98) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.75), 0 0 45px rgba(0, 240, 255, 0.18);
+  box-sizing: border-box;
+}
+
+.test-report-modal-glow {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.22) 0%, rgba(0, 240, 255, 0) 70%);
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.test-report-modal-close {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.15rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #9CA3AF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.test-report-modal-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  transform: rotate(90deg);
+}
+
+.test-report-modal-body {
+  padding: 2.25rem 1.75rem 1.25rem 1.75rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  position: relative;
+  z-index: 2;
+}
+
+.test-report-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.test-report-icon-ring {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.test-report-icon-ring.healthy {
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.25) 0%, rgba(0, 240, 255, 0.05) 70%);
+  border: 2px solid #00F0FF;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.4), inset 0 0 15px rgba(0, 240, 255, 0.2);
+  color: #00F0FF;
+}
+
+.test-report-icon-ring.anomaly {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.05) 70%);
+  border: 2px solid #F59E0B;
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.4), inset 0 0 15px rgba(245, 158, 11, 0.2);
+  color: #F59E0B;
+}
+
+.test-report-icon-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.test-report-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+.test-report-status-badge.healthy {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #00F0FF;
+}
+
+.test-report-status-badge.anomaly {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #F59E0B;
+}
+
+.test-report-title {
+  margin: 0.2rem 0 0.4rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.test-report-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #9CA3AF;
+  line-height: 1.45;
+  max-width: 440px;
+}
+
+/* Delivery Details Box */
+.test-report-delivery-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  box-sizing: border-box;
+}
+
+.test-report-delivery-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.test-report-delivery-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #34D399;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+}
+
+.test-report-delivery-status .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34D399;
+  box-shadow: 0 0 8px #34D399;
+  animation: pulseGlow 1.8s infinite ease-in-out;
+}
+
+.test-report-recipients-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.test-report-recipients-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.test-report-recipient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  border-radius: 9999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.775rem;
+  color: #E5E7EB;
+}
+
+.test-report-advisory {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: #FCD34D;
+  line-height: 1.35;
+}
+
+/* Conditions Breakdown */
+.test-report-conditions-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-sizing: border-box;
+}
+
+.test-report-conditions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.test-report-logic-tag {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #00F0FF;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+}
+
+.test-report-conditions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.test-report-cond-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 0.75rem;
+}
+
+.test-report-cond-item.triggered {
+  border-left: 3px solid #F59E0B;
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.test-report-cond-item.passed {
+  border-left: 3px solid #00F0FF;
+  background: rgba(0, 240, 255, 0.025);
+}
+
+.cond-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.cond-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.cond-metric-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #FFFFFF;
+  text-transform: capitalize;
+}
+
+.cond-segment-tag {
+  font-size: 0.7rem;
+  color: #9CA3AF;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.cond-rule-tag {
+  font-size: 0.7rem;
+  color: #6B7280;
+}
+
+.cond-telemetry-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  color: #9CA3AF;
+}
+
+.cond-val-pill {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+}
+
+.cond-val-pill strong {
+  color: #F3F4F6;
+}
+
+.cond-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.cond-change-badge {
+  font-size: 0.775rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+}
+
+.cond-change-badge.negative {
+  background: rgba(239, 68, 68, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.cond-change-badge.positive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.cond-status-pill {
+  font-size: 0.675rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cond-status-pill.alert {
+  color: #F59E0B;
+}
+
+.cond-status-pill.ok {
+  color: #00F0FF;
+}
+
+/* Modal Footer */
+.test-report-modal-footer {
+  padding: 0 1.75rem 1.75rem 1.75rem;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.btn-modal-done {
+  background: linear-gradient(135deg, #00F0FF 0%, #00B4D8 100%);
+  color: #050B14;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.35);
+  width: 100%;
+  text-align: center;
+}
+
+.btn-modal-done:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 28px rgba(0, 240, 255, 0.55);
+}
+
+/* Error View */
+.test-report-error-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+}
+
+.test-report-error-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  border: 2px solid #EF4444;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+

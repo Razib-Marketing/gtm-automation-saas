@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, Send, X, Sparkles, Layers, Check } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { 
+  ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, 
+  Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info 
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
@@ -32,6 +35,29 @@ interface IncidentTemplate {
     conditionType: 'drops_below' | 'spikes_above' | 'changes_by';
     thresholdPercentage: number;
   }>;
+}
+
+interface TestReportResult {
+  isOpen: boolean;
+  status: 'success' | 'anomaly' | 'error';
+  propertyName?: string;
+  comparisonPeriod?: string;
+  matchType?: 'ALL' | 'ANY';
+  conditions?: Array<{
+    metric: string;
+    source?: string;
+    medium?: string;
+    conditionType: string;
+    thresholdPercentage: number;
+    pastVal: number;
+    currentVal: number;
+    percentChange: number;
+    isTriggered: boolean;
+  }>;
+  emailStatus?: string;
+  emailError?: string | null;
+  recipients?: string[];
+  errorMessage?: string;
 }
 
 const INCIDENT_TEMPLATES: IncidentTemplate[] = [
@@ -187,7 +213,18 @@ export const Observer = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<TestReportResult | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setTestResult(null);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
 
   useEffect(() => {
     fetchProperties();
@@ -362,6 +399,7 @@ export const Observer = () => {
 
   const handleTest = async (id: string) => {
     setTestingId(id);
+    const monitorObj = monitors.find(m => m.id === id);
     try {
       const res = await fetch('/api/ga4/test', {
         method: 'POST',
@@ -373,46 +411,36 @@ export const Observer = () => {
       });
       const data = await res.json().catch(() => null);
       if (res.ok && data) {
-        let conditionLines = '';
-        if (data.conditions && Array.isArray(data.conditions)) {
-          conditionLines = data.conditions.map((c: any) => {
-            const statusSymbol = c.isTriggered ? '⚠ TRIGGERED' : '✔ OK';
-            const changeStr = `${c.percentChange > 0 ? '+' : ''}${c.percentChange.toFixed(1)}%`;
-            const opSymbol = c.conditionType === 'spikes_above' ? '>' : c.conditionType === 'changes_by' ? '±' : '< -';
-            const hasSource = c.source && c.source !== 'All' && c.source !== 'all';
-            const hasMedium = c.medium && c.medium !== 'All' && c.medium !== 'all';
-            let segTag = '';
-            if (hasSource && hasMedium) {
-              segTag = ` [${c.source} / ${c.medium}]`;
-            } else if (hasSource) {
-              segTag = ` [${c.source}]`;
-            } else if (hasMedium) {
-              segTag = ` [Medium: ${c.medium}]`;
-            }
-            return `• ${c.metric}${segTag} (${opSymbol}${Math.abs(c.thresholdPercentage)}%): Prev ${c.pastVal.toLocaleString()} → Curr ${c.currentVal.toLocaleString()} (${changeStr}) [${statusSymbol}]`;
-          }).join('\n');
-        } else {
-          conditionLines = `Evaluation: ${data.percentChange > 0 ? '+' : ''}${data.percentChange?.toFixed(2)}%`;
-        }
+        const recipientsList = (data.recipients && data.recipients.length > 0)
+          ? data.recipients
+          : (monitorObj?.alert_email 
+              ? monitorObj.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.includes('@')) 
+              : []);
 
-        const logicLabel = data.matchType === 'ALL' ? 'Match ALL conditions (AND)' : 'Match ANY condition (OR)';
-        const overallStatus = data.isTriggered ? '⚠ ANOMALY DETECTED (Alert Triggered)' : '✔ HEALTHY (All conditions normal)';
-
-        alert(`GA4 Monitor Test Results:
----------------------------------------------
-Status: ${overallStatus}
-Rule Logic: ${logicLabel}
-
-Evaluated Conditions:
-${conditionLines}
-
-Email Dispatch:
-Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.emailError}` : ''}`);
+        setTestResult({
+          isOpen: true,
+          status: data.isTriggered ? 'anomaly' : 'success',
+          propertyName: data.propertyName || monitorObj?.property_name || 'GA4 Observer Monitor',
+          comparisonPeriod: data.comparisonPeriod || monitorObj?.comparison_period || 'yesterday_vs_last_week',
+          matchType: data.matchType || monitorObj?.match_type || 'ANY',
+          conditions: data.conditions || [],
+          emailStatus: data.emailStatus || 'Sent',
+          emailError: data.emailError,
+          recipients: recipientsList,
+        });
       } else {
-        alert(`Test failed: ${data?.error || `Server returned status ${res.status}`}`);
+        setTestResult({
+          isOpen: true,
+          status: 'error',
+          errorMessage: data?.error || `Server returned error status ${res.status}`
+        });
       }
     } catch (e: any) {
-      alert(`An error occurred during test: ${e.message || e}`);
+      setTestResult({
+        isOpen: true,
+        status: 'error',
+        errorMessage: e.message || 'An unexpected network error occurred while running the test.'
+      });
     } finally {
       setTestingId(null);
     }
@@ -1304,6 +1332,205 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
 
         </motion.div>
       </div>
+
+      {/* Animated Cool Test Report Popup Modal */}
+      <AnimatePresence>
+        {testResult?.isOpen && (
+          <motion.div 
+            className="test-report-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setTestResult(null)}
+          >
+            <motion.div 
+              className="test-report-modal-card"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="test-report-modal-glow" />
+
+              <button 
+                className="test-report-modal-close"
+                onClick={() => setTestResult(null)}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+
+              {testResult.status === 'error' ? (
+                <div className="test-report-modal-body">
+                  <div className="test-report-error-view">
+                    <div className="test-report-error-icon">
+                      <ShieldAlert size={38} color="#EF4444" />
+                    </div>
+                    <h4 style={{ color: '#F87171', fontSize: '1.25rem', margin: '0 0 0.5rem', fontWeight: 700 }}>
+                      Report Test Failed
+                    </h4>
+                    <p style={{ color: '#9CA3AF', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: 1.5, maxWidth: '420px' }}>
+                      {testResult.errorMessage || 'An error occurred while evaluating metrics or contacting the email service.'}
+                    </p>
+                    <button 
+                      onClick={() => setTestResult(null)} 
+                      className="btn-modal-done"
+                      style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #EF4444', color: '#FCA5A5' }}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="test-report-modal-body custom-scrollbar">
+                    {/* Hero Header */}
+                    <div className="test-report-hero">
+                      <div className={`test-report-icon-ring ${testResult.status === 'anomaly' ? 'anomaly' : 'healthy'}`}>
+                        <motion.div 
+                          className="test-report-icon-inner"
+                          initial={{ scale: 0, rotate: -45 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", damping: 14, stiffness: 260, delay: 0.1 }}
+                        >
+                          {testResult.status === 'anomaly' ? (
+                            <AlertTriangle size={32} />
+                          ) : (
+                            <CheckCircle2 size={32} />
+                          )}
+                        </motion.div>
+                      </div>
+
+                      <motion.div 
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.12 }}
+                      >
+                        <div className={`test-report-status-badge ${testResult.status === 'anomaly' ? 'anomaly' : 'healthy'}`}>
+                          {testResult.status === 'anomaly' ? '⚠️ ANOMALY DETECTED & ALERT DISPATCHED' : '✨ TEST REPORT DISPATCHED'}
+                        </div>
+                        <h3 className="test-report-title">
+                          {testResult.propertyName || 'GA4 Observer Monitor'}
+                        </h3>
+                        <p className="test-report-subtitle">
+                          {testResult.status === 'anomaly' 
+                            ? 'Live telemetry breached your anomaly conditions. An incident alert email has been sent.' 
+                            : 'All GA4 telemetry metrics evaluated healthy and within your normal baseline thresholds.'}
+                        </p>
+                      </motion.div>
+                    </div>
+
+                    {/* Email Delivery Box */}
+                    <div className="test-report-delivery-card">
+                      <div className="test-report-delivery-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Send size={14} style={{ color: '#00F0FF' }} />
+                          <span style={{ fontWeight: 600, fontSize: '0.85rem', color: '#F3F4F6' }}>Email Dispatch</span>
+                        </div>
+                        <div className="test-report-delivery-status">
+                          <span className="live-dot" />
+                          <span>{testResult.emailStatus || 'Sent via Resend'}</span>
+                        </div>
+                      </div>
+
+                      <div className="test-report-recipients-wrap">
+                        <span style={{ fontSize: '0.725rem', color: '#9CA3AF' }}>
+                          Delivered to {testResult.recipients && testResult.recipients.length > 0 ? `(${testResult.recipients.length} recipients)` : ''}:
+                        </span>
+                        <div className="test-report-recipients-list">
+                          {(testResult.recipients && testResult.recipients.length > 0 ? testResult.recipients : ['Configured Alert Recipients']).map((email, idx) => (
+                            <span key={idx} className="test-report-recipient-chip">
+                              <Mail size={12} style={{ color: '#00F0FF' }} />
+                              <span>{email}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {testResult.emailError && (
+                        <div className="test-report-advisory">
+                          <Info size={14} style={{ flexShrink: 0, color: '#F59E0B' }} />
+                          <span>{testResult.emailError}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Evaluated Conditions */}
+                    <div className="test-report-conditions-section">
+                      <div className="test-report-conditions-header">
+                        <span style={{ fontWeight: 600, fontSize: '0.825rem', color: '#E5E7EB' }}>
+                          Condition Evaluation ({testResult.conditions?.length || 0})
+                        </span>
+                        <span className="test-report-logic-tag">
+                          {testResult.matchType === 'ALL' ? 'Rule: Match ALL (AND)' : 'Rule: Match ANY (OR)'}
+                        </span>
+                      </div>
+
+                      <div className="test-report-conditions-list custom-scrollbar">
+                        {testResult.conditions && testResult.conditions.length > 0 ? (
+                          testResult.conditions.map((c, i) => {
+                            const isNeg = c.percentChange < 0;
+                            const op = c.conditionType === 'spikes_above' ? '>' : c.conditionType === 'changes_by' ? '±' : '< -';
+                            const hasSource = c.source && c.source !== 'All' && c.source !== 'all';
+                            const hasMedium = c.medium && c.medium !== 'All' && c.medium !== 'all';
+
+                            return (
+                              <div key={i} className={`test-report-cond-item ${c.isTriggered ? 'triggered' : 'passed'}`}>
+                                <div className="cond-item-left">
+                                  <div className="cond-item-title-row">
+                                    <span className="cond-metric-name">{c.metric}</span>
+                                    {(hasSource || hasMedium) && (
+                                      <span className="cond-segment-tag">
+                                        {hasSource && hasMedium ? `${c.source} / ${c.medium}` : (hasSource ? c.source : c.medium)}
+                                      </span>
+                                    )}
+                                    <span className="cond-rule-tag">
+                                      Rule: {op} {Math.abs(c.thresholdPercentage)}%
+                                    </span>
+                                  </div>
+
+                                  <div className="cond-telemetry-row">
+                                    <span className="cond-val-pill">Prev: <strong>{c.pastVal.toLocaleString()}</strong></span>
+                                    <span style={{ color: '#6B7280' }}>→</span>
+                                    <span className="cond-val-pill">Curr: <strong>{c.currentVal.toLocaleString()}</strong></span>
+                                  </div>
+                                </div>
+
+                                <div className="cond-item-right">
+                                  <span className={`cond-change-badge ${isNeg ? 'negative' : 'positive'}`}>
+                                    {c.percentChange > 0 ? '+' : ''}{c.percentChange.toFixed(1)}%
+                                  </span>
+                                  <span className={`cond-status-pill ${c.isTriggered ? 'alert' : 'ok'}`}>
+                                    {c.isTriggered ? 'Triggered' : 'Healthy'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div style={{ fontSize: '0.8rem', color: '#9CA3AF', textAlign: 'center', padding: '0.75rem' }}>
+                            Single metric evaluation completed.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="test-report-modal-footer">
+                    <button 
+                      onClick={() => setTestResult(null)}
+                      className="btn-modal-done"
+                    >
+                      Done & Dismiss
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </PageTransition>
   );
 };

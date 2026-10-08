@@ -611,7 +611,10 @@ export async function onRequest(context: any) {
       currentVal: primaryCond.currentVal,
       pastVal: primaryCond.pastVal,
       emailStatus,
-      emailError
+      emailError,
+      recipients,
+      propertyName: monitor.property_name,
+      comparisonPeriod: monitor.comparison_period
     }), { 
       status: 200,
       headers: { 'Content-Type': 'application/json' }
