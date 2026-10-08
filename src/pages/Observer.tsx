@@ -244,7 +244,7 @@ export const Observer = () => {
         let conditionLines = '';
         if (data.conditions && Array.isArray(data.conditions)) {
           conditionLines = data.conditions.map((c: any) => {
-            const statusSymbol = c.isTriggered ? '🚨 TRIGGERED' : '✅ OK';
+            const statusSymbol = c.isTriggered ? '⚠ TRIGGERED' : '✔ OK';
             const changeStr = `${c.percentChange > 0 ? '+' : ''}${c.percentChange.toFixed(1)}%`;
             const opSymbol = c.conditionType === 'spikes_above' ? '>' : c.conditionType === 'changes_by' ? '±' : '< -';
             const hasSource = c.source && c.source !== 'All' && c.source !== 'all';
@@ -264,7 +264,7 @@ export const Observer = () => {
         }
 
         const logicLabel = data.matchType === 'ALL' ? 'Match ALL conditions (AND)' : 'Match ANY condition (OR)';
-        const overallStatus = data.isTriggered ? '🚨 ANOMALY DETECTED (Alert Triggered)' : '✅ HEALTHY (All conditions normal)';
+        const overallStatus = data.isTriggered ? '⚠ ANOMALY DETECTED (Alert Triggered)' : '✔ HEALTHY (All conditions normal)';
 
         alert(`GA4 Monitor Test Results:
 ---------------------------------------------

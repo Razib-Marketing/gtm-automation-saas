@@ -324,8 +324,19 @@ export async function onRequest(context: any) {
     const primaryCond = evaluatedConditions[0] || { percentChange: 0, currentVal: 0, pastVal: 0 };
 
     // 8. Build Rich Email HTML
-    const headerBg = isTriggered ? '#DC2626' : '#2563EB';
-    const headerTitle = isTriggered ? '🚨 GA4 Anomaly Detected' : '✅ GA4 Monitor Health Check';
+    const headerBg = isTriggered ? '#DC2626' : '#accf00';
+    const headerTextColor = isTriggered ? '#FFFFFF' : '#0F172A';
+    const headerSubColor = isTriggered ? 'rgba(255, 255, 255, 0.85)' : '#334155';
+    const headerBorder = isTriggered ? '#B91C1C' : '#94b300';
+    const headerTitle = isTriggered ? 'GA4 Anomaly Detected' : 'GA4 Monitor Health Check';
+    const headerIconBadge = isTriggered
+      ? `<div style="margin-bottom: 12px;">
+          <span style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background: #991B1B; color: #FFFFFF; font-size: 22px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">⚠</span>
+         </div>`
+      : `<div style="margin-bottom: 12px;">
+          <span style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background: #0F172A; color: #accf00; font-size: 24px; font-weight: 900; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">✔</span>
+         </div>`;
+
     const statusNote = isTriggered
       ? `<p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
           Your Observer monitor for <strong>${monitor.property_name}</strong> triggered an alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
@@ -335,10 +346,10 @@ export async function onRequest(context: any) {
         </p>`;
 
     const rowsHtml = evaluatedConditions.map(c => {
-      const changeColor = c.percentChange > 0 ? '#059669' : '#DC2626';
+      const changeColor = c.percentChange > 0 ? '#accf00' : '#DC2626';
       const statusBadge = c.isTriggered
-        ? '<span style="background: #FEE2E2; color: #991B1B; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700;">TRIGGERED</span>'
-        : '<span style="background: #D1FAE5; color: #065F46; padding: 3px 8px; border-radius: 9999px; font-size: 11px; font-weight: 700;">OK</span>';
+        ? '<span style="display: inline-block; background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">⚠ TRIGGERED</span>'
+        : '<span style="display: inline-block; background: #0F172A; color: #accf00; border: 1px solid #accf00; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">✔ OK</span>';
       
       const opText = c.conditionType === 'spikes_above' ? `Spikes > ${Math.abs(c.thresholdPercentage)}%`
         : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`
@@ -366,7 +377,7 @@ export async function onRequest(context: any) {
           <td style="padding: 10px 12px; color: #6B7280; font-size: 12px;">${opText}</td>
           <td style="padding: 10px 12px; color: #374151;">${c.pastVal.toLocaleString()}</td>
           <td style="padding: 10px 12px; color: #374151; font-weight: 600;">${c.currentVal.toLocaleString()}</td>
-          <td style="padding: 10px 12px; font-weight: 700; color: ${changeColor};">
+          <td style="padding: 10px 12px; font-weight: 800; color: ${changeColor}; font-size: 13px;">
             ${c.percentChange > 0 ? '+' : ''}${c.percentChange.toFixed(1)}%
           </td>
           <td style="padding: 10px 12px; text-align: right;">${statusBadge}</td>
@@ -376,9 +387,10 @@ export async function onRequest(context: any) {
 
     const htmlBody = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; background-color: #FFFFFF;">
-        <div style="background-color: ${headerBg}; color: #FFFFFF; padding: 24px; text-align: center;">
-          <h2 style="margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.025em;">${headerTitle}</h2>
-          <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Property: ${monitor.property_name}</p>
+        <div style="background-color: ${headerBg}; color: ${headerTextColor}; padding: 26px 20px; text-align: center; border-bottom: 2px solid ${headerBorder};">
+          ${headerIconBadge}
+          <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: ${headerTextColor}; letter-spacing: -0.025em;">${headerTitle}</h2>
+          <p style="margin: 6px 0 0 0; font-size: 13px; color: ${headerSubColor}; font-weight: 600;">Property: ${monitor.property_name}</p>
         </div>
         <div style="padding: 24px;">
           ${statusNote}
@@ -416,7 +428,7 @@ export async function onRequest(context: any) {
     let subject = '';
     if (isTriggered) {
       if (matchType === 'ALL') {
-        subject = `🚨 GA4 Compound Alert: ${monitor.property_name} (ALL Conditions Matched)`;
+        subject = `⚠ GA4 Compound Alert: ${monitor.property_name} (ALL Conditions Matched)`;
       } else {
         const topTrigger = triggeredConditions[0];
         let segStr = '';
@@ -427,10 +439,10 @@ export async function onRequest(context: any) {
         } else if (topTrigger.medium !== 'All') {
           segStr = ` [Medium: ${topTrigger.medium}]`;
         }
-        subject = `🚨 GA4 Alert: ${monitor.property_name} (${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
+        subject = `⚠ GA4 Alert: ${monitor.property_name} (${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
       }
     } else {
-      subject = `✅ Health Check: ${monitor.property_name} is stable`;
+      subject = `✔ Health Check: ${monitor.property_name} is stable`;
     }
 
     let emailStatus = 'Not sent';
