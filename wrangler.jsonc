@@ -7,12 +7,12 @@
     "directory": "./dist",
     "binding": "ASSETS"
   },
-  "account_id": "9a5773f8872387b270ff94a8768ca0ee",
+  "account_id": "e6935eeaed0033bef01efe59dd5b9337",
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "gtm_automation_d1",
-      "database_id": "b3d530d4-aa76-4e71-8d29-b93fa2346656"
+      "database_id": "3e29a56f-8e68-4aa5-99c6-1b9a5677e2cd"
     }
   ],
   "triggers": {
