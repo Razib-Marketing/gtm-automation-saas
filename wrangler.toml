@@ -9,3 +9,6 @@ binding = "DB"
 database_name = "gtm_automation_d1"
 database_id = "b3d530d4-aa76-4e71-8d29-b93fa2346656"
 
+[triggers]
+crons = [ "0 * * * *" ]
+

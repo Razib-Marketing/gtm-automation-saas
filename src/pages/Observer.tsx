@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-react';
-import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, Send } from 'lucide-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
+import { ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, Send, X, Sparkles, Layers, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -17,56 +17,126 @@ interface ConditionItem {
   thresholdPercentage: number;
 }
 
-const PRESETS = [
+interface IncidentTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  category: string;
+  description: string;
+  matchType: 'ALL' | 'ANY';
+  period: string;
+  conditions: Array<{
+    metric: string;
+    source: string;
+    medium: string;
+    conditionType: 'drops_below' | 'spikes_above' | 'changes_by';
+    thresholdPercentage: number;
+  }>;
+}
+
+const INCIDENT_TEMPLATES: IncidentTemplate[] = [
   {
-    name: '🤖 Bot Traffic Spike',
-    description: 'Surge in traffic with plunging engagement rate (bots/scrapers)',
-    matchType: 'ALL' as const,
+    id: 'ecommerce_crash',
+    name: 'E-Commerce Revenue & Sales Crash',
+    icon: '🛒',
+    category: 'E-Commerce & Revenue',
+    description: 'Instant alert if transactions, key events, or revenue crash while visitors continue (broken checkout/payment gateway).',
+    matchType: 'ANY',
     period: 'yesterday_vs_last_week',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'spikes_above' as const, thresholdPercentage: 60 },
-      { id: '2', metric: 'engagementRate', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 30 }
+      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 },
+      { metric: 'totalRevenue', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 35 },
+      { metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 }
     ]
   },
   {
-    name: '🚨 Outage / Zero Traffic',
-    description: 'Catastrophic drop in sessions or active users',
-    matchType: 'ANY' as const,
+    id: 'bot_surge',
+    name: 'Bot Traffic & Scraper Surge',
+    icon: '🤖',
+    category: 'Traffic Integrity',
+    description: 'Surge in automated traffic coupled with plunging engagement rate (headless browser scrapers or fake referral click farms).',
+    matchType: 'ALL',
     period: 'yesterday_vs_last_week',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 40 },
-      { id: '2', metric: 'activeUsers', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 40 }
+      { metric: 'sessions', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 50 },
+      { metric: 'engagementRate', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 }
     ]
   },
   {
-    name: '📉 Organic Search Drop',
-    description: 'Dip in GA4 Organic Search traffic or conversions',
-    matchType: 'ANY' as const,
-    period: 'yesterday_vs_last_week',
+    id: 'outage_zero',
+    name: 'Catastrophic Outage / Zero Tracking',
+    icon: '🚨',
+    category: 'Critical Emergency',
+    description: 'Critical emergency alert if sessions or active users plunge drastically (site down, DNS error, or removed GTM script).',
+    matchType: 'ANY',
+    period: 'daily',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'Organic Search', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 30 },
-      { id: '2', metric: 'keyEvents', source: 'Organic Search', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 25 }
+      { metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 40 },
+      { metric: 'activeUsers', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 40 }
     ]
   },
   {
-    name: '📉 Paid Search (CPC) Slump',
-    description: 'Drop in Paid Search traffic or conversions',
-    matchType: 'ANY' as const,
+    id: 'seo_organic_drop',
+    name: 'Organic Search (SEO) Traffic Drop',
+    icon: '📉',
+    category: 'SEO & Search',
+    description: 'Alert if Google Organic Search visitors drop (detects Google algorithm penalties, deindexing, or broken canonicals).',
+    matchType: 'ANY',
     period: 'last_7_vs_previous_7',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
-      { id: '2', metric: 'keyEvents', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below' as const, thresholdPercentage: 25 }
+      { metric: 'sessions', source: 'Organic Search', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 },
+      { metric: 'keyEvents', source: 'Organic Search', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 }
     ]
   },
   {
-    name: '🛡️ Full Health Guard',
-    description: 'Traffic drops, key event drops, or bounce rate spikes',
-    matchType: 'ANY' as const,
+    id: 'paid_cpc_slump',
+    name: 'Paid Search (CPC) Campaign Slump',
+    icon: '💸',
+    category: 'Paid Acquisition (PPC)',
+    description: 'Drop in Paid Search or Paid Social traffic/conversions while Google Ads/Meta budget is actively spending.',
+    matchType: 'ANY',
+    period: 'last_7_vs_previous_7',
+    conditions: [
+      { metric: 'sessions', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below', thresholdPercentage: 25 },
+      { metric: 'keyEvents', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below', thresholdPercentage: 25 }
+    ]
+  },
+  {
+    id: 'form_failure',
+    name: 'Lead Gen & Booking Form Glitch',
+    icon: '🎯',
+    category: 'Lead Generation',
+    description: 'Traffic stays steady, but Key Events (lead form submits/bookings) freeze or decline sharply (broken web form or API).',
+    matchType: 'ANY',
     period: 'yesterday_vs_last_week',
     conditions: [
-      { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
-      { id: '2', metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below' as const, thresholdPercentage: 25 },
-      { id: '3', metric: 'bounceRate', source: 'all', medium: '', conditionType: 'spikes_above' as const, thresholdPercentage: 35 }
+      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 35 }
+    ]
+  },
+  {
+    id: 'ux_bounce_spike',
+    name: 'High Bounce Rate & UX Glitch',
+    icon: '📱',
+    category: 'User Experience',
+    description: 'Abnormal surge in bounce rate and plunge in engagement (500 server errors, slow mobile rendering, broken layout).',
+    matchType: 'ANY',
+    period: 'yesterday_vs_last_week',
+    conditions: [
+      { metric: 'bounceRate', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 35 },
+      { metric: 'engagementRate', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 }
+    ]
+  },
+  {
+    id: 'viral_surge',
+    name: 'Viral Traffic Spike / Media Surge',
+    icon: '📈',
+    category: 'Growth Opportunity',
+    description: 'Massive unexpected increase in sessions and new users (influencer feature, viral social mention, PR spotlight).',
+    matchType: 'ANY',
+    period: 'daily',
+    conditions: [
+      { metric: 'sessions', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 75 },
+      { metric: 'newUsers', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 75 }
     ]
   }
 ];
@@ -97,6 +167,7 @@ const KNOWN_SOURCES = [
 
 export const Observer = () => {
   const { getToken, signOut } = useAuth();
+  const { user } = useUser();
   const [properties, setProperties] = useState<any[]>([]);
   const [monitors, setMonitors] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
@@ -110,7 +181,10 @@ export const Observer = () => {
   const [matchType, setMatchType] = useState<'ANY' | 'ALL'>('ANY');
   const [actionType, setActionType] = useState('email');
   const [period, setPeriod] = useState('yesterday_vs_last_week');
-  const [alertEmail, setAlertEmail] = useState('');
+  const [alertEmails, setAlertEmails] = useState<string[]>([]);
+  const [emailInput, setEmailInput] = useState('');
+  const [setupMode, setSetupMode] = useState<'template' | 'manual'>('template');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
@@ -153,10 +227,53 @@ export const Observer = () => {
     }
   };
 
-  const applyPreset = (preset: typeof PRESETS[0]) => {
-    setMatchType(preset.matchType);
-    setPeriod(preset.period);
-    setConditions(preset.conditions.map((c, i) => ({ ...c, id: String(Date.now() + i) })));
+  useEffect(() => {
+    if (user?.primaryEmailAddress?.emailAddress && alertEmails.length === 0) {
+      setAlertEmails([user.primaryEmailAddress.emailAddress]);
+    }
+  }, [user]);
+
+  const addEmail = (raw: string) => {
+    const cleaned = raw.trim();
+    if (!cleaned) return;
+    const parts = cleaned.split(/[,;\s]+/).map(s => s.trim()).filter(s => s.includes('@'));
+    if (parts.length === 0) return;
+    setAlertEmails(prev => {
+      const set = new Set([...prev, ...parts]);
+      return Array.from(set);
+    });
+    setEmailInput('');
+  };
+
+  const removeEmail = (emailToRemove: string) => {
+    setAlertEmails(prev => prev.filter(e => e !== emailToRemove));
+  };
+
+  const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',' || e.key === 'Tab') {
+      e.preventDefault();
+      addEmail(emailInput);
+    }
+  };
+
+  const handleEmailBlur = () => {
+    if (emailInput.trim() && emailInput.includes('@')) {
+      addEmail(emailInput);
+    }
+  };
+
+  const applyTemplate = (tmpl: IncidentTemplate) => {
+    setSelectedTemplateId(tmpl.id);
+    setMatchType(tmpl.matchType);
+    if (tmpl.period) setPeriod(tmpl.period);
+    setConditions(tmpl.conditions.map((c, i) => ({
+      id: String(Date.now() + i),
+      metric: c.metric,
+      source: c.source,
+      medium: c.medium,
+      conditionType: c.conditionType,
+      thresholdPercentage: c.thresholdPercentage
+    })));
   };
 
   const addCondition = () => {
@@ -184,8 +301,21 @@ export const Observer = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreating(true);
     setErrorMsg('');
+
+    let finalEmails = [...alertEmails];
+    if (emailInput.trim() && emailInput.includes('@')) {
+      finalEmails = Array.from(new Set([...finalEmails, emailInput.trim()]));
+      setAlertEmails(finalEmails);
+      setEmailInput('');
+    }
+
+    if (finalEmails.length === 0) {
+      setErrorMsg('Please specify at least one alert email recipient.');
+      return;
+    }
+
+    setCreating(true);
     try {
       const res = await fetch('/api/ga4/monitors', {
         method: 'POST',
@@ -198,7 +328,8 @@ export const Observer = () => {
           propertyId: selectedProperty,
           propertyName: properties.find(p => p.name === selectedProperty)?.displayName,
           comparisonPeriod: period,
-          alertEmail,
+          alertEmail: finalEmails.join(', '),
+          alertEmails: finalEmails,
           matchType,
           conditions: conditions.map(c => {
             const finalSource = c.source === 'custom' ? (c.customSource?.trim() || 'all') : (c.source || 'all');
@@ -216,6 +347,7 @@ export const Observer = () => {
       
       if (res.ok) {
         setEditingId(null);
+        setSelectedTemplateId(null);
         await fetchMonitors();
       } else {
         const data = await res.json();
@@ -290,7 +422,13 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
     setEditingId(m.id);
     setSelectedProperty(m.property_id);
     setPeriod(m.comparison_period);
-    setAlertEmail(m.alert_email);
+    const parsed = m.alert_email
+      ? m.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.includes('@'))
+      : [];
+    setAlertEmails(parsed);
+    setEmailInput('');
+    setSelectedTemplateId(null);
+    setSetupMode('manual');
     setMatchType(m.matchType || m.match_type || 'ANY');
     if (m.conditions && Array.isArray(m.conditions) && m.conditions.length > 0) {
       setConditions(m.conditions.map((c: any, idx: number) => {
@@ -329,6 +467,9 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
     setSelectedProperty('');
     setConditions([{ id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 20 }]);
     setMatchType('ANY');
+    setAlertEmails(user?.primaryEmailAddress?.emailAddress ? [user.primaryEmailAddress.emailAddress] : []);
+    setEmailInput('');
+    setSelectedTemplateId(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -427,61 +568,148 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                   <ShieldAlert size={18} style={{ color: '#F59E0B' }}/> Condition & Anomaly Rules
                 </h4>
 
-                {/* Quick Presets */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label className="module-label" style={{ display: 'block', marginBottom: '0.6rem', color: '#9CA3AF' }}>
-                    ⚡ Quick Presets (1-Click Anomaly Protection)
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '0.75rem' }}>
-                    {PRESETS.map(p => (
-                      <button
-                        key={p.name}
-                        type="button"
-                        onClick={() => applyPreset(p)}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                          borderRadius: '8px',
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.25rem'
-                        }}
-                        onMouseOver={e => {
-                          e.currentTarget.style.borderColor = '#6366F1';
-                          e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
-                        }}
-                        onMouseOut={e => {
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
-                        }}
-                      >
-                        <div style={{ fontWeight: 600, color: '#F3F4F6', fontSize: '0.85rem' }}>{p.name}</div>
-                        <div style={{ color: '#9CA3AF', fontSize: '0.72rem', lineHeight: '1.3' }}>{p.description}</div>
-                      </button>
+                {/* GA4 Property Selection */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>GA4 Property</label>
+                  <select 
+                    value={selectedProperty} 
+                    onChange={e => setSelectedProperty(e.target.value)}
+                    className="module-input" 
+                    style={{ paddingLeft: '1rem' }}
+                    required
+                  >
+                    <option value="">Select a property...</option>
+                    {properties.map(p => (
+                      <option key={p.name} value={p.name}>{p.displayName} ({p.name})</option>
                     ))}
+                  </select>
+                  {errorMsg && <div style={{ color: '#EF4444', marginTop: '0.5rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
+                </div>
+
+                {/* Setup Mode Selector */}
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <label className="module-label" style={{ display: 'block', marginBottom: '0.6rem', color: '#9CA3AF' }}>
+                    Setup Method (1-Click Template vs Manual Builder):
+                  </label>
+                  <div className="template-mode-nav">
+                    <button
+                      type="button"
+                      onClick={() => setSetupMode('template')}
+                      className={`template-mode-btn ${setupMode === 'template' ? 'active' : ''}`}
+                    >
+                      <Sparkles size={15} style={{ color: setupMode === 'template' ? '#00F0FF' : 'inherit' }} />
+                      Premade Incident Templates ({INCIDENT_TEMPLATES.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setSetupMode('manual'); setSelectedTemplateId(null); }}
+                      className={`template-mode-btn ${setupMode === 'manual' ? 'active' : ''}`}
+                    >
+                      <Layers size={15} style={{ color: setupMode === 'manual' ? '#00F0FF' : 'inherit' }} />
+                      Custom / Manual Rule Builder
+                    </button>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div>
-                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>GA4 Property</label>
-                    <select 
-                      value={selectedProperty} 
-                      onChange={e => setSelectedProperty(e.target.value)}
-                      className="module-input" 
-                      style={{ paddingLeft: '1rem' }}
-                      required
-                    >
-                      <option value="">Select a property...</option>
-                      {properties.map(p => (
-                        <option key={p.name} value={p.name}>{p.displayName} ({p.name})</option>
-                      ))}
-                    </select>
-                    {errorMsg && <div style={{ color: '#EF4444', marginTop: '0.5rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
+                {/* Premade Templates Library Grid */}
+                {setupMode === 'template' && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <label className="module-label" style={{ margin: 0, color: '#D1D5DB' }}>
+                        ⚡ Select a Premade Incident Template (Click to Auto-Configure):
+                      </label>
+                      {selectedTemplateId && (
+                        <span style={{ fontSize: '0.75rem', color: '#00F0FF', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Check size={14} /> Active Template Loaded
+                        </span>
+                      )}
+                    </div>
+                    <div className="template-card-grid">
+                      {INCIDENT_TEMPLATES.map(tmpl => {
+                        const isSelected = selectedTemplateId === tmpl.id;
+                        return (
+                          <div
+                            key={tmpl.id}
+                            onClick={() => applyTemplate(tmpl)}
+                            className={`template-item-card ${isSelected ? 'selected' : ''}`}
+                          >
+                            <div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                                <span style={{ fontSize: '1.35rem' }}>{tmpl.icon}</span>
+                                <span style={{ 
+                                  fontSize: '0.68rem', 
+                                  fontWeight: 600, 
+                                  padding: '2px 8px', 
+                                  borderRadius: '9999px',
+                                  background: isSelected ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                  color: isSelected ? '#00F0FF' : '#9CA3AF',
+                                  border: `1px solid ${isSelected ? '#00F0FF' : 'rgba(255, 255, 255, 0.08)'}`
+                                }}>
+                                  {tmpl.category}
+                                </span>
+                              </div>
+                              <h5 style={{ margin: '0 0 0.35rem 0', color: 'white', fontSize: '0.88rem', fontWeight: 600 }}>
+                                {tmpl.name}
+                              </h5>
+                              <p style={{ margin: 0, fontSize: '0.74rem', color: '#9CA3AF', lineHeight: '1.35' }}>
+                                {tmpl.description}
+                              </p>
+                            </div>
+
+                            <div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.65rem' }}>
+                                {tmpl.conditions.map((c, i) => (
+                                  <span key={i} style={{ fontSize: '0.68rem', padding: '1px 6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#E5E7EB' }}>
+                                    {c.metric} {c.conditionType === 'spikes_above' ? '>' : '< -'}{c.thresholdPercentage}%
+                                  </span>
+                                ))}
+                                <span style={{ fontSize: '0.68rem', padding: '1px 5px', background: 'rgba(99, 102, 241, 0.15)', color: '#A5B4FC', borderRadius: '4px', fontWeight: 600 }}>
+                                  Match {tmpl.matchType}
+                                </span>
+                              </div>
+                              
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); applyTemplate(tmpl); }}
+                                style={{
+                                  width: '100%',
+                                  padding: '0.45rem',
+                                  borderRadius: '6px',
+                                  border: isSelected ? '1px solid #00F0FF' : '1px solid rgba(255, 255, 255, 0.1)',
+                                  background: isSelected ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                                  color: isSelected ? '#00F0FF' : '#D1D5DB',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '0.35rem',
+                                  transition: 'all 0.15s'
+                                }}
+                              >
+                                {isSelected ? <><Check size={13} /> Loaded & Active</> : 'Apply Template'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', borderTop: '1px solid rgba(255, 255, 255, 0.06)', paddingTop: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div>
+                      <h5 style={{ margin: 0, color: 'white', fontSize: '0.92rem', fontWeight: 600 }}>
+                        {selectedTemplateId ? '⚙ Customize Applied Template Rules' : '⚙ Active Anomaly Conditions'}
+                      </h5>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#9CA3AF' }}>
+                        {selectedTemplateId 
+                          ? 'All template rules loaded! You can adjust any threshold percentage, change filters, or add rules below.' 
+                          : 'Define your custom metrics, condition thresholds, and acquisition segments.'}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Compound Match Logic (Shown when multiple conditions exist) */}
@@ -756,18 +984,59 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                     </select>
                   </div>
                   <div>
-                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Alert Email</label>
-                    <div className="input-wrapper">
-                      <Mail className="input-icon" />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.25rem' }}>
+                      <label className="module-label" style={{ margin: 0 }}>
+                        Alert Recipients ({alertEmails.length})
+                      </label>
+                      <span style={{ fontSize: '0.72rem', color: '#9CA3AF' }}>Press Enter or comma to add</span>
+                    </div>
+
+                    <div className="email-chips-container">
+                      {alertEmails.map((email, idx) => (
+                        <span key={idx} className="email-chip">
+                          <Mail size={11} style={{ color: '#00F0FF', flexShrink: 0 }} />
+                          <span>{email}</span>
+                          <button 
+                            type="button" 
+                            onClick={() => removeEmail(email)}
+                            className="email-chip-remove"
+                            title="Remove recipient"
+                          >
+                            <X size={12} />
+                          </button>
+                        </span>
+                      ))}
                       <input 
                         type="email" 
-                        value={alertEmail}
-                        onChange={e => setAlertEmail(e.target.value)}
-                        className="module-input"
-                        placeholder="alerts@example.com"
-                        required
+                        value={emailInput}
+                        onChange={e => setEmailInput(e.target.value)}
+                        onKeyDown={handleEmailKeyDown}
+                        onBlur={handleEmailBlur}
+                        placeholder={alertEmails.length === 0 ? "Type email and press Enter..." : "Add another email..."}
+                        className="email-chips-input"
                       />
+                      {emailInput.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => addEmail(emailInput)}
+                          style={{
+                            background: 'rgba(0, 240, 255, 0.15)',
+                            border: '1px solid #00F0FF',
+                            color: '#00F0FF',
+                            fontSize: '0.75rem',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                          }}
+                        >
+                          + Add
+                        </button>
+                      )}
                     </div>
+                    <p style={{ margin: '0.45rem 0 0 0', fontSize: '0.75rem', color: '#6B7280' }}>
+                      ⚡ Automatic alerts are sent to all recipients whenever an anomaly or incident occurs.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -915,20 +1184,31 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                         </div>
                         
                         <div className="observer-card-actions">
-                          <div style={{ 
-                            fontSize: '0.825rem', 
-                            color: '#9CA3AF', 
-                            display: 'inline-flex', 
-                            alignItems: 'center', 
-                            background: 'rgba(255,255,255,0.05)',
-                            padding: '0.35rem 0.75rem',
-                            borderRadius: '9999px',
-                            maxWidth: '240px',
-                            border: '1px solid rgba(255,255,255,0.08)'
-                          }}>
-                            <Mail size={13} style={{ marginRight: '0.4rem', flexShrink: 0, color: '#00F0FF' }} />
-                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.alert_email}</span>
-                          </div>
+                          {(() => {
+                            const rawEmails = (m.alert_email || '').split(',').map((e: string) => e.trim()).filter(Boolean);
+                            const count = rawEmails.length;
+                            const label = count > 1 ? `${rawEmails[0]} (+${count - 1} more)` : (rawEmails[0] || 'No email');
+                            return (
+                              <div 
+                                title={rawEmails.join(', ')}
+                                style={{ 
+                                  fontSize: '0.825rem', 
+                                  color: '#9CA3AF', 
+                                  display: 'inline-flex', 
+                                  alignItems: 'center', 
+                                  background: 'rgba(255,255,255,0.05)',
+                                  padding: '0.35rem 0.75rem',
+                                  borderRadius: '9999px',
+                                  maxWidth: '260px',
+                                  border: '1px solid rgba(255,255,255,0.08)',
+                                  cursor: count > 1 ? 'pointer' : 'default'
+                                }}
+                              >
+                                <Mail size={13} style={{ marginRight: '0.4rem', flexShrink: 0, color: '#00F0FF' }} />
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+                              </div>
+                            );
+                          })()}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <button 
                               onClick={() => handleTest(m.id)}

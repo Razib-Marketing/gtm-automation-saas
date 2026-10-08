@@ -428,6 +428,11 @@ export async function onRequestGet(context: any) {
             subject = `⚠ GA4 Alert: ${cleanName} — ${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%`;
           }
 
+          const alertEmails = monitor.alert_email
+            ? monitor.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.length > 0 && e.includes('@'))
+            : [];
+          const recipients = alertEmails.length > 0 ? alertEmails : [monitor.alert_email.trim()];
+
           let emailSent = false;
           const resendApiKey = env.RESEND_API_KEY;
 
@@ -442,25 +447,49 @@ export async function onRequestGet(context: any) {
                 },
                 body: JSON.stringify({
                   from: 'GA4 Observer <onboarding@resend.dev>',
-                  to: [monitor.alert_email],
+                  to: recipients,
                   subject: subject,
                   html: htmlBody
                 })
               });
-              if (resendRes.ok) emailSent = true;
+              if (resendRes.ok) {
+                emailSent = true;
+              } else if (recipients.length > 1) {
+                // Fallback: send individually to each recipient
+                for (const r of recipients) {
+                  try {
+                    const sRes = await fetch('https://api.resend.com/emails', {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${resendApiKey}`,
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        from: 'GA4 Observer <onboarding@resend.dev>',
+                        to: [r],
+                        subject: subject,
+                        html: htmlBody
+                      })
+                    });
+                    if (sRes.ok) emailSent = true;
+                  } catch (_) {}
+                }
+              }
             } catch (_) {}
           }
 
           // 2. Try Cloudflare Email Service binding if available
           if (!emailSent && env.EMAIL && typeof env.EMAIL.send === 'function') {
             try {
-              await env.EMAIL.send({
-                to: monitor.alert_email,
-                from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
-                subject: subject,
-                html: htmlBody,
-                text: `GA4 Alert: ${monitor.property_name}`
-              });
+              for (const r of recipients) {
+                await env.EMAIL.send({
+                  to: r,
+                  from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
+                  subject: subject,
+                  html: htmlBody,
+                  text: `GA4 Alert: ${monitor.property_name}`
+                });
+              }
               emailSent = true;
             } catch (_) {}
           }
@@ -472,7 +501,7 @@ export async function onRequestGet(context: any) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  personalizations: [{ to: [{ email: monitor.alert_email }] }],
+                  personalizations: [{ to: recipients.map((r: string) => ({ email: r })) }],
                   from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
                   subject: subject,
                   content: [
@@ -485,7 +514,7 @@ export async function onRequestGet(context: any) {
             } catch (_) {}
           }
 
-          logs.push(`Alerted ${monitor.alert_email} for ${monitor.property_name}`);
+          logs.push(`Alerted ${recipients.join(', ')} for ${monitor.property_name}`);
 
           // Log each triggered condition to Database
           for (const cond of triggeredConditions) {

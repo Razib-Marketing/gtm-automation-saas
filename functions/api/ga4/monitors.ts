@@ -67,7 +67,14 @@ export async function onRequest(context: any) {
   if (request.method === 'POST') {
     try {
       const body = await request.json();
-      const { id, propertyId, propertyName, comparisonPeriod, alertEmail, matchType } = body;
+      const { id, propertyId, propertyName, comparisonPeriod, matchType } = body;
+      
+      let alertEmail = body.alertEmail;
+      if (Array.isArray(body.alertEmails) && body.alertEmails.length > 0) {
+        alertEmail = body.alertEmails.map((e: string) => e.trim()).filter((e: string) => e.includes('@')).join(', ');
+      } else if (typeof alertEmail === 'string') {
+        alertEmail = alertEmail.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.includes('@')).join(', ');
+      }
       
       let conditions = body.conditions;
       // Fallback if legacy single metric format sent
@@ -85,7 +92,7 @@ export async function onRequest(context: any) {
       }
 
       if (!propertyId || !alertEmail) {
-        return new Response(JSON.stringify({ error: 'Missing propertyId or alertEmail' }), { status: 400 });
+        return new Response(JSON.stringify({ error: 'Missing propertyId or valid alertEmail' }), { status: 400 });
       }
 
       const primaryMetric = conditions[0].metric;

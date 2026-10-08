@@ -486,6 +486,11 @@ export async function onRequest(context: any) {
     let emailStatus = 'Not sent';
     let emailError: string | null = null;
 
+    const alertEmails = monitor.alert_email
+      ? monitor.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.length > 0 && e.includes('@'))
+      : [];
+    const recipients = alertEmails.length > 0 ? alertEmails : [monitor.alert_email.trim()];
+
     const resendApiKey = env.RESEND_API_KEY;
 
     // 1. Try Resend
@@ -499,7 +504,7 @@ export async function onRequest(context: any) {
           },
           body: JSON.stringify({
             from: 'GA4 Observer <onboarding@resend.dev>',
-            to: [monitor.alert_email],
+            to: recipients,
             subject: subject,
             html: htmlBody
           })
@@ -507,14 +512,43 @@ export async function onRequest(context: any) {
 
         const resendData: any = await resendRes.json().catch(() => ({}));
         if (resendRes.ok) {
-          emailStatus = 'Sent via Resend';
+          emailStatus = `Sent via Resend (${recipients.length} recipient${recipients.length > 1 ? 's' : ''})`;
           emailError = null;
         } else {
-          let msg = resendData.message || resendData.error || resendRes.statusText;
-          if (resendRes.status === 403 && typeof msg === 'string' && msg.includes('can only send testing emails to your own email address')) {
-            msg = `${msg}\n👉 Note: To test with onboarding@resend.dev, set your Alert Email to your Resend account email. To send to any recipient, verify your domain at resend.com/domains.`;
+          // Fallback: if multiple recipients fail in sandbox testing, try sending individually
+          if (recipients.length > 1) {
+            let sentCount = 0;
+            for (const r of recipients) {
+              try {
+                const singleRes = await fetch('https://api.resend.com/emails', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${resendApiKey}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    from: 'GA4 Observer <onboarding@resend.dev>',
+                    to: [r],
+                    subject: subject,
+                    html: htmlBody
+                  })
+                });
+                if (singleRes.ok) sentCount++;
+              } catch (_) {}
+            }
+            if (sentCount > 0) {
+              emailStatus = `Sent to ${sentCount}/${recipients.length} recipient(s) via Resend`;
+              emailError = null;
+            }
           }
-          emailError = `Resend (${resendRes.status}): ${msg}`;
+
+          if (!emailStatus.startsWith('Sent')) {
+            let msg = resendData.message || resendData.error || resendRes.statusText;
+            if (resendRes.status === 403 && typeof msg === 'string' && msg.includes('can only send testing emails to your own email address')) {
+              msg = `${msg}\n👉 Note: To test with onboarding@resend.dev, set your Alert Email to your Resend account email. To send to any recipient, verify your domain at resend.com/domains.`;
+            }
+            emailError = `Resend (${resendRes.status}): ${msg}`;
+          }
         }
       } catch (err: any) {
         emailError = `Resend error: ${err.message}`;
@@ -522,16 +556,18 @@ export async function onRequest(context: any) {
     }
 
     // 2. Cloudflare Native Email binding if Resend didn't send
-    if (emailStatus !== 'Sent via Resend' && env.EMAIL && typeof env.EMAIL.send === 'function') {
+    if (!emailStatus.startsWith('Sent') && env.EMAIL && typeof env.EMAIL.send === 'function') {
       try {
-        await env.EMAIL.send({
-          to: monitor.alert_email,
-          from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
-          subject: subject,
-          html: htmlBody,
-          text: `GA4 Observer: ${monitor.property_name} status update.`
-        });
-        emailStatus = 'Sent via Cloudflare Email Service';
+        for (const recipient of recipients) {
+          await env.EMAIL.send({
+            to: recipient,
+            from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GA4 Observer' },
+            subject: subject,
+            html: htmlBody,
+            text: `GA4 Observer: ${monitor.property_name} status update.`
+          });
+        }
+        emailStatus = `Sent via Cloudflare Email Service (${recipients.length} recipients)`;
         emailError = null;
       } catch (err: any) {
         if (!emailError) emailError = `Cloudflare Email Service: ${err.message}`;
