@@ -328,17 +328,22 @@ export async function onRequestGet(context: any) {
 
           const cleanName = formatCleanPropertyName(monitor.property_name);
 
-          const rowsHtml = evaluatedConditions.map(c => {
-            const changeColor = c.percentChange > 0 ? '#0284C7' : '#DC2626';
+          const conditionCardsHtml = evaluatedConditions.map(c => {
+            const isNegative = c.percentChange < 0;
+            const changeColor = isNegative ? '#DC2626' : '#0284C7';
+            const changeBg = isNegative ? '#FEF2F2' : '#F0F9FF';
+            const changeBorder = isNegative ? '#FCA5A5' : '#BAE6FD';
+            const cardAccent = c.isTriggered ? '#DC2626' : '#00F0FF';
+            
             const statusBadge = c.isTriggered
-              ? '<span style="display: inline-block; background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">⚠ TRIGGERED</span>'
-              : '<span style="display: inline-block; background: #0B0F19; color: #00F0FF; border: 1px solid #00F0FF; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">✔ OK</span>';
+              ? '<span style="display: inline-block; background-color: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;">⚠ TRIGGERED</span>'
+              : '<span style="display: inline-block; background-color: #0B0F19; color: #00F0FF; border: 1px solid #00F0FF; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;">✔ OK</span>';
             
             const opText = c.conditionType === 'spikes_above' ? `Spikes > ${Math.abs(c.thresholdPercentage)}%`
               : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`
               : `Drops < -${Math.abs(c.thresholdPercentage)}%`;
 
-            let segmentText = '';
+            let segmentText = 'All Traffic';
             if (c.source !== 'All' && c.medium !== 'All') {
               segmentText = `${c.source} / ${c.medium}`;
             } else if (c.source !== 'All') {
@@ -347,69 +352,112 @@ export async function onRequestGet(context: any) {
               segmentText = `Medium: ${c.medium}`;
             }
 
-            const segmentBadge = segmentText
-              ? `<div style="font-size: 11px; color: #6366F1; font-weight: 500; margin-top: 2px;">${segmentText}</div>`
-              : `<div style="font-size: 11px; color: #9CA3AF; margin-top: 2px;">All Traffic</div>`;
-
             return `
-              <tr style="border-bottom: 1px solid #E5E7EB;">
-                <td style="padding: 10px 12px; font-weight: 600; color: #111827;">
-                  ${c.metric}
-                  ${segmentBadge}
-                </td>
-                <td style="padding: 10px 12px; color: #6B7280; font-size: 12px;">${opText}</td>
-                <td style="padding: 10px 12px; color: #374151;">${c.pastVal.toLocaleString()}</td>
-                <td style="padding: 10px 12px; color: #374151; font-weight: 600;">${c.currentVal.toLocaleString()}</td>
-                <td style="padding: 10px 12px; font-weight: 800; color: ${changeColor}; font-size: 13px;">
-                  ${c.percentChange > 0 ? '+' : ''}${c.percentChange.toFixed(1)}%
-                </td>
-                <td style="padding: 10px 12px; text-align: right;">${statusBadge}</td>
-              </tr>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: separate; border-spacing: 0; width: 100%; margin-bottom: 12px; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid ${cardAccent}; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 12px 14px;">
+                    <!-- Header Row: Metric Name & Segment on left, Status Pill on right -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; width: 100%;">
+                      <tr>
+                        <td style="vertical-align: middle; text-align: left;">
+                          <div style="font-size: 15px; font-weight: 700; color: #0F172A; text-transform: capitalize;">
+                            ${c.metric}
+                          </div>
+                          <div style="font-size: 11px; color: #64748B; margin-top: 2px;">
+                            Channel: <strong style="color: #475569;">${segmentText}</strong>
+                          </div>
+                        </td>
+                        <td style="vertical-align: middle; text-align: right; white-space: nowrap;">
+                          ${statusBadge}
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Data Row: Baseline -> Current & % Change -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse; width: 100%; margin-top: 10px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px;">
+                      <tr>
+                        <td style="padding: 9px 12px; text-align: left; vertical-align: middle;">
+                          <div style="font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em;">
+                            Baseline: <strong style="color: #334155;">${c.pastVal.toLocaleString()}</strong>
+                            <span style="color: #94A3B8; margin: 0 4px;">→</span>
+                            Current: <strong style="color: #0F172A;">${c.currentVal.toLocaleString()}</strong>
+                          </div>
+                          <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">
+                            Rule: <span style="color: #64748B;">${opText}</span>
+                          </div>
+                        </td>
+                        <td style="padding: 9px 12px; text-align: right; vertical-align: middle; white-space: nowrap;">
+                          <span style="display: inline-block; font-size: 13px; font-weight: 800; color: ${changeColor}; background-color: ${changeBg}; border: 1px solid ${changeBorder}; padding: 3px 9px; border-radius: 5px;">
+                            ${c.percentChange > 0 ? '+' : ''}${c.percentChange.toFixed(1)}%
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
             `;
           }).join('');
 
           const htmlBody = `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; background-color: #FFFFFF;">
-              <div style="background-color: #DC2626; color: #FFFFFF; padding: 26px 20px; text-align: center; border-bottom: 2px solid #B91C1C;">
-                <div style="margin-bottom: 12px;">
-                  <span style="display: inline-block; width: 46px; height: 46px; line-height: 46px; border-radius: 50%; background: #991B1B; color: #FFFFFF; font-size: 22px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">⚠</span>
-                </div>
-                <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.025em;">GA4 Anomaly Detected</h2>
-                <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Property: ${cleanName}</p>
-              </div>
-              <div style="padding: 24px;">
-                <p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
-                  Your Observer monitor for <strong>${cleanName}</strong> triggered an anomaly alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
-                </p>
-
-                <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: #4B5563; display: flex; justify-content: space-between;">
-                  <div><strong>Rule Logic:</strong> Match ${matchType === 'ALL' ? 'ALL conditions (AND)' : 'ANY condition (OR)'}</div>
-                  <div><strong>Comparison Period:</strong> ${monitor.comparison_period.replace(/_/g, ' ')}</div>
-                </div>
-
-                <div style="border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; margin-top: 12px;">
-                  <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-                    <thead>
-                      <tr style="background-color: #F3F4F6; border-bottom: 1px solid #E5E7EB; color: #4B5563; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">
-                        <th style="padding: 8px 12px;">Metric</th>
-                        <th style="padding: 8px 12px;">Rule</th>
-                        <th style="padding: 8px 12px;">Prev</th>
-                        <th style="padding: 8px 12px;">Curr</th>
-                        <th style="padding: 8px 12px;">Change</th>
-                        <th style="padding: 8px 12px; text-align: right;">Status</th>
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>GA4 Anomaly Detected</title>
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F1F5F9; margin: 0; padding: 20px 10px; width: 100%;">
+                <tr>
+                  <td align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 580px; margin: 0 auto; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+                      <!-- Header Banner -->
+                      <tr>
+                        <td style="background-color: #DC2626; color: #FFFFFF; padding: 26px 20px; text-align: center; border-bottom: 2px solid #B91C1C;">
+                          <div style="margin-bottom: 12px;">
+                            <span style="display: inline-block; width: 46px; height: 46px; line-height: 46px; border-radius: 50%; background: #991B1B; color: #FFFFFF; font-size: 22px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">⚠</span>
+                          </div>
+                          <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.025em;">GA4 Anomaly Detected</h2>
+                          <p style="margin: 6px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 600;">Property: ${cleanName}</p>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      ${rowsHtml}
-                    </tbody>
-                  </table>
-                </div>
 
-                <p style="margin-top: 24px; font-size: 11px; color: #9CA3AF; text-align: center;">
-                  Automated monitoring by <strong>GTM & Analytics Automation SaaS</strong> • Real-time Anomaly Observer
-                </p>
-              </div>
-            </div>
+                      <!-- Content Area -->
+                      <tr>
+                        <td style="padding: 20px 16px;">
+                          <p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0; line-height: 1.5;">
+                            Your Observer monitor for <strong>${cleanName}</strong> triggered an anomaly alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
+                          </p>
+
+                          <!-- Meta Information Box -->
+                          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 16px;">
+                            <tr>
+                              <td style="padding: 10px 14px; font-size: 12px; color: #4B5563; text-align: left;">
+                                <div><strong>Rule Logic:</strong> Match ${matchType === 'ALL' ? 'ALL conditions (AND)' : 'ANY condition (OR)'}</div>
+                                <div style="margin-top: 4px;"><strong>Comparison Period:</strong> ${monitor.comparison_period.replace(/_/g, ' ')}</div>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- Responsive Metric Cards List -->
+                          <div style="margin-top: 8px;">
+                            ${conditionCardsHtml}
+                          </div>
+
+                          <!-- Footer -->
+                          <p style="margin: 24px 0 0 0; font-size: 11px; color: #94A3B8; text-align: center; line-height: 1.5;">
+                            Automated monitoring by <strong>GTM & Analytics Automation SaaS</strong><br>
+                            Real-time Anomaly Observer
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
           `;
 
           let subject = '';

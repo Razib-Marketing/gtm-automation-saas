@@ -213,7 +213,7 @@ export const Observer = () => {
   const [period, setPeriod] = useState('yesterday_vs_last_week');
   const [alertEmails, setAlertEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
-  const [setupMode, setSetupMode] = useState<'template' | 'manual'>('template');
+  const [setupMode, setSetupMode] = useState<'template' | 'manual'>('manual');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
@@ -682,19 +682,19 @@ export const Observer = () => {
                   <div className="template-mode-nav">
                     <button
                       type="button"
-                      onClick={() => setSetupMode('template')}
-                      className={`template-mode-btn ${setupMode === 'template' ? 'active' : ''}`}
-                    >
-                      <Sparkles size={15} style={{ color: setupMode === 'template' ? '#00F0FF' : 'inherit' }} />
-                      Premade Incident Templates ({INCIDENT_TEMPLATES.length})
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => { setSetupMode('manual'); setSelectedTemplateId(null); }}
                       className={`template-mode-btn ${setupMode === 'manual' ? 'active' : ''}`}
                     >
                       <Layers size={15} style={{ color: setupMode === 'manual' ? '#00F0FF' : 'inherit' }} />
-                      Custom / Manual Rule Builder
+                      Custom Rules (Manual Builder)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSetupMode('template')}
+                      className={`template-mode-btn ${setupMode === 'template' ? 'active' : ''}`}
+                    >
+                      <Sparkles size={15} style={{ color: setupMode === 'template' ? '#00F0FF' : 'inherit' }} />
+                      Premade Templates ({INCIDENT_TEMPLATES.length})
                     </button>
                   </div>
                 </div>
