@@ -390,7 +390,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
               {/* TRIGGER SECTION */}
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h4 style={{ color: 'white', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Activity size={18} style={{ color: '#6366F1' }}/> Trigger
+                  <Activity size={18} style={{ color: '#00F0FF' }}/> Trigger
                 </h4>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
@@ -740,7 +740,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
               {/* ACTION SECTION */}
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h4 style={{ color: 'white', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Mail size={18} style={{ color: '#accf00' }}/> Action
+                  <Mail size={18} style={{ color: '#00F0FF' }}/> Action
                 </h4>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
@@ -839,7 +839,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                               width: '8px', 
                               height: '8px', 
                               borderRadius: '50%', 
-                              backgroundColor: m.status === 'active' ? '#accf00' : '#F59E0B' 
+                              backgroundColor: m.status === 'active' ? '#00F0FF' : '#F59E0B' 
                             }} />
                             <h4 style={{ color: 'white', margin: 0, fontWeight: 600 }}>{m.property_name}</h4>
                             <span style={{
@@ -926,7 +926,7 @@ Status: ${data.emailStatus || 'Sent'}${data.emailError ? `\nNotice: ${data.email
                             maxWidth: '240px',
                             border: '1px solid rgba(255,255,255,0.08)'
                           }}>
-                            <Mail size={13} style={{ marginRight: '0.4rem', flexShrink: 0, color: '#accf00' }} />
+                            <Mail size={13} style={{ marginRight: '0.4rem', flexShrink: 0, color: '#00F0FF' }} />
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.alert_email}</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

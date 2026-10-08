@@ -362,17 +362,17 @@ export async function onRequest(context: any) {
     const cleanName = formatCleanPropertyName(monitor.property_name);
 
     // 8. Build Rich Email HTML
-    const headerBg = isTriggered ? '#DC2626' : '#accf00';
-    const headerTextColor = isTriggered ? '#FFFFFF' : '#0F172A';
-    const headerSubColor = isTriggered ? 'rgba(255, 255, 255, 0.85)' : '#334155';
-    const headerBorder = isTriggered ? '#B91C1C' : '#94b300';
+    const headerBg = isTriggered ? '#DC2626' : '#00F0FF';
+    const headerTextColor = isTriggered ? '#FFFFFF' : '#0B0F19';
+    const headerSubColor = isTriggered ? 'rgba(255, 255, 255, 0.85)' : '#1E293B';
+    const headerBorder = isTriggered ? '#B91C1C' : '#00C8D6';
     const headerTitle = isTriggered ? 'GA4 Anomaly Detected' : 'GA4 Monitor Health Check';
     const headerIconBadge = isTriggered
       ? `<div style="margin-bottom: 12px;">
           <span style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background: #991B1B; color: #FFFFFF; font-size: 22px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">⚠</span>
          </div>`
       : `<div style="margin-bottom: 12px;">
-          <span style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background: #0F172A; color: #accf00; font-size: 24px; font-weight: 900; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">✔</span>
+          <span style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background: #0B0F19; color: #00F0FF; font-size: 24px; font-weight: 900; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">✔</span>
          </div>`;
 
     const statusNote = isTriggered
@@ -384,10 +384,10 @@ export async function onRequest(context: any) {
         </p>`;
 
     const rowsHtml = evaluatedConditions.map(c => {
-      const changeColor = c.percentChange > 0 ? '#accf00' : '#DC2626';
+      const changeColor = c.percentChange > 0 ? '#0284C7' : '#DC2626';
       const statusBadge = c.isTriggered
         ? '<span style="display: inline-block; background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">⚠ TRIGGERED</span>'
-        : '<span style="display: inline-block; background: #0F172A; color: #accf00; border: 1px solid #accf00; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">✔ OK</span>';
+        : '<span style="display: inline-block; background: #0B0F19; color: #00F0FF; border: 1px solid #00F0FF; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">✔ OK</span>';
       
       const opText = c.conditionType === 'spikes_above' ? `Spikes > ${Math.abs(c.thresholdPercentage)}%`
         : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`

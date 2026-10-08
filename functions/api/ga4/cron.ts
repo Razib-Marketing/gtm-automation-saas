@@ -329,10 +329,10 @@ export async function onRequestGet(context: any) {
           const cleanName = formatCleanPropertyName(monitor.property_name);
 
           const rowsHtml = evaluatedConditions.map(c => {
-            const changeColor = c.percentChange > 0 ? '#accf00' : '#DC2626';
+            const changeColor = c.percentChange > 0 ? '#0284C7' : '#DC2626';
             const statusBadge = c.isTriggered
               ? '<span style="display: inline-block; background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">⚠ TRIGGERED</span>'
-              : '<span style="display: inline-block; background: #0F172A; color: #accf00; border: 1px solid #accf00; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">✔ OK</span>';
+              : '<span style="display: inline-block; background: #0B0F19; color: #00F0FF; border: 1px solid #00F0FF; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;">✔ OK</span>';
             
             const opText = c.conditionType === 'spikes_above' ? `Spikes > ${Math.abs(c.thresholdPercentage)}%`
               : c.conditionType === 'changes_by' ? `Changes ± ${Math.abs(c.thresholdPercentage)}%`
