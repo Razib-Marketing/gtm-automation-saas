@@ -1,3 +1,15 @@
+async function ensureAlertsSchema(db: any) {
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN alert_type TEXT DEFAULT 'automated'").run();
+  } catch (_) {}
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN status TEXT DEFAULT 'anomaly'").run();
+  } catch (_) {}
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN recipients TEXT").run();
+  } catch (_) {}
+}
+
 export async function onRequest(context: any) {
   const { env, request } = context;
 
@@ -691,6 +703,51 @@ export async function onRequest(context: any) {
       } catch (mcErr: any) {
         if (!emailError) emailError = `Cloudflare Relay failed: ${mcErr.message}`;
       }
+    }
+
+    // Log manual report to ga4_alerts
+    try {
+      await ensureAlertsSchema(env.DB);
+      const alertId = 'alert_manual_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+      const summaryMetric = isTriggered
+        ? `Manual Report: ${triggeredConditions.length} Condition(s) Triggered`
+        : `Manual Health Check: All ${evaluatedConditions.length} Condition(s) Stable`;
+      const conditionTypeSummary = isTriggered ? 'anomaly' : 'stable';
+      const primaryChange = (triggeredConditions[0] || evaluatedConditions[0])?.percentChange || 0;
+      const statusValue = isTriggered ? 'anomaly' : 'stable';
+      const recipientsStr = recipients.join(', ');
+
+      try {
+        await env.DB.prepare(
+          `INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change, alert_type, status, recipients)
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'manual', ?, ?)`
+        ).bind(
+          alertId,
+          monitor.id,
+          monitor.user_id,
+          monitor.property_name,
+          summaryMetric,
+          conditionTypeSummary,
+          primaryChange,
+          statusValue,
+          recipientsStr
+        ).run();
+      } catch (_) {
+        await env.DB.prepare(
+          `INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          alertId,
+          monitor.id,
+          monitor.user_id,
+          monitor.property_name,
+          summaryMetric,
+          conditionTypeSummary,
+          primaryChange
+        ).run();
+      }
+    } catch (insertErr) {
+      console.error('Failed to log manual test report:', insertErr);
     }
 
     return new Response(JSON.stringify({ 

@@ -15,6 +15,18 @@ function getClerkUserId(request: Request) {
   }
 }
 
+async function ensureAlertsSchema(db: any) {
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN alert_type TEXT DEFAULT 'automated'").run();
+  } catch (_) {}
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN status TEXT DEFAULT 'anomaly'").run();
+  } catch (_) {}
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN recipients TEXT").run();
+  } catch (_) {}
+}
+
 export async function onRequest(context: any) {
   const { env, request } = context;
   const userId = getClerkUserId(request);
@@ -25,13 +37,21 @@ export async function onRequest(context: any) {
 
   if (request.method === 'GET') {
     try {
+      await ensureAlertsSchema(env.DB);
+
       const { results: rawMonitors } = await env.DB.prepare(
         'SELECT * FROM ga4_monitors WHERE user_id = ? ORDER BY created_at DESC'
       ).bind(userId).all();
       
-      const { results: alerts } = await env.DB.prepare(
-        'SELECT * FROM ga4_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 50'
+      const { results: rawAlerts } = await env.DB.prepare(
+        'SELECT * FROM ga4_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 100'
       ).bind(userId).all();
+
+      const alerts = (rawAlerts || []).map((a: any) => ({
+        ...a,
+        alert_type: a.alert_type || (a.metric?.toLowerCase().startsWith('manual') ? 'manual' : 'automated'),
+        status: a.status || (a.condition_type === 'stable' ? 'stable' : 'anomaly')
+      }));
 
       // Normalize conditions and match_type for each monitor
       const monitors = (rawMonitors || []).map((m: any) => {

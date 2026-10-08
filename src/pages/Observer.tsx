@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { 
   ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, 
-  Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info 
+  Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info, Zap 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -219,6 +219,7 @@ export const Observer = () => {
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<TestReportResult | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [alertHistoryTab, setAlertHistoryTab] = useState<'automated' | 'manual'>('automated');
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -435,6 +436,7 @@ export const Observer = () => {
           sandboxRestricted: Boolean(data.sandboxRestricted),
           verifiedDomainName: data.verifiedDomainName || null,
         });
+        await fetchMonitors();
       } else {
         setTestResult({
           isOpen: true,
@@ -520,6 +522,9 @@ export const Observer = () => {
       console.error(e);
     }
   };
+
+  const automatedAlerts = alerts.filter((a: any) => (a.alert_type || 'automated') === 'automated');
+  const manualReports = alerts.filter((a: any) => a.alert_type === 'manual');
 
   return (
     <PageTransition locationKey="observer">
@@ -1304,52 +1309,229 @@ export const Observer = () => {
             </div>
           </div>
 
-          {/* Recent Alerts Dashboard (Bottom) */}
+          {/* Dual-Type Alert History Dashboard (Bottom) */}
           <div className="selection-card" style={{ marginTop: '1rem' }}>
-            <div className="selection-header">
+            <div className="selection-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
               <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Bell size={20} style={{ color: '#F59E0B' }}/> Alert History
+                <Bell size={20} style={{ color: '#00F0FF' }}/> Alert History
               </h3>
+
+              {/* Two Type History Switcher */}
+              <div style={{
+                display: 'flex',
+                gap: '0.4rem',
+                background: 'rgba(255, 255, 255, 0.03)',
+                padding: '4px',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.08)'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setAlertHistoryTab('automated')}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '6px',
+                    fontSize: '0.785rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease',
+                    border: alertHistoryTab === 'automated' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid transparent',
+                    background: alertHistoryTab === 'automated' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                    color: alertHistoryTab === 'automated' ? '#FCA5A5' : '#9CA3AF'
+                  }}
+                >
+                  <Zap size={13} style={{ color: alertHistoryTab === 'automated' ? '#EF4444' : '#6B7280' }} />
+                  <span>Automated Issue Alerts</span>
+                  <span style={{
+                    fontSize: '0.685rem',
+                    background: alertHistoryTab === 'automated' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                    padding: '1px 6px',
+                    borderRadius: '10px',
+                    color: alertHistoryTab === 'automated' ? '#FEE2E2' : '#9CA3AF'
+                  }}>
+                    {automatedAlerts.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAlertHistoryTab('manual')}
+                  style={{
+                    padding: '0.4rem 0.85rem',
+                    borderRadius: '6px',
+                    fontSize: '0.785rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    transition: 'all 0.15s ease',
+                    border: alertHistoryTab === 'manual' ? '1px solid rgba(0, 240, 255, 0.4)' : '1px solid transparent',
+                    background: alertHistoryTab === 'manual' ? 'rgba(0, 240, 255, 0.12)' : 'transparent',
+                    color: alertHistoryTab === 'manual' ? '#00F0FF' : '#9CA3AF'
+                  }}
+                >
+                  <Send size={13} style={{ color: alertHistoryTab === 'manual' ? '#00F0FF' : '#6B7280' }} />
+                  <span>Manual Report History</span>
+                  <span style={{
+                    fontSize: '0.685rem',
+                    background: alertHistoryTab === 'manual' ? 'rgba(0, 240, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                    padding: '1px 6px',
+                    borderRadius: '10px',
+                    color: alertHistoryTab === 'manual' ? '#FFFFFF' : '#9CA3AF'
+                  }}>
+                    {manualReports.length}
+                  </span>
+                </button>
+              </div>
             </div>
             
-            <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ marginTop: '1.25rem' }}>
               {loading ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
-                  <div className="spinner">Loading...</div>
+                  <div className="spinner">Loading history...</div>
                 </div>
-              ) : alerts.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem 0', color: '#9CA3AF' }}>
-                  <Bell size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} />
-                  <p>No alerts have been triggered yet.</p>
-                </div>
-              ) : (
-                <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                  {alerts.map((a: any) => (
-                    <div 
-                      key={a.id} 
-                      style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        padding: '1rem', 
-                        background: 'rgba(255,255,255,0.02)',
-                        borderLeft: '4px solid #EF4444',
-                        borderRadius: '0 8px 8px 0'
-                      }}
-                    >
-                      <div>
-                        <h5 style={{ margin: '0 0 0.25rem 0', color: 'white', fontSize: '0.9rem' }}>{a.property_name}</h5>
-                        <div style={{ display: 'flex', gap: '1rem', color: '#9CA3AF', fontSize: '0.8rem' }}>
-                          <span>{a.metric}</span>
-                          <span>{a.condition_type === 'spikes_above' ? 'Spiked by' : a.condition_type === 'changes_by' ? 'Changed by' : 'Dropped by'} {Math.abs(a.percent_change).toFixed(1)}%</span>
+              ) : alertHistoryTab === 'automated' ? (
+                automatedAlerts.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 0', color: '#9CA3AF' }}>
+                    <Zap size={44} style={{ margin: '0 auto 0.75rem', opacity: 0.25, color: '#EF4444' }} />
+                    <h4 style={{ margin: '0 0 0.25rem', color: '#E5E7EB', fontSize: '0.95rem' }}>No Automated Issue Alerts Yet</h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#6B7280', maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      Automated monitoring runs daily in the background. When an anomaly triggers your monitor conditions, it will be automatically recorded here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '380px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                    {automatedAlerts.map((a: any) => (
+                      <div 
+                        key={a.id} 
+                        style={{ 
+                          display: 'flex', 
+                          justifyContent: 'space-between', 
+                          alignItems: 'center', 
+                          padding: '1rem', 
+                          background: 'rgba(239, 68, 68, 0.03)',
+                          border: '1px solid rgba(239, 68, 68, 0.15)',
+                          borderLeft: '4px solid #EF4444',
+                          borderRadius: '0 8px 8px 0',
+                          gap: '1rem'
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              color: '#F87171',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              fontSize: '0.685rem',
+                              fontWeight: 700,
+                              letterSpacing: '0.03em'
+                            }}>
+                              <Zap size={11} /> AUTOMATED ISSUE ALERT
+                            </span>
+                            <h5 style={{ margin: 0, color: '#FFFFFF', fontSize: '0.9rem', fontWeight: 600 }}>
+                              {a.property_name}
+                            </h5>
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.75rem', color: '#9CA3AF', fontSize: '0.785rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <span style={{ color: '#E5E7EB', fontWeight: 500 }}>{a.metric}</span>
+                            <span style={{ color: '#F87171', fontWeight: 600 }}>
+                              {a.condition_type === 'spikes_above' ? 'Spiked by' : a.condition_type === 'changes_by' ? 'Changed by' : 'Dropped by'} {Math.abs(a.percent_change).toFixed(1)}%
+                            </span>
+                            {a.recipients && (
+                              <span style={{ color: '#6B7280', fontSize: '0.75rem' }}>
+                                • Sent to: {a.recipients}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ color: '#6B7280', fontSize: '0.75rem', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                          {new Date(a.created_at).toLocaleString()}
                         </div>
                       </div>
-                      <div style={{ color: '#6B7280', fontSize: '0.8rem' }}>
-                        {new Date(a.created_at).toLocaleString()}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )
+              ) : (
+                manualReports.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '3rem 0', color: '#9CA3AF' }}>
+                    <Send size={44} style={{ margin: '0 auto 0.75rem', opacity: 0.25, color: '#00F0FF' }} />
+                    <h4 style={{ margin: '0 0 0.25rem', color: '#E5E7EB', fontSize: '0.95rem' }}>No Manual Reports Sent Yet</h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#6B7280', maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      Click <strong>"Send Report"</strong> on any active monitor above to dispatch an on-demand report to your team and log it here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="custom-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '380px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                    {manualReports.map((a: any) => {
+                      const isStable = a.status === 'stable' || a.condition_type === 'stable';
+                      const accentColor = isStable ? '#00F0FF' : '#EF4444';
+                      const badgeBg = isStable ? 'rgba(0, 240, 255, 0.1)' : 'rgba(239, 68, 68, 0.15)';
+                      const badgeBorder = isStable ? 'rgba(0, 240, 255, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+                      const badgeText = isStable ? '#00F0FF' : '#FCA5A5';
+                      const badgeLabel = isStable ? 'HEALTH CHECK (STABLE)' : 'ANOMALY DETECTED';
+
+                      return (
+                        <div 
+                          key={a.id} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            padding: '1rem', 
+                            background: isStable ? 'rgba(0, 240, 255, 0.02)' : 'rgba(239, 68, 68, 0.03)',
+                            border: `1px solid ${isStable ? 'rgba(0, 240, 255, 0.12)' : 'rgba(239, 68, 68, 0.15)'}`,
+                            borderLeft: `4px solid ${accentColor}`,
+                            borderRadius: '0 8px 8px 0',
+                            gap: '1rem'
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                background: badgeBg,
+                                color: badgeText,
+                                border: `1px solid ${badgeBorder}`,
+                                padding: '2px 7px',
+                                borderRadius: '4px',
+                                fontSize: '0.685rem',
+                                fontWeight: 700,
+                                letterSpacing: '0.03em'
+                              }}>
+                                <Send size={11} /> {badgeLabel}
+                              </span>
+                              <h5 style={{ margin: 0, color: '#FFFFFF', fontSize: '0.9rem', fontWeight: 600 }}>
+                                {a.property_name}
+                              </h5>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.75rem', color: '#9CA3AF', fontSize: '0.785rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <span style={{ color: '#E5E7EB', fontWeight: 500 }}>{a.metric}</span>
+                              {a.recipients && (
+                                <span style={{ color: '#6B7280', fontSize: '0.75rem' }}>
+                                  • Delivered to: {a.recipients}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ color: '#6B7280', fontSize: '0.75rem', whiteSpace: 'nowrap', textAlign: 'right' }}>
+                            {new Date(a.created_at).toLocaleString()}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
               )}
             </div>
           </div>

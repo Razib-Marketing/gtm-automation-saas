@@ -1,3 +1,15 @@
+async function ensureAlertsSchema(db: any) {
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN alert_type TEXT DEFAULT 'automated'").run();
+  } catch (_) {}
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN status TEXT DEFAULT 'anomaly'").run();
+  } catch (_) {}
+  try {
+    await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN recipients TEXT").run();
+  } catch (_) {}
+}
+
 export async function onRequestGet(context: any) {
   const { env, request } = context;
 
@@ -597,9 +609,26 @@ export async function onRequestGet(context: any) {
             } else if (cond.medium !== 'All') {
               metricDisplay = `${cond.metric} [Medium: ${cond.medium}]`;
             }
-            await env.DB.prepare(
-              "INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change) VALUES (?, ?, ?, ?, ?, ?, ?)"
-            ).bind(alertId, monitor.id, monitor.user_id, monitor.property_name, metricDisplay, cond.conditionType, cond.percentChange).run();
+            try {
+              await ensureAlertsSchema(env.DB);
+              await env.DB.prepare(
+                `INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change, alert_type, status, recipients) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 'automated', 'anomaly', ?)`
+              ).bind(
+                alertId, 
+                monitor.id, 
+                monitor.user_id, 
+                monitor.property_name, 
+                metricDisplay, 
+                cond.conditionType, 
+                cond.percentChange,
+                recipients.join(', ')
+              ).run();
+            } catch (_) {
+              await env.DB.prepare(
+                "INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change) VALUES (?, ?, ?, ?, ?, ?, ?)"
+              ).bind(alertId, monitor.id, monitor.user_id, monitor.property_name, metricDisplay, cond.conditionType, cond.percentChange).run();
+            }
           }
         }
 
