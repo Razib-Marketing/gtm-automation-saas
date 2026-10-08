@@ -405,9 +405,14 @@ export async function onRequestGet(context: any) {
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>GA4 Anomaly Detected</title>
+              <style>
+                title, style { display: none !important; }
+              </style>
             </head>
             <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+              <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 0px; line-height: 0px; max-width: 0px; opacity: 0;">
+                GA4 Anomaly Alert for ${cleanName}
+              </div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F1F5F9; margin: 0; padding: 20px 10px; width: 100%;">
                 <tr>
                   <td align="center">
@@ -462,7 +467,7 @@ export async function onRequestGet(context: any) {
 
           let subject = '';
           if (matchType === 'ALL') {
-            subject = `⚠ GA4 Alert: ${cleanName} (All Conditions Triggered)`;
+            subject = `GA4 Alert: ${cleanName} (All Conditions Triggered)`;
           } else {
             const topTrigger = triggeredConditions[0] || evaluatedConditions[0];
             let segStr = '';
@@ -473,7 +478,7 @@ export async function onRequestGet(context: any) {
             } else if (topTrigger.medium !== 'All') {
               segStr = ` [Medium: ${topTrigger.medium}]`;
             }
-            subject = `⚠ GA4 Alert: ${cleanName} — ${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%`;
+            subject = `GA4 Alert: ${cleanName} — ${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%`;
           }
 
           const alertEmails = monitor.alert_email
