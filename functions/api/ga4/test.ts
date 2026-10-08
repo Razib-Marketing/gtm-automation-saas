@@ -485,6 +485,10 @@ export async function onRequest(context: any) {
 
     let emailStatus = 'Not sent';
     let emailError: string | null = null;
+    let successfulRecipients: string[] = [];
+    let failedRecipients: Array<{ email: string; reason: string }> = [];
+    let sandboxRestricted = false;
+    let verifiedDomainName: string | null = null;
 
     const alertEmails = monitor.alert_email
       ? monitor.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.length > 0 && e.includes('@'))
@@ -496,6 +500,25 @@ export async function onRequest(context: any) {
     // 1. Try Resend
     if (resendApiKey) {
       try {
+        // Dynamically check if any domain is verified on Resend
+        let senderEmail = 'onboarding@resend.dev';
+        try {
+          const domRes = await fetch('https://api.resend.com/domains', {
+            headers: { 'Authorization': `Bearer ${resendApiKey}` }
+          });
+          if (domRes.ok) {
+            const domData: any = await domRes.json();
+            const verified = domData.data?.find((d: any) => d.status === 'verified');
+            if (verified) {
+              verifiedDomainName = verified.name;
+              senderEmail = `alerts@${verified.name}`;
+            }
+          }
+        } catch (_) {}
+
+        const senderFrom = `GA4 Observer <${senderEmail}>`;
+
+        // Attempt sending to all recipients
         const resendRes = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -503,7 +526,7 @@ export async function onRequest(context: any) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'GA4 Observer <onboarding@resend.dev>',
+            from: senderFrom,
             to: recipients,
             subject: subject,
             html: htmlBody
@@ -513,39 +536,54 @@ export async function onRequest(context: any) {
         const resendData: any = await resendRes.json().catch(() => ({}));
         if (resendRes.ok) {
           emailStatus = `Sent via Resend (${recipients.length} recipient${recipients.length > 1 ? 's' : ''})`;
+          successfulRecipients = [...recipients];
           emailError = null;
         } else {
-          // Fallback: if multiple recipients fail in sandbox testing, try sending individually
-          if (recipients.length > 1) {
-            let sentCount = 0;
-            for (const r of recipients) {
-              try {
-                const singleRes = await fetch('https://api.resend.com/emails', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${resendApiKey}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    from: 'GA4 Observer <onboarding@resend.dev>',
-                    to: [r],
-                    subject: subject,
-                    html: htmlBody
-                  })
-                });
-                if (singleRes.ok) sentCount++;
-              } catch (_) {}
-            }
-            if (sentCount > 0) {
-              emailStatus = `Sent to ${sentCount}/${recipients.length} recipient(s) via Resend`;
-              emailError = null;
+          // If batch send failed (e.g. sandbox restriction on external emails), send individually
+          for (const r of recipients) {
+            try {
+              const singleRes = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${resendApiKey}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  from: senderFrom,
+                  to: [r],
+                  subject: subject,
+                  html: htmlBody
+                })
+              });
+              const singleData: any = await singleRes.json().catch(() => ({}));
+              if (singleRes.ok) {
+                successfulRecipients.push(r);
+              } else {
+                const reason = singleData.message || singleData.error || singleRes.statusText;
+                if (singleRes.status === 403 && typeof reason === 'string' && reason.includes('can only send testing emails to your own email address')) {
+                  sandboxRestricted = true;
+                }
+                failedRecipients.push({ email: r, reason });
+              }
+            } catch (err: any) {
+              failedRecipients.push({ email: r, reason: err.message });
             }
           }
 
-          if (!emailStatus.startsWith('Sent')) {
+          if (successfulRecipients.length > 0) {
+            emailStatus = `Delivered to ${successfulRecipients.length}/${recipients.length} recipient(s) via Resend`;
+            if (failedRecipients.length > 0) {
+              if (sandboxRestricted) {
+                emailError = `Resend Sandbox Restriction: Only ${successfulRecipients.join(', ')} received the email. Other recipients were blocked by Resend because razibmarketing.net is not yet verified on DNS.`;
+              } else {
+                emailError = `Some recipients failed: ${failedRecipients.map(f => `${f.email} (${f.reason})`).join(', ')}`;
+              }
+            }
+          } else {
             let msg = resendData.message || resendData.error || resendRes.statusText;
             if (resendRes.status === 403 && typeof msg === 'string' && msg.includes('can only send testing emails to your own email address')) {
-              msg = `${msg}\n👉 Note: To test with onboarding@resend.dev, set your Alert Email to your Resend account email. To send to any recipient, verify your domain at resend.com/domains.`;
+              sandboxRestricted = true;
+              msg = `Resend Sandbox Restriction: onboarding@resend.dev can only send to ovi@razibmarketing.net. Please verify razibmarketing.net on DNS to send to external recipients.`;
             }
             emailError = `Resend (${resendRes.status}): ${msg}`;
           }
@@ -613,6 +651,10 @@ export async function onRequest(context: any) {
       emailStatus,
       emailError,
       recipients,
+      successfulRecipients,
+      failedRecipients,
+      sandboxRestricted,
+      verifiedDomainName,
       propertyName: monitor.property_name,
       comparisonPeriod: monitor.comparison_period
     }), { 

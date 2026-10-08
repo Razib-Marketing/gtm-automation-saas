@@ -439,6 +439,23 @@ export async function onRequestGet(context: any) {
           // 1. Try Resend
           if (resendApiKey) {
             try {
+              // Check if a custom domain is verified on Resend
+              let cronSenderEmail = 'onboarding@resend.dev';
+              try {
+                const domRes = await fetch('https://api.resend.com/domains', {
+                  headers: { 'Authorization': `Bearer ${resendApiKey}` }
+                });
+                if (domRes.ok) {
+                  const domData: any = await domRes.json();
+                  const verified = domData.data?.find((d: any) => d.status === 'verified');
+                  if (verified) {
+                    cronSenderEmail = `alerts@${verified.name}`;
+                  }
+                }
+              } catch (_) {}
+
+              const cronSenderFrom = `GA4 Observer <${cronSenderEmail}>`;
+
               const resendRes = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: {
@@ -446,7 +463,7 @@ export async function onRequestGet(context: any) {
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  from: 'GA4 Observer <onboarding@resend.dev>',
+                  from: cronSenderFrom,
                   to: recipients,
                   subject: subject,
                   html: htmlBody
@@ -465,7 +482,7 @@ export async function onRequestGet(context: any) {
                         'Content-Type': 'application/json'
                       },
                       body: JSON.stringify({
-                        from: 'GA4 Observer <onboarding@resend.dev>',
+                        from: cronSenderFrom,
                         to: [r],
                         subject: subject,
                         html: htmlBody
