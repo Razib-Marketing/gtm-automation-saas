@@ -323,6 +323,44 @@ export async function onRequest(context: any) {
     const triggeredConditions = evaluatedConditions.filter(c => c.isTriggered);
     const primaryCond = evaluatedConditions[0] || { percentChange: 0, currentVal: 0, pastVal: 0 };
 
+    // Helper to sanitize property name into a clean, professional brand/site name
+    const formatCleanPropertyName = (rawName?: string): string => {
+      if (!rawName) return 'GA4 Property';
+      let name = rawName.trim();
+      if (name.includes(' > ')) {
+        const parts = name.split(' > ').map(s => s.trim());
+        const account = parts[0];
+        const prop = parts[1] || '';
+        const cleanProp = prop
+          .replace(/\/\s*GA4\b.*/i, '')
+          .replace(/-\s*GA4\b.*/i, '')
+          .replace(/\bGA4\s*-\s*MonsterInsights\b/i, '')
+          .replace(/\bMonsterInsights\b/i, '')
+          .replace(/\bGA4\b/i, '')
+          .replace(/\/+$/, '')
+          .trim();
+        if (account.toLowerCase() === cleanProp.toLowerCase() || !cleanProp) {
+          name = account;
+        } else if (cleanProp.includes('.') && !account.includes('.')) {
+          name = account;
+        } else {
+          name = account || cleanProp;
+        }
+      } else if (name.includes('>')) {
+        name = name.split('>')[0].trim();
+      }
+      return name
+        .replace(/\/\s*GA4\b.*/i, '')
+        .replace(/-\s*GA4\b.*/i, '')
+        .replace(/\bGA4\s*-\s*MonsterInsights\b/i, '')
+        .replace(/\bMonsterInsights\b/i, '')
+        .replace(/\bGA4\b/i, '')
+        .replace(/\/+$/, '')
+        .trim() || rawName;
+    };
+
+    const cleanName = formatCleanPropertyName(monitor.property_name);
+
     // 8. Build Rich Email HTML
     const headerBg = isTriggered ? '#DC2626' : '#accf00';
     const headerTextColor = isTriggered ? '#FFFFFF' : '#0F172A';
@@ -339,10 +377,10 @@ export async function onRequest(context: any) {
 
     const statusNote = isTriggered
       ? `<p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
-          Your Observer monitor for <strong>${monitor.property_name}</strong> triggered an alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
+          Your Observer monitor for <strong>${cleanName}</strong> triggered an alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
         </p>`
       : `<p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
-          This is a manual health check for <strong>${monitor.property_name}</strong>. All evaluated conditions are within expected parameters.
+          This is a manual health check for <strong>${cleanName}</strong>. All evaluated conditions are within expected parameters.
         </p>`;
 
     const rowsHtml = evaluatedConditions.map(c => {
@@ -390,7 +428,7 @@ export async function onRequest(context: any) {
         <div style="background-color: ${headerBg}; color: ${headerTextColor}; padding: 26px 20px; text-align: center; border-bottom: 2px solid ${headerBorder};">
           ${headerIconBadge}
           <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: ${headerTextColor}; letter-spacing: -0.025em;">${headerTitle}</h2>
-          <p style="margin: 6px 0 0 0; font-size: 13px; color: ${headerSubColor}; font-weight: 600;">Property: ${monitor.property_name}</p>
+          <p style="margin: 6px 0 0 0; font-size: 13px; color: ${headerSubColor}; font-weight: 600;">Property: ${cleanName}</p>
         </div>
         <div style="padding: 24px;">
           ${statusNote}
@@ -428,7 +466,7 @@ export async function onRequest(context: any) {
     let subject = '';
     if (isTriggered) {
       if (matchType === 'ALL') {
-        subject = `⚠ GA4 Compound Alert: ${monitor.property_name} (ALL Conditions Matched)`;
+        subject = `⚠ GA4 Alert: ${cleanName} (All Conditions Triggered)`;
       } else {
         const topTrigger = triggeredConditions[0];
         let segStr = '';
@@ -439,10 +477,10 @@ export async function onRequest(context: any) {
         } else if (topTrigger.medium !== 'All') {
           segStr = ` [Medium: ${topTrigger.medium}]`;
         }
-        subject = `⚠ GA4 Alert: ${monitor.property_name} (${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
+        subject = `⚠ GA4 Alert: ${cleanName} — ${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%`;
       }
     } else {
-      subject = `✔ Health Check: ${monitor.property_name} is stable`;
+      subject = `✔ Health Check: ${cleanName} is Stable`;
     }
 
     let emailStatus = 'Not sent';

@@ -290,6 +290,44 @@ export async function onRequestGet(context: any) {
         if (isTriggered) {
           const triggeredConditions = evaluatedConditions.filter(c => c.isTriggered);
 
+          // Helper to sanitize property name into a clean, professional brand/site name
+          const formatCleanPropertyName = (rawName?: string): string => {
+            if (!rawName) return 'GA4 Property';
+            let name = rawName.trim();
+            if (name.includes(' > ')) {
+              const parts = name.split(' > ').map(s => s.trim());
+              const account = parts[0];
+              const prop = parts[1] || '';
+              const cleanProp = prop
+                .replace(/\/\s*GA4\b.*/i, '')
+                .replace(/-\s*GA4\b.*/i, '')
+                .replace(/\bGA4\s*-\s*MonsterInsights\b/i, '')
+                .replace(/\bMonsterInsights\b/i, '')
+                .replace(/\bGA4\b/i, '')
+                .replace(/\/+$/, '')
+                .trim();
+              if (account.toLowerCase() === cleanProp.toLowerCase() || !cleanProp) {
+                name = account;
+              } else if (cleanProp.includes('.') && !account.includes('.')) {
+                name = account;
+              } else {
+                name = account || cleanProp;
+              }
+            } else if (name.includes('>')) {
+              name = name.split('>')[0].trim();
+            }
+            return name
+              .replace(/\/\s*GA4\b.*/i, '')
+              .replace(/-\s*GA4\b.*/i, '')
+              .replace(/\bGA4\s*-\s*MonsterInsights\b/i, '')
+              .replace(/\bMonsterInsights\b/i, '')
+              .replace(/\bGA4\b/i, '')
+              .replace(/\/+$/, '')
+              .trim() || rawName;
+          };
+
+          const cleanName = formatCleanPropertyName(monitor.property_name);
+
           const rowsHtml = evaluatedConditions.map(c => {
             const changeColor = c.percentChange > 0 ? '#accf00' : '#DC2626';
             const statusBadge = c.isTriggered
@@ -337,11 +375,11 @@ export async function onRequestGet(context: any) {
                   <span style="display: inline-block; width: 46px; height: 46px; line-height: 46px; border-radius: 50%; background: #991B1B; color: #FFFFFF; font-size: 22px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">⚠</span>
                 </div>
                 <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.025em;">GA4 Anomaly Detected</h2>
-                <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Property: ${monitor.property_name}</p>
+                <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Property: ${cleanName}</p>
               </div>
               <div style="padding: 24px;">
                 <p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
-                  Your Observer monitor for <strong>${monitor.property_name}</strong> triggered an anomaly alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
+                  Your Observer monitor for <strong>${cleanName}</strong> triggered an anomaly alert based on your compound rule criteria (Match <strong>${matchType}</strong>).
                 </p>
 
                 <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: #4B5563; display: flex; justify-content: space-between;">
@@ -376,7 +414,7 @@ export async function onRequestGet(context: any) {
 
           let subject = '';
           if (matchType === 'ALL') {
-            subject = `⚠ GA4 Compound Alert: ${monitor.property_name} (ALL Conditions Matched)`;
+            subject = `⚠ GA4 Alert: ${cleanName} (All Conditions Triggered)`;
           } else {
             const topTrigger = triggeredConditions[0] || evaluatedConditions[0];
             let segStr = '';
@@ -387,7 +425,7 @@ export async function onRequestGet(context: any) {
             } else if (topTrigger.medium !== 'All') {
               segStr = ` [Medium: ${topTrigger.medium}]`;
             }
-            subject = `⚠ GA4 Alert: ${monitor.property_name} (${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%)`;
+            subject = `⚠ GA4 Alert: ${cleanName} — ${topTrigger.metric}${segStr} ${topTrigger.actionText} ${Math.abs(topTrigger.percentChange).toFixed(1)}%`;
           }
 
           let emailSent = false;
