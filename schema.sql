@@ -56,8 +56,23 @@ CREATE TABLE IF NOT EXISTS ga4_monitors (
     threshold_percentage REAL NOT NULL,
     comparison_period TEXT DEFAULT 'daily',
     alert_email TEXT NOT NULL,
+    condition_type TEXT,
+    conditions TEXT,
+    match_type TEXT DEFAULT 'ANY',
     status TEXT DEFAULT 'active',
     last_checked_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- GA4 Alerts Table
+CREATE TABLE IF NOT EXISTS ga4_alerts (
+    id TEXT PRIMARY KEY,
+    monitor_id TEXT NOT NULL REFERENCES ga4_monitors(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL,
+    property_name TEXT,
+    metric TEXT NOT NULL,
+    condition_type TEXT,
+    percent_change REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

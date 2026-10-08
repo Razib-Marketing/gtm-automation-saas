@@ -436,8 +436,43 @@ export async function onRequest(context: any) {
     let emailStatus = 'Not sent';
     let emailError: string | null = null;
 
-    // 1. Try Cloudflare Native Email binding (send_email) if configured
-    if (env.EMAIL && typeof env.EMAIL.send === 'function') {
+    const resendApiKey = env.RESEND_API_KEY;
+
+    // 1. Try Resend
+    if (resendApiKey) {
+      try {
+        const resendRes = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'GA4 Observer <onboarding@resend.dev>',
+            to: [monitor.alert_email],
+            subject: subject,
+            html: htmlBody
+          })
+        });
+
+        const resendData: any = await resendRes.json().catch(() => ({}));
+        if (resendRes.ok) {
+          emailStatus = 'Sent via Resend';
+          emailError = null;
+        } else {
+          let msg = resendData.message || resendData.error || resendRes.statusText;
+          if (resendRes.status === 403 && typeof msg === 'string' && msg.includes('can only send testing emails to your own email address')) {
+            msg = `${msg}\n👉 Note: To test with onboarding@resend.dev, set your Alert Email to your Resend account email. To send to any recipient, verify your domain at resend.com/domains.`;
+          }
+          emailError = `Resend (${resendRes.status}): ${msg}`;
+        }
+      } catch (err: any) {
+        emailError = `Resend error: ${err.message}`;
+      }
+    }
+
+    // 2. Cloudflare Native Email binding if Resend didn't send
+    if (emailStatus !== 'Sent via Resend' && env.EMAIL && typeof env.EMAIL.send === 'function') {
       try {
         await env.EMAIL.send({
           to: monitor.alert_email,
@@ -447,13 +482,14 @@ export async function onRequest(context: any) {
           text: `GA4 Observer: ${monitor.property_name} status update.`
         });
         emailStatus = 'Sent via Cloudflare Email Service';
+        emailError = null;
       } catch (err: any) {
-        emailError = `Cloudflare Email Service: ${err.message}`;
+        if (!emailError) emailError = `Cloudflare Email Service: ${err.message}`;
       }
     }
 
-    // 2. Cloudflare MailChannels outbound relay (default Cloudflare Workers outbound email)
-    if (emailStatus === 'Not sent') {
+    // 3. Cloudflare MailChannels outbound relay (fallback)
+    if (emailStatus !== 'Sent via Resend' && emailStatus !== 'Sent via Cloudflare Email Service') {
       try {
         const mcRes = await fetch('https://api.mailchannels.net/tx/v1/send', {
           method: 'POST',
@@ -473,10 +509,10 @@ export async function onRequest(context: any) {
           emailError = null;
         } else {
           const mcErr = await mcRes.text().catch(() => '');
-          emailError = `Cloudflare Relay (${mcRes.status}): ${mcErr || mcRes.statusText}`;
+          if (!emailError) emailError = `Cloudflare Relay (${mcRes.status}): ${mcErr || mcRes.statusText}`;
         }
       } catch (mcErr: any) {
-        emailError = `Cloudflare Relay failed: ${mcErr.message}`;
+        if (!emailError) emailError = `Cloudflare Relay failed: ${mcErr.message}`;
       }
     }
 
