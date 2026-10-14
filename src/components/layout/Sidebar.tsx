@@ -10,7 +10,7 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="global-sidebar">
       <div className="sidebar-header">
-        <img src="/gtmauto-logo.webp" alt="GTMAuto Logo" style={{ height: '32px', width: 'auto' }} />
+        <img src="/tagobserver-logo.webp" alt="TagObserver Logo" style={{ height: '34px', width: 'auto' }} />
       </div>
 
       <nav className="sidebar-nav">

@@ -19,8 +19,8 @@ export async function onRequest(context) {
         }
       ],
       from: {
-        email: 'no-reply@gtm-automation-saas.pages.dev',
-        name: 'GTM Auto Contact Form'
+        email: 'no-reply@gtm-automation-saas.ovi-e69.workers.dev',
+        name: 'TagObserver Contact Form'
       },
       reply_to: {
         email: email,

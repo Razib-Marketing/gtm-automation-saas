@@ -21,7 +21,7 @@ export const Navbar = () => {
     >
       <div className="navbar-container">
         <Link to="/" className="navbar-logo" style={{ display: 'flex', alignItems: 'center' }}>
-          <img src="/gtmauto-logo.webp" alt="GTMAuto Logo" style={{ height: '40px', width: 'auto' }} />
+          <img src="/tagobserver-logo.webp" alt="TagObserver Logo" style={{ height: '42px', width: 'auto' }} />
         </Link>
 
         <div className="navbar-links">

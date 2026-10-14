@@ -28,11 +28,11 @@ export async function onRequestPost(context) {
       <body>
         <div class="container">
           <div class="header">
-            <div><img src="https://gtm-automation-saas.pages.dev/gtmauto-logo.webp" alt="GTMAuto Logo" height="40" style="display: block; margin: 0; border: 0;" /></div>
+            <div><img src="https://gtm-automation-saas.ovi-e69.workers.dev/tagobserver-logo.webp" alt="TagObserver Logo" height="40" style="display: block; margin: 0; border: 0;" /></div>
           </div>
           <div class="content">
             <h2>New Contact Request</h2>
-            <p>You have received a new message from the GTMAuto platform contact form.</p>
+            <p>You have received a new message from the TagObserver platform contact form.</p>
             <div class="data-box">
               <div class="data-row">
                 <span class="data-label">Full Name</span>
@@ -49,7 +49,7 @@ export async function onRequestPost(context) {
             </div>
           </div>
           <div class="footer">
-            Automated via GTMAuto Edge-Native Platform
+            Automated via TagObserver Edge-Native Platform
           </div>
         </div>
       </body>
@@ -67,7 +67,7 @@ export async function onRequestPost(context) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'GTMAuto Platform <onboarding@resend.dev>',
+        from: 'TagObserver Platform <onboarding@resend.dev>',
         to: ['ovi.cse23@gmail.com'],
         subject: `New Contact Request from ${name || 'User'}`,
         html: html

@@ -17,7 +17,7 @@ export const Community = () => {
           <h1>Community</h1>
           
           <section style={{ marginTop: '2rem' }}>
-            <h2 style={{ borderBottom: 'none' }}>Join the GTMAuto Developer Community</h2>
+            <h2 style={{ borderBottom: 'none' }}>Join the TagObserver Developer Community</h2>
             <p style={{ fontSize: '1.1rem', color: '#9CA3AF' }}>Connect with other tracking specialists, share your custom recipes, and get help from our engineering team.</p>
             
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '2rem' }}>
@@ -28,8 +28,8 @@ export const Community = () => {
 
           <section style={{ marginTop: '4rem' }}>
             <h2>Contribute a Recipe</h2>
-            <p>Have a custom tracking module for an obscure booking engine or SaaS platform? The GTMAuto community thrives on shared knowledge.</p>
-            <p>If you have an exported JSON container that you'd like to convert into a GTMAuto module, please email our integration team at <a href="mailto:hello@gtmauto.io">hello@gtmauto.io</a> and we'll add it to the platform directory!</p>
+            <p>Have a custom tracking module for an obscure booking engine or SaaS platform? The TagObserver community thrives on shared knowledge.</p>
+            <p>If you have an exported JSON container that you'd like to convert into a TagObserver module, please email our integration team at <a href="mailto:hello@tagobserver.io">hello@tagobserver.io</a> and we'll add it to the platform directory!</p>
           </section>
         </motion.div>
       </div>

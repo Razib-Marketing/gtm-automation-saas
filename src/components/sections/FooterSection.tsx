@@ -40,7 +40,7 @@ export const FooterSection = () => {
         <div className="footer-top">
           <div className="footer-brand">
             <div className="footer-logo" style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
-              <img src="/gtmauto-logo.webp" alt="GTMAuto Logo" style={{ height: '48px', width: 'auto' }} />
+              <img src="/tagobserver-logo.webp" alt="TagObserver Logo" style={{ height: '48px', width: 'auto' }} />
             </div>
             <p className="footer-description">
               The Edge-Native Analytics Platform. Deploy advanced tracking architectures across your domains in seconds with zero latency.
@@ -89,7 +89,7 @@ export const FooterSection = () => {
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} All rights reserved by GTMAuto.</p>
+          <p>&copy; {new Date().getFullYear()} All rights reserved by TagObserver.</p>
           <div className="footer-legal">
             <Link to="/privacy-policy">Privacy Policy</Link>
             <Link to="/terms-of-service">Terms of Service</Link>

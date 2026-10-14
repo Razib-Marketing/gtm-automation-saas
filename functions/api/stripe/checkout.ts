@@ -41,7 +41,7 @@ export async function onRequestPost(context: any) {
     const customPrice = hasDiscount ? Math.floor(baseCustomPrice * 0.9) : baseCustomPrice;
 
     const unitAmount = tier === 'pro' ? 14900 : customPrice * 100;
-    const productName = tier === 'pro' ? 'GTMAuto Pro Plan' : 'GTMAuto Custom Plan';
+    const productName = tier === 'pro' ? 'TagObserver Pro Plan' : 'TagObserver Custom Plan';
     const productDesc = tier === 'pro' ? 'Up to 10 GTM Workspaces' : `Up to ${quantity} GTM Workspaces${hasDiscount ? ' (10% Volume Discount)' : ''}`;
 
     const sessionData: any = {

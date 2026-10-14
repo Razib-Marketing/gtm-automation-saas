@@ -12,8 +12,8 @@ async function sendPurchaseSuccessEmail(env: any, email: string, name: string, t
     <body style="margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff;">
       <div style="max-width: 600px; margin: 30px auto; background-color: #111827; border-radius: 16px; overflow: hidden; border: 1px solid #1f2937; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         <div style="background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%); padding: 32px 24px; text-align: center; border-bottom: 1px solid #1f2937;">
-          <h2 style="margin: 0; color: #00F0FF; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;">GTM Auto</h2>
-          <p style="margin: 6px 0 0 0; color: #9ca3af; font-size: 14px;">Automation & GA4 Observer Intelligence</p>
+          <h2 style="margin: 0; color: #00F0FF; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;">TagObserver</h2>
+          <p style="margin: 6px 0 0 0; color: #9ca3af; font-size: 14px;">Automated GTM Deployment & GA4 Observer Intelligence</p>
         </div>
         <div style="padding: 32px 28px;">
           <div style="display: inline-block; background-color: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 9999px; padding: 4px 14px; margin-bottom: 16px;">
@@ -71,9 +71,9 @@ async function sendPurchaseSuccessEmail(env: any, email: string, name: string, t
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: `GTM Auto <${senderEmail}>`,
+          from: `TagObserver <${senderEmail}>`,
           to: [email],
-          subject: `Payment Confirmed: Welcome to GTM Auto ${planName}!`,
+          subject: `Payment Confirmed: Welcome to TagObserver ${planName}!`,
           html: htmlContent
         })
       });
@@ -89,9 +89,9 @@ async function sendPurchaseSuccessEmail(env: any, email: string, name: string, t
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email, name: name || 'GTM Auto User' }] }],
-        from: { email: 'no-reply@gtm-automation-saas.ovi-e69.workers.dev', name: 'GTM Auto' },
-        subject: `Payment Confirmed: Welcome to GTM Auto ${planName}!`,
+        personalizations: [{ to: [{ email, name: name || 'TagObserver User' }] }],
+        from: { email: 'no-reply@gtm-automation-saas.ovi-e69.workers.dev', name: 'TagObserver' },
+        subject: `Payment Confirmed: Welcome to TagObserver ${planName}!`,
         content: [{ type: 'text/html', value: htmlContent }]
       })
     });

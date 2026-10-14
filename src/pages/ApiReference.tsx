@@ -19,7 +19,7 @@ export const ApiReference = () => {
 
           <section>
             <h2>Overview</h2>
-            <p>GTMAuto interfaces directly with the <a href="https://developers.google.com/tag-platform/tag-manager/api/v2" target="_blank" rel="noopener noreferrer">Google Tag Manager API v2</a> to programmatically build container structures.</p>
+            <p>TagObserver interfaces directly with the <a href="https://developers.google.com/tag-platform/tag-manager/api/v2" target="_blank" rel="noopener noreferrer">Google Tag Manager API v2</a> to programmatically build container structures.</p>
           </section>
 
           <section>
@@ -37,7 +37,7 @@ export const ApiReference = () => {
 
           <section>
             <h2>Rate Limiting</h2>
-            <p>GTMAuto handles Google's API quota limits by implementing intelligent polling and delay mechanics (2000ms between POST requests) to prevent 429 Too Many Requests errors when deploying large architectures like hotel booking engines.</p>
+            <p>TagObserver handles Google's API quota limits by implementing intelligent polling and delay mechanics (2000ms between POST requests) to prevent 429 Too Many Requests errors when deploying large architectures like hotel booking engines.</p>
           </section>
         </motion.div>
       </div>

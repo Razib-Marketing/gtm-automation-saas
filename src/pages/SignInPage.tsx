@@ -12,7 +12,7 @@ export const SignInPage = () => {
       <header className="navbar" style={{ position: 'absolute', background: 'transparent' }}>
         <div className="navbar-container">
           <Link to="/" className="navbar-logo" style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/gtmauto-logo.webp" alt="GTMAuto Logo" style={{ height: '40px', width: 'auto' }} />
+            <img src="/tagobserver-logo.webp" alt="TagObserver Logo" style={{ height: '42px', width: 'auto' }} />
           </Link>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#9CA3AF', textDecoration: 'none', fontWeight: 500, transition: 'color 0.3s' }} onMouseEnter={(e) => e.currentTarget.style.color = 'white'} onMouseLeave={(e) => e.currentTarget.style.color = '#9CA3AF'}>
             <span>Close</span>

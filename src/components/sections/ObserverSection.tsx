@@ -199,7 +199,7 @@ export const ObserverSection: React.FC = () => {
             <Sparkles size={22} color="#00F0FF" />
             <div>
               <h3>How GA4 Observer is Included in Your Plan</h3>
-              <p>Observer is fully built into your GTMAuto subscription with tiered monitor limits.</p>
+              <p>Observer is fully built into your TagObserver subscription with tiered monitor limits.</p>
             </div>
           </div>
 

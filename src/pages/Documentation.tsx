@@ -19,9 +19,9 @@ export const Documentation = () => {
 
           <section>
             <h2>Getting Started</h2>
-            <p>Welcome to the GTMAuto documentation. This guide will help you understand how to use our platform to automate your Google Tag Manager deployments.</p>
+            <p>Welcome to the TagObserver documentation. This guide will help you understand how to use our platform to automate your Google Tag Manager deployments.</p>
             <ul>
-              <li><strong>Connect GTM:</strong> Navigate to the dashboard and securely authorize GTMAuto to manage your containers.</li>
+              <li><strong>Connect GTM:</strong> Navigate to the dashboard and securely authorize TagObserver to manage your containers.</li>
               <li><strong>Select Modules:</strong> Choose from our library of enterprise tracking recipes, spanning basic clicks to complex e-commerce data layers.</li>
               <li><strong>Deploy:</strong> Click 'Deploy Selected Modules' and watch as your tags, triggers, and variables are built natively via the API.</li>
             </ul>
@@ -29,7 +29,7 @@ export const Documentation = () => {
 
           <section>
             <h2>Supported Tracking Modules</h2>
-            <p>GTMAuto currently supports automated deployments for:</p>
+            <p>TagObserver currently supports automated deployments for:</p>
             <ul>
               <li>Basic & Outbound Clicks (Phone, Email, Social, OTAs)</li>
               <li>Form Tracking (Elementor, Gravity Forms, HubSpot, Salesforce)</li>
@@ -50,7 +50,7 @@ export const Documentation = () => {
 
           <section>
             <h2>Troubleshooting</h2>
-            <p>If you encounter the "Already Exists" error during deployment, it means your container already has a Tag, Trigger, or Variable with that exact name. GTMAuto skips these to protect your existing configurations. If you hit an audit limitation, please check your subscription tier on the Settings page.</p>
+            <p>If you encounter the "Already Exists" error during deployment, it means your container already has a Tag, Trigger, or Variable with that exact name. TagObserver skips these to protect your existing configurations. If you hit an audit limitation, please check your subscription tier on the Settings page.</p>
           </section>
         </motion.div>
       </div>
