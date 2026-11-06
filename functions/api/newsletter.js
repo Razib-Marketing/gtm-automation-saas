@@ -47,7 +47,20 @@ export async function onRequestPost(context) {
                 <!-- Header Banner -->
                 <tr>
                   <td style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); padding: 28px 24px; text-align: left; border-bottom: 1px solid #1E293B;">
-                    <img src="https://gtmobserver.com/gtmobserver-logo.webp" alt="GTMObserver" height="36" style="display: block; border: 0; margin-bottom: 14px;" />
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                      <tr>
+                        <td align="left" valign="middle">
+                          <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
+                            <img src="https://gtmobserver.com/gtmobserver-logo.png" 
+                                 alt="GTMObserver" 
+                                 width="190" 
+                                 height="35" 
+                                 border="0"
+                                 style="display: block; width: 190px !important; max-width: 190px !important; height: 35px !important; border: 0; outline: none; text-decoration: none;" />
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
                     <span style="display: inline-block; background-color: rgba(56, 189, 248, 0.12); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px;">
                       📬 NEW NEWSLETTER SUBSCRIBER
                     </span>
@@ -139,7 +152,20 @@ export async function onRequestPost(context) {
                 <!-- Header Banner -->
                 <tr>
                   <td style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); padding: 28px 24px; text-align: left; border-bottom: 1px solid #1E293B;">
-                    <img src="https://gtmobserver.com/gtmobserver-logo.webp" alt="GTMObserver" height="36" style="display: block; border: 0; margin-bottom: 14px;" />
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                      <tr>
+                        <td align="left" valign="middle">
+                          <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
+                            <img src="https://gtmobserver.com/gtmobserver-logo.png" 
+                                 alt="GTMObserver" 
+                                 width="190" 
+                                 height="35" 
+                                 border="0"
+                                 style="display: block; width: 190px !important; max-width: 190px !important; height: 35px !important; border: 0; outline: none; text-decoration: none;" />
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
                     <span style="display: inline-block; background-color: rgba(0, 240, 255, 0.12); color: #00F0FF; border: 1px solid rgba(0, 240, 255, 0.3); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px;">
                       🚀 WELCOME TO GTM OBSERVER INSIDER
                     </span>
