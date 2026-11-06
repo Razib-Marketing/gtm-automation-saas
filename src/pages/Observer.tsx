@@ -145,6 +145,45 @@ const INCIDENT_TEMPLATES: IncidentTemplate[] = [
     ]
   },
   {
+    id: 'contact_form_crash',
+    name: 'Contact & RFP Form Submission Crash',
+    icon: '📩',
+    category: 'Lead Generation',
+    description: 'Instant alert when contact inquiries and RFP lead form submissions drop by over 30% while sessions continue (broken backend or API timeout).',
+    matchType: 'ANY',
+    period: 'yesterday_vs_last_week',
+    conditions: [
+      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 },
+      { metric: 'sessions', source: 'all', medium: '', conditionType: 'changes_by', thresholdPercentage: 15 }
+    ]
+  },
+  {
+    id: 'newsletter_signup_slump',
+    name: 'Newsletter & Audience Signup Slump',
+    icon: '📬',
+    category: 'Audience Acquisition',
+    description: 'Alert if email newsletter subscriber growth or audience captures decline by more than 25% compared to prior 7 days.',
+    matchType: 'ANY',
+    period: 'last_7_vs_previous_7',
+    conditions: [
+      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 },
+      { metric: 'activeUsers', source: 'all', medium: '', conditionType: 'changes_by', thresholdPercentage: 20 }
+    ]
+  },
+  {
+    id: 'form_abandonment_spike',
+    name: 'Form Abandonment & Validation Errors',
+    icon: '⚠️',
+    category: 'Lead Generation',
+    description: 'Engaged users remain stable but conversions drop sharply (detects broken validation scripts, form CAPTCHA lockouts, or failed submit buttons).',
+    matchType: 'ALL',
+    period: 'yesterday_vs_last_week',
+    conditions: [
+      { metric: 'engagementRate', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 10 },
+      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 35 }
+    ]
+  },
+  {
     id: 'ux_bounce_spike',
     name: 'High Bounce Rate & UX Glitch',
     icon: '📱',
