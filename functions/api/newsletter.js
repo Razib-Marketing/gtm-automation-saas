@@ -50,12 +50,12 @@ export async function onRequestPost(context) {
                       <tr>
                         <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="https://gtmobserver.com/gtmobserver-logo-email.png" 
+                            <img src="https://gtmobserver.com/gtmobserver-logo.png" 
                                  alt="GTMObserver" 
-                                 width="170" 
-                                 height="31" 
+                                 width="190" 
+                                 height="35" 
                                  border="0" 
-                                 style="display: block; width: 170px; height: 31px; max-width: 170px; max-height: 31px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 31px;" />
+                                 style="display: block; width: 190px; height: 35px; max-width: 190px; max-height: 35px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 35px;" />
                           </a>
                         </td>
                       </tr>
@@ -160,12 +160,12 @@ export async function onRequestPost(context) {
                       <tr>
                         <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="https://gtmobserver.com/gtmobserver-logo-email.png" 
+                            <img src="https://gtmobserver.com/gtmobserver-logo.png" 
                                  alt="GTMObserver" 
-                                 width="170" 
-                                 height="31" 
+                                 width="190" 
+                                 height="35" 
                                  border="0" 
-                                 style="display: block; width: 170px; height: 31px; max-width: 170px; max-height: 31px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 31px;" />
+                                 style="display: block; width: 190px; height: 35px; max-width: 190px; max-height: 35px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 35px;" />
                           </a>
                         </td>
                       </tr>
