@@ -1,5 +1,3 @@
-import { GTM_LOGO_BASE64 } from './_email_assets';
-
 export async function onRequestPost(context) {
   const { request, env, waitUntil } = context;
 
@@ -24,13 +22,6 @@ export async function onRequestPost(context) {
       dateStyle: 'medium',
       timeStyle: 'short'
     }) + ' UTC';
-
-    const logoAttachment = {
-      filename: 'gtmobserver-logo.png',
-      content: GTM_LOGO_BASE64,
-      content_type: 'image/png',
-      cid: 'gtmobserver-logo'
-    };
 
     // 1. Human-Crafted Admin Notification
     const adminHtml = `
@@ -59,12 +50,12 @@ export async function onRequestPost(context) {
                       <tr>
                         <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="cid:gtmobserver-logo" 
+                            <img src="https://gtmobserver.com/gtmobserver-logo-email.png" 
                                  alt="GTMObserver" 
                                  width="170" 
                                  height="31" 
                                  border="0" 
-                                 style="display: block; width: 170px; height: 31px; border: 0; outline: none;" />
+                                 style="display: block; width: 170px; height: 31px; max-width: 170px; max-height: 31px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 31px;" />
                           </a>
                         </td>
                       </tr>
@@ -169,12 +160,12 @@ export async function onRequestPost(context) {
                       <tr>
                         <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="cid:gtmobserver-logo" 
+                            <img src="https://gtmobserver.com/gtmobserver-logo-email.png" 
                                  alt="GTMObserver" 
                                  width="170" 
                                  height="31" 
                                  border="0" 
-                                 style="display: block; width: 170px; height: 31px; border: 0; outline: none;" />
+                                 style="display: block; width: 170px; height: 31px; max-width: 170px; max-height: 31px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 31px;" />
                           </a>
                         </td>
                       </tr>
@@ -242,7 +233,7 @@ export async function onRequestPost(context) {
       </html>
     `;
 
-    // 1. Dispatch Admin Notification via Resend with embedded CID logo
+    // 1. Dispatch Admin Notification via Resend directly (No file attachments)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -254,8 +245,7 @@ export async function onRequestPost(context) {
         to: ['ovi@razibmarketing.net'],
         reply_to: email,
         subject: `New newsletter subscriber: ${email}`,
-        html: adminHtml,
-        attachments: [logoAttachment]
+        html: adminHtml
       })
     });
 
@@ -269,7 +259,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    // 2. Dispatch Subscriber Welcome Email (Non-blocking) with embedded CID logo
+    // 2. Dispatch Subscriber Welcome Email (Non-blocking) directly
     const sendWelcome = async () => {
       try {
         await fetch('https://api.resend.com/emails', {
@@ -283,8 +273,7 @@ export async function onRequestPost(context) {
             to: [email],
             reply_to: 'info@gtmobserver.com',
             subject: `Welcome to GTMObserver Insider`,
-            html: subscriberHtml,
-            attachments: [logoAttachment]
+            html: subscriberHtml
           })
         });
       } catch (e) {

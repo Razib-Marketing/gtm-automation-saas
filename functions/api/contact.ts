@@ -1,5 +1,3 @@
-import { GTM_LOGO_BASE64 } from './_email_assets';
-
 export async function onRequestPost(context: any) {
   const { request, env, waitUntil } = context;
 
@@ -51,12 +49,12 @@ export async function onRequestPost(context: any) {
                       <tr>
                         <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="cid:gtmobserver-logo" 
+                            <img src="https://gtmobserver.com/gtmobserver-logo-email.png" 
                                  alt="GTMObserver" 
                                  width="170" 
                                  height="31" 
                                  border="0" 
-                                 style="display: block; width: 170px; height: 31px; border: 0; outline: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 18px; font-weight: 800; color: #FFFFFF;" />
+                                 style="display: block; width: 170px; height: 31px; max-width: 170px; max-height: 31px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 31px;" />
                           </a>
                         </td>
                       </tr>
@@ -167,12 +165,12 @@ export async function onRequestPost(context: any) {
                       <tr>
                         <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="cid:gtmobserver-logo" 
+                            <img src="https://gtmobserver.com/gtmobserver-logo-email.png" 
                                  alt="GTMObserver" 
                                  width="170" 
                                  height="31" 
                                  border="0" 
-                                 style="display: block; width: 170px; height: 31px; border: 0; outline: none;" />
+                                 style="display: block; width: 170px; height: 31px; max-width: 170px; max-height: 31px; border: 0; outline: none; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; color: #00E5FF; line-height: 31px;" />
                           </a>
                         </td>
                       </tr>
@@ -244,14 +242,7 @@ export async function onRequestPost(context: any) {
       </html>
     `;
 
-    const logoAttachment = {
-      filename: 'gtmobserver-logo.png',
-      content: GTM_LOGO_BASE64,
-      content_type: 'image/png',
-      cid: 'gtmobserver-logo'
-    };
-
-    // Send Admin Notification Email via Resend with embedded CID logo
+    // Send Admin Notification Email via Resend directly (No file attachments)
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -263,8 +254,7 @@ export async function onRequestPost(context: any) {
         to: ['ovi@razibmarketing.net'],
         reply_to: email,
         subject: `New inquiry from ${name}`,
-        html: adminHtml,
-        attachments: [logoAttachment]
+        html: adminHtml
       })
     });
 
@@ -280,7 +270,7 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    // Send Customer Confirmation Autoresponder Email (Non-blocking) with embedded CID logo
+    // Send Customer Confirmation Autoresponder Email (Non-blocking) directly
     const sendAutoresponder = async () => {
       try {
         await fetch('https://api.resend.com/emails', {
@@ -294,8 +284,7 @@ export async function onRequestPost(context: any) {
             to: [email],
             reply_to: 'contact@gtmobserver.com',
             subject: `We received your message – GTMObserver`,
-            html: customerHtml,
-            attachments: [logoAttachment]
+            html: customerHtml
           })
         });
       } catch (e) {
