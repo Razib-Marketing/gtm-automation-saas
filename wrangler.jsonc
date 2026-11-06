@@ -7,6 +7,12 @@
     "directory": "./dist",
     "binding": "ASSETS"
   },
+  "routes": [
+    { "pattern": "gtmobserver.com", "custom_domain": true },
+    { "pattern": "www.gtmobserver.com", "custom_domain": true },
+    { "pattern": "app.gtmobserver.com", "custom_domain": true },
+    { "pattern": "dashboard.gtmobserver.com", "custom_domain": true }
+  ],
   "account_id": "e6935eeaed0033bef01efe59dd5b9337",
   "d1_databases": [
     {

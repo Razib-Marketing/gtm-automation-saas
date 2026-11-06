@@ -4,7 +4,6 @@ import { Hono } from 'hono';
 import * as route_0 from '../functions/api/auth/google/callback.ts';
 import * as route_1 from '../functions/api/auth/google/login.ts';
 import * as route_2 from '../functions/api/auth/status.ts';
-import * as route_3 from '../functions/api/contact.js';
 import * as route_4 from '../functions/api/contact.ts';
 import * as route_5 from '../functions/api/ga4/cron.ts';
 import * as route_6 from '../functions/api/ga4/monitors.ts';
@@ -101,6 +100,28 @@ app.get('*', async (c) => {
     return c.json({ error: 'API route not found' }, 404);
   }
   const url = new URL(c.req.url);
+
+  // Canonical redirect from dashboard.gtmobserver.com -> app.gtmobserver.com
+  if (url.hostname === 'dashboard.gtmobserver.com') {
+    url.hostname = 'app.gtmobserver.com';
+    return c.redirect(url.toString(), 301);
+  }
+
+  // If visiting an app route on the marketing domain, redirect to app.gtmobserver.com
+  if (url.hostname === 'gtmobserver.com' || url.hostname === 'www.gtmobserver.com') {
+    const appRoutes = ['/dashboard', '/observer', '/projects', '/analytics', '/settings', '/support'];
+    if (appRoutes.some(r => url.pathname === r || url.pathname.startsWith(r + '/'))) {
+      url.hostname = 'app.gtmobserver.com';
+      return c.redirect(url.toString(), 302);
+    }
+  }
+
+  // Try fetching direct static asset (e.g. /robots.txt, /sitemap.xml, /llms.txt, etc.)
+  const assetRes = await c.env.ASSETS.fetch(c.req.raw);
+  if (assetRes.status !== 404) {
+    return assetRes;
+  }
+
   url.pathname = '/';
   return c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw));
 });
@@ -112,7 +133,7 @@ export default {
     const cronModule = routes['/api/ga4/cron'];
     if (cronModule && cronModule.onRequestGet) {
         // Mock a request just to satisfy the function signature
-        const request = new Request('https://gtm-automation-saas.pages.dev/api/ga4/cron?token=' + (env.CRON_SECRET || ''));
+        const request = new Request('https://gtmobserver.com/api/ga4/cron?token=' + (env.CRON_SECRET || ''));
         const context = {
             request,
             env,

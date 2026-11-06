@@ -86,6 +86,27 @@ export async function onRequest(context: any) {
 
   if (request.method === 'POST') {
     try {
+      let userRow: any = null;
+      try {
+        userRow = await env.DB.prepare('SELECT email, subscription_tier FROM users WHERE id = ?').bind(userId).first();
+      } catch (_) {}
+      const userEmail = (userRow?.email || '').toLowerCase().trim();
+      const ADMIN_EMAILS = [
+        'ovi.cse23@gmail.com',
+        'ovi@razibmarketing.net',
+        'ovi@razibmarekting.net',
+        'support@cogwheelmarketing.com'
+      ];
+      const isAdmin = ADMIN_EMAILS.includes(userEmail);
+      const tier = isAdmin ? 'custom' : (userRow?.subscription_tier || 'free');
+
+      if (tier === 'free') {
+        return new Response(JSON.stringify({ 
+          error: 'An active paid subscription (Pro or Custom) is required to activate GA4 anomaly monitors. Please choose a plan on our pricing page.',
+          requiresUpgrade: true
+        }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+      }
+
       const body = await request.json();
       const { id, propertyId, propertyName, comparisonPeriod, matchType } = body;
       

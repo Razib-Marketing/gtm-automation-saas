@@ -5,10 +5,12 @@ import {
   ArrowRight, Filter, Sparkles 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { SignedIn, SignedOut, SignUpButton } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
+import { pushDataLayer } from '../../utils/analytics';
 import './ObserverSection.css';
 
 export const ObserverSection: React.FC = () => {
+  const { isSignedIn } = useAuth();
   return (
     <section className="observer-section" id="observer">
       <div className="observer-container">
@@ -199,7 +201,7 @@ export const ObserverSection: React.FC = () => {
             <Sparkles size={22} color="#00F0FF" />
             <div>
               <h3>How GA4 Observer is Included in Your Plan</h3>
-              <p>Observer is fully built into your TagObserver subscription with tiered monitor limits.</p>
+              <p>Observer is fully built into your GTMObserver subscription with tiered monitor limits.</p>
             </div>
           </div>
 
@@ -242,19 +244,31 @@ export const ObserverSection: React.FC = () => {
           </div>
 
           <div className="observer-cta-actions">
-            <SignedOut>
-              <SignUpButton mode="modal">
-                <button className="btn-primary" style={{ padding: '0.85rem 2rem', fontSize: '1rem' }}>
-                  Start Monitoring for Free <ArrowRight size={18} style={{ marginLeft: '6px' }} />
-                </button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              <Link to="/observer" className="btn-primary" style={{ padding: '0.85rem 2rem', fontSize: '1rem' }}>
+            {isSignedIn ? (
+              <a 
+                href="https://app.gtmobserver.com/observer" 
+                className="btn-primary" 
+                style={{ padding: '0.85rem 2rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+                onClick={() => pushDataLayer('cta_click', { cta_text: 'Open GA4 Observer', cta_location: 'observer_section' })}
+              >
                 Open GA4 Observer <ArrowRight size={18} style={{ marginLeft: '6px' }} />
+              </a>
+            ) : (
+              <Link 
+                to="/sign-up" 
+                className="btn-primary" 
+                style={{ padding: '0.85rem 2rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center' }}
+                onClick={() => pushDataLayer('cta_click', { cta_text: 'Start Monitoring for Free', cta_location: 'observer_section' })}
+              >
+                Start Monitoring for Free <ArrowRight size={18} style={{ marginLeft: '6px' }} />
               </Link>
-            </SignedIn>
-            <Link to="/pricing" className="btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem' }}>
+            )}
+            <Link 
+              to="/pricing" 
+              className="btn-secondary" 
+              style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem' }}
+              onClick={() => pushDataLayer('cta_click', { cta_text: 'View All Pricing Details', cta_location: 'observer_section' })}
+            >
               View All Pricing Details
             </Link>
           </div>

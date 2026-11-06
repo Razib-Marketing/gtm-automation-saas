@@ -1,4 +1,4 @@
-import { getGoogleAccessToken } from './_utils';
+import { getGoogleAccessToken, extractClerkUserId } from './_utils';
 import { safaraTemplate, synxisTemplate, ihotelierTemplate, windsurferTemplate, mewsTemplate, woocommerceTemplate, getBasicTemplate } from './templates/index';
 
 // Only used for payload generation
@@ -354,6 +354,28 @@ export async function onRequest(context) {
       for (const config of moduleConfigs) {
         configMap.set(config.id, config);
       }
+    }
+
+    const clerkUserId = extractClerkUserId(request);
+    let userRow: any = null;
+    try {
+      userRow = await env.DB.prepare('SELECT email, subscription_tier FROM users WHERE id = ?').bind(clerkUserId).first();
+    } catch (_) {}
+    const userEmail = (userRow?.email || '').toLowerCase().trim();
+    const ADMIN_EMAILS = [
+      'ovi.cse23@gmail.com',
+      'ovi@razibmarketing.net',
+      'ovi@razibmarekting.net',
+      'support@cogwheelmarketing.com'
+    ];
+    const isAdmin = ADMIN_EMAILS.includes(userEmail);
+    const tier = isAdmin ? 'custom' : (userRow?.subscription_tier || 'free');
+
+    if (tier === 'free') {
+      return new Response(JSON.stringify({ 
+        error: 'An active paid subscription (Pro or Custom) is required to deploy tracking recipes. Please choose a plan on our pricing page.',
+        requiresUpgrade: true
+      }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
 
     const accessToken = await getGoogleAccessToken(env, request);

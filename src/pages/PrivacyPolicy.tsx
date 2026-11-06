@@ -19,7 +19,7 @@ export const PrivacyPolicy = () => {
 
           <section>
             <h2>1. Introduction</h2>
-            <p>Welcome to TagObserver. We respect your privacy and are committed to protecting your personal data. This Privacy Policy will inform you as to how we look after your personal data when you visit our website and use our Google Tag Manager automation services.</p>
+            <p>Welcome to GTMObserver. We respect your privacy and are committed to protecting your personal data. This Privacy Policy will inform you as to how we look after your personal data when you visit our website and use our Google Tag Manager automation services.</p>
           </section>
 
           <section>
@@ -41,7 +41,7 @@ export const PrivacyPolicy = () => {
               <li>To manage your account and provide customer support.</li>
             </ul>
             <h3>Google API Services User Data Policy</h3>
-            <p>TagObserver's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+            <p>GTMObserver's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
             <p>Specifically, we require the <code>https://www.googleapis.com/auth/tagmanager.edit.containers</code> scope to programmatically create, edit, and publish tags, triggers, and variables inside your designated Google Tag Manager containers. We do not sell this data, and we do not use this data for serving advertisements.</p>
           </section>
 
@@ -57,7 +57,7 @@ export const PrivacyPolicy = () => {
 
           <section>
             <h2>6. Contact Us</h2>
-            <p>If you have any questions about this Privacy Policy, please contact us at support@tagobserver.io.</p>
+            <p>If you have any questions about this Privacy Policy, please contact us at support@gtmobserver.com.</p>
           </section>
         </motion.div>
       </div>

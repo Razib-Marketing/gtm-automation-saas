@@ -54,7 +54,7 @@ export const Settings = () => {
       } else {
         alert(data.error || 'Failed to create checkout session');
       }
-    } catch (err) {
+    } catch (_err) {
       alert('Error connecting to checkout');
     } finally {
       setCheckoutLoading(false);

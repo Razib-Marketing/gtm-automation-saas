@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { ClerkProvider } from '@clerk/clerk-react';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { ClerkProvider, useAuth } from '@clerk/clerk-react';
 import { dark } from '@clerk/themes';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
@@ -22,6 +22,8 @@ import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
 import Pricing from './pages/Pricing';
 import { AnimatePresence } from 'framer-motion';
+import { CookieConsent } from './components/ui/CookieConsent';
+import { Loader2 } from 'lucide-react';
 import './App.css';
 
 class ErrorBoundary extends React.Component {
@@ -58,6 +60,30 @@ if (!PUBLISHABLE_KEY) {
   throw new Error("Missing Publishable Key");
 }
 
+const RootRoute = () => {
+  const { isSignedIn, isLoaded } = useAuth();
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isAppSubdomain = hostname === 'app.gtmobserver.com' || hostname === 'dashboard.gtmobserver.com';
+
+  if (isAppSubdomain) {
+    if (!isLoaded) {
+      return (
+        <div style={{ minHeight: '100vh', background: '#0a0d14', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Loader2 className="animate-spin text-cyan-400" size={32} />
+        </div>
+      );
+    }
+    if (isSignedIn) {
+      return <Navigate to="/dashboard" replace />;
+    } else {
+      window.location.replace('https://gtmobserver.com');
+      return null;
+    }
+  }
+
+  return <Home />;
+};
+
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -78,7 +104,7 @@ const AppRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/observer" element={<Observer />} />
         <Route path="/projects" element={<Projects />} />
@@ -100,28 +126,40 @@ const AppRoutes = () => {
 
 const AppLayout = () => {
   const location = useLocation();
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isMarketingDomain = hostname === 'gtmobserver.com' || hostname === 'www.gtmobserver.com';
+
   const innerPaths = ['/dashboard', '/settings', '/projects', '/analytics', '/support', '/observer'];
   const isInnerApp = innerPaths.some(path => location.pathname.startsWith(path));
   const isAuthPage = location.pathname.startsWith('/sign-in') || location.pathname.startsWith('/sign-up');
 
+  // If a user navigates directly to an app route on the marketing domain, redirect to app.gtmobserver.com
+  React.useEffect(() => {
+    if (isMarketingDomain && isInnerApp) {
+      window.location.replace(`https://app.gtmobserver.com${location.pathname}${location.search}${location.hash}`);
+    }
+  }, [location.pathname, isMarketingDomain, isInnerApp]);
+
   return (
     <div className="app-wrapper">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       {!isInnerApp && !isAuthPage && <Navbar />}
       
       {isInnerApp ? (
         <div className="inner-app-layout">
           <Sidebar />
-          <main className="inner-main-content">
+          <main id="main-content" tabIndex={-1} className="inner-main-content">
             <AppRoutes />
           </main>
         </div>
       ) : (
-        <main className="main-content">
+        <main id="main-content" tabIndex={-1} className="main-content">
           <AppRoutes />
         </main>
       )}
 
       {!isInnerApp && !isAuthPage && <FooterSection />}
+      <CookieConsent />
     </div>
   );
 };
@@ -132,6 +170,8 @@ function App() {
       publishableKey={PUBLISHABLE_KEY} 
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
+      afterSignInUrl="https://gtmobserver.com"
+      afterSignUpUrl="https://gtmobserver.com"
       appearance={{ baseTheme: dark, variables: { colorPrimary: '#00F0FF', colorBackground: '#121212', colorText: 'white' } }}
     >
       <Router>

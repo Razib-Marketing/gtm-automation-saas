@@ -1,27 +1,37 @@
-export async function getGoogleAccessToken(env: any, request: Request) {
+export function extractClerkUserId(request: Request): string {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('Missing Clerk Authorization header');
+    throw new Error('Missing Clerk Authorization header. Please sign in or refresh your session.');
   }
 
-  const token = authHeader.split(' ')[1];
-  let clerkUserId = null;
+  const token = authHeader.substring(7).trim();
+  if (!token || token === 'null' || token === 'undefined') {
+    throw new Error('Authentication token is missing or not yet loaded. Please refresh your session.');
+  }
+
+  const parts = token.split('.');
+  if (parts.length < 2 || !parts[1]) {
+    throw new Error('Malformed authentication token. Please re-authenticate.');
+  }
+
   try {
-    let payloadBase64 = token.split('.')[1];
-    payloadBase64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    let payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     while (payloadBase64.length % 4) {
       payloadBase64 += '=';
     }
     const payloadString = atob(payloadBase64);
     const payload = JSON.parse(payloadString);
-    clerkUserId = payload.sub;
-  } catch (e) {
-    throw new Error('Invalid Clerk token: ' + e.message);
+    if (!payload.sub) {
+      throw new Error('User ID not present in token');
+    }
+    return payload.sub;
+  } catch (e: any) {
+    throw new Error('Invalid Clerk token: ' + (e.message || 'Unable to decode'));
   }
+}
 
-  if (!clerkUserId) {
-    throw new Error('Could not extract user ID from token');
-  }
+export async function getGoogleAccessToken(env: any, request: Request) {
+  const clerkUserId = extractClerkUserId(request);
 
   const dbResult = await env.DB.prepare(`
     SELECT encrypted_refresh_token 

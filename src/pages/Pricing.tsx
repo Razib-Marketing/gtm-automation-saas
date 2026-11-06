@@ -1,26 +1,67 @@
 import { useState, useEffect } from 'react';
-import { useAuth, useUser, RedirectToSignIn } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
+import { Link } from 'react-router-dom';
 import { Check, X, Shield, Sparkles, Loader2 } from 'lucide-react';
+import { pushDataLayer } from '../utils/analytics';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import './Pricing.css';
 
 export default function Pricing() {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const [containers, setContainers] = useState(10);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [currentTier, setCurrentTier] = useState('free');
 
   useEffect(() => {
+    pushDataLayer('view_item_list', {
+      ecommerce: {
+        item_list_id: 'pricing_plans',
+        item_list_name: 'Subscription Plans',
+        items: [
+          { item_id: 'plan_pro', item_name: 'GTMObserver Pro Tier', price: 149, item_category: 'Subscription', quantity: 1 },
+          { item_id: 'plan_custom', item_name: 'GTMObserver Custom Tier', price: 149, item_category: 'Subscription', quantity: 1 }
+        ]
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     if (user) {
       fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(user.primaryEmailAddress?.emailAddress || '')}`)
         .then(res => res.json())
-        .then(data => setCurrentTier(data.subscription_tier || 'free'));
+        .then(data => setCurrentTier(data.subscription_tier || 'free'))
+        .catch(() => {});
     }
   }, [user]);
 
   const handleCheckout = async (tier: 'pro' | 'custom') => {
+    const checkoutPrice = tier === 'custom' ? customPrice : 149;
+    pushDataLayer('begin_checkout', {
+      ecommerce: {
+        currency: 'USD',
+        value: checkoutPrice,
+        items: [
+          {
+            item_id: tier === 'custom' ? 'plan_custom' : 'plan_pro',
+            item_name: tier === 'custom' ? `GTMObserver Custom Tier (${containers} Containers)` : 'GTMObserver Pro Tier',
+            item_category: 'Subscription',
+            price: checkoutPrice,
+            quantity: 1
+          }
+        ]
+      },
+      tier,
+      containers: tier === 'custom' ? containers : 10,
+      price: checkoutPrice,
+      currency: 'USD'
+    });
+
+    if (!isSignedIn) {
+      window.location.href = `/sign-up?redirect_url=${encodeURIComponent('/pricing')}`;
+      return;
+    }
     setCheckoutLoading(true);
     try {
       const token = await getToken();
@@ -35,15 +76,12 @@ export default function Pricing() {
       } else {
         alert(data.error || 'Failed to create checkout session');
       }
-    } catch (err) {
+    } catch (_err) {
       alert('Error connecting to checkout');
     } finally {
       setCheckoutLoading(false);
     }
   };
-
-  if (!isLoaded) return null;
-  if (!isSignedIn) return <RedirectToSignIn />;
 
   const baseCustomPrice = Math.max(149, Math.ceil(containers * 14.9)); // 10 GTM Accounts = $149
   const hasDiscount = containers >= 15;
@@ -52,8 +90,6 @@ export default function Pricing() {
   return (
     <PageTransition locationKey="pricing">
       <BackgroundMesh />
-      
-
 
       <div className="pricing-page">
         <div className="pricing-header-text">
@@ -66,7 +102,11 @@ export default function Pricing() {
         <div className="pricing-grid-container">
           {/* Free Tier */}
           <div className="pricing-card-box">
-            {currentTier === 'free' && <div className="current-plan-badge" style={{ background: 'linear-gradient(135deg, #4F46E5, #00F0FF)', boxShadow: '0 4px 15px rgba(0, 240, 255, 0.4)', color: 'white', border: 'none' }}>Current Plan</div>}
+            {isSignedIn && currentTier === 'free' && (
+              <div className="current-plan-badge" style={{ background: 'linear-gradient(135deg, #4F46E5, #00F0FF)', boxShadow: '0 4px 15px rgba(0, 240, 255, 0.4)', color: 'white', border: 'none' }}>
+                Current Plan
+              </div>
+            )}
             <div className="tier-title-container">
               <h3 className="tier-title-header">Free</h3>
               <div className="tier-price-display">$0<span>/mo</span></div>
@@ -84,15 +124,23 @@ export default function Pricing() {
               <li><Check className="feature-icon-active" size={20} /> <span>5 GTM Workspace Audits</span></li>
             </ul>
             
-            <button className="checkout-btn muted" disabled>
-              {currentTier === 'free' ? 'Active' : 'Downgrade'}
-            </button>
+            {isSignedIn ? (
+              <button className="checkout-btn muted" disabled={currentTier === 'free'}>
+                {currentTier === 'free' ? 'Active' : 'Downgrade'}
+              </button>
+            ) : (
+              <Link to="/sign-up" className="checkout-btn muted" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+                Get Started Free
+              </Link>
+            )}
           </div>
 
           {/* Pro Tier */}
           <div className="pricing-card-box active-tier">
-            {currentTier === 'pro' ? (
-              <div className="current-plan-badge" style={{ background: 'linear-gradient(135deg, #4F46E5, #00F0FF)', boxShadow: '0 4px 15px rgba(0, 240, 255, 0.4)', color: 'white', border: 'none' }}>Current Plan</div>
+            {isSignedIn && currentTier === 'pro' ? (
+              <div className="current-plan-badge" style={{ background: 'linear-gradient(135deg, #4F46E5, #00F0FF)', boxShadow: '0 4px 15px rgba(0, 240, 255, 0.4)', color: 'white', border: 'none' }}>
+                Current Plan
+              </div>
             ) : (
               <div className="current-plan-badge">Most Popular</div>
             )}
@@ -118,16 +166,20 @@ export default function Pricing() {
             
             <button 
               onClick={() => handleCheckout('pro')}
-              disabled={checkoutLoading || currentTier === 'pro'}
+              disabled={checkoutLoading || (isSignedIn && currentTier === 'pro')}
               className="checkout-btn primary"
             >
-              {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : currentTier === 'pro' ? 'Active Plan' : 'Upgrade to Pro'}
+              {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : isSignedIn && currentTier === 'pro' ? 'Active Plan' : 'Upgrade to Pro'}
             </button>
           </div>
 
           {/* Custom Tier */}
           <div className="pricing-card-box">
-            {currentTier === 'custom' && <div className="current-plan-badge" style={{ background: 'linear-gradient(135deg, #4F46E5, #00F0FF)', boxShadow: '0 4px 15px rgba(0, 240, 255, 0.4)', color: 'white', border: 'none' }}>Current Plan</div>}
+            {isSignedIn && currentTier === 'custom' && (
+              <div className="current-plan-badge" style={{ background: 'linear-gradient(135deg, #4F46E5, #00F0FF)', boxShadow: '0 4px 15px rgba(0, 240, 255, 0.4)', color: 'white', border: 'none' }}>
+                Current Plan
+              </div>
+            )}
             <div className="tier-title-container">
               <div className="tier-title-header">
                 <Shield size={20} className="feature-icon-active" />
@@ -168,7 +220,7 @@ export default function Pricing() {
               disabled={checkoutLoading}
               className="checkout-btn outline"
             >
-              {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : currentTier === 'custom' ? 'Update Limits' : 'Contact Sales / Upgrade'}
+              {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : isSignedIn && currentTier === 'custom' ? 'Update Limits' : 'Contact Sales / Upgrade'}
             </button>
           </div>
         </div>

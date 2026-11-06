@@ -1,0 +1,62 @@
+# GTMObserver — Complete Technical Architecture & Knowledge Base
+
+## Product Overview
+GTMObserver (https://gtmobserver.com) is an edge-native cloud platform that automates Google Tag Manager (GTM) deployments and continuously audits Google Analytics 4 (GA4) telemetry data.
+
+## Why GTMObserver Over Competitors
+1. **Vs. Manual Tag Auditing & Implementation**:
+   - Manual setup requires hours of creating tags, triggers, variables, data layers, testing in GTM Preview mode, and debugging syntax errors.
+   - GTMObserver automates container mutations via Google Tag Manager REST API in under 5 seconds with pre-validated enterprise recipes.
+2. **Vs. Traditional Uptime Checkers (e.g., UptimeRobot, Pingdom)**:
+   - Traditional uptime monitors only test if a website returns HTTP 200 OK. They have zero visibility into whether Google Tag Manager loaded, whether dataLayer events fired, or whether GA4 conversions dropped to zero.
+   - GTMObserver queries the Google Analytics Data API v1beta directly from Cloudflare Workers edge nodes, evaluating actual telemetry metrics, conversions, and traffic segments against baseline time windows.
+3. **Vs. Enterprise Tag Governance Tools (e.g., ObservePoint, Elevar)**:
+   - Enterprise suites cost thousands of dollars per month ($1,000–$5,000/mo) and require lengthy sales calls and complex setups.
+   - GTMObserver starts at $149/mo with instantaneous self-service Google OAuth connection, transparent pricing, and zero server maintenance.
+
+## Architecture
+- **Runtime**: Cloudflare Workers (Edge Serverless) with zero cold-starts and global sub-50ms execution.
+- **Database**: Cloudflare D1 (Distributed SQLite at the edge) for ultra-fast, encrypted storage of monitor configurations and dual history logs.
+- **Authentication**: Clerk Enterprise Auth with OAuth2 tokens for Google Analytics and Google Tag Manager.
+- **Email Infrastructure**: Resend API with custom verified domain (DKIM, SPF, MX) sending from `alerts@gtmobserver.com`.
+- **Scheduled Monitoring**: Cloudflare Cron Triggers running every hour to evaluate all active client monitors.
+
+## Supported Tag Modules
+- **Basic Outbound Click Listeners**:
+  - `tel:` Phone link click detection
+  - `mailto:` Email link click detection
+  - Outbound generic external links
+  - Social media outbound link tracking (Facebook, Instagram, LinkedIn, YouTube, TikTok)
+  - Map / Directions links (Google Maps, Apple Maps, Waze)
+- **Forms & Lead Generation**:
+  - Elementor WordPress Form listener
+  - Contact Form 7 (CF7) event listener
+  - Gravity Forms AJAX listener
+  - HubSpot embedded forms
+  - Generic HTML forms with form ID and class filtering
+- **Hospitality & Hotel Booking Engines**:
+  - Synxis / Sabre Hospitality (SBE) booking engine tracking
+  - StayNTouch hotel PMS and reservation suite
+  - Revinate guest feedback and marketing
+  - Zmail direct booking iframe forms
+- **E-Commerce GA4 DataLayers**:
+  - WooCommerce Standard E-Commerce (view_item, add_to_cart, remove_from_cart, view_cart, begin_checkout, purchase)
+  - Custom transactional data layer pushes with currency, items array, transaction_id, and tax.
+
+## GA4 Telemetry Anomaly Detection Engine
+- Evaluates:
+  - Metric: `sessions`, `keyEvents` (formerly `conversions`), `purchaseRevenue`, `screenPageViews`
+  - Comparison Windows:
+    - Daily: Yesterday vs 2 Days Ago
+    - Weekly: Yesterday vs 8 Days Ago
+    - Last 7 vs Previous 7 Days
+    - Last 28 vs Previous 28 Days
+    - Last 30 vs Previous 30 Days
+    - Yearly: Yesterday vs 365 Days Ago
+  - Condition Types:
+    - Drops Below: Flags when metric decreases beyond a set threshold (e.g., -20% or -50%)
+    - Spikes Above: Flags unexpected surges (e.g., bot traffic or rogue tracking loops)
+    - Changes By: Flags any significant deviation outside expected boundaries
+  - Compound Logic:
+    - Match ANY: Alerts if at least one condition fails
+    - Match ALL: Alerts only if all compound conditions are met

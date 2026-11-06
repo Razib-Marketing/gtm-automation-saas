@@ -1,0 +1,51 @@
+# GTMObserver
+> The Edge-Native Google Tag Manager Automation & Autonomous GA4 Telemetry Platform.
+
+GTMObserver (https://gtmobserver.com) is an enterprise analytics automation SaaS built natively on Cloudflare Workers edge architecture. It solves two critical challenges for digital analytics agencies, e-commerce brands, and marketing teams:
+1. **Automated Google Tag Manager (GTM) Deployment**: 1-click deployment of production-grade tracking architectures directly into Google Tag Manager containers via the official Google Tag Manager API. Eliminates manual tag creation, custom JavaScript debugging, and human errors.
+2. **Autonomous GA4 Telemetry Observer & Alerts**: 24/7 background edge monitoring that continuously evaluates Google Analytics 4 properties. Detects tracking crashes, conversion dropoffs, key event anomalies, and traffic fluctuations against historical baselines, dispatching real-time email alerts to teams and clients before revenue is lost.
+
+## Core Capabilities
+- **Automated GTM Recipe Library**:
+  - Basic Outbound Clicks (phone `tel:`, email `mailto:`, generic outbound links).
+  - Social Engagement (Facebook, Instagram, LinkedIn, YouTube, TikTok outbound clicks).
+  - WordPress Form Ecosystem (Elementor Forms, Contact Form 7, Gravity Forms, HubSpot).
+  - Hotel & Hospitality Booking Engines (Synxis / SBE, StayNTouch, Revinate, Zmail).
+  - E-Commerce Data Layers (WooCommerce standard GA4 events: `view_item`, `add_to_cart`, `purchase`).
+  - Scroll Depth (25%, 50%, 75%, 90% threshold triggers).
+  - Video Tracking (HTML5, YouTube, Vimeo play/pause/complete).
+- **GA4 Real-Time Anomaly Detection**:
+  - Evaluates live metrics (`sessions`, `keyEvents`/conversions, `purchaseRevenue`, `screenPageViews`).
+  - Dimensional traffic segmentation (All Traffic, Organic Search, Paid Search, Social, Referral, Email).
+  - Flexible comparison periods (Yesterday vs 2 Days Ago, Yesterday vs Last Week, Last 7 vs Previous 7, Last 28 vs Previous 28, Last 30 vs Previous 30, Yearly).
+  - Multi-condition compound evaluation (Match ALL or Match ANY rules).
+  - Automated Cron execution runs every hour at the Cloudflare edge.
+- **Enterprise Multi-Recipient Dispatch**:
+  - Real-time alert emails with DKIM/SPF authenticated deliverability via Resend (`alerts@gtmobserver.com`).
+  - Dual history logging (Automated issue incidents vs Manual test reports).
+  - Client-ready telemetry breakdowns with baseline comparisons and percentage changes.
+
+## Pricing Tiers
+- **Free Tier ($0/month)**:
+  - 1 Active GA4 Monitor.
+  - Daily background anomaly checks.
+  - Single alert recipient.
+  - Unlimited manual test reports.
+- **Pro Tier ($149/month)**:
+  - Up to 10 Active GA4 Monitors.
+  - Hourly background edge checks.
+  - Multi-recipient team & client email dispatch.
+  - Compound rules (AND / OR logic).
+  - Complete Dual History audit logs.
+- **Custom / Agency Tier ($149+/month)**:
+  - 10 to 100+ Custom property monitors.
+  - Volume container discounts (10% off for 15+ containers).
+  - Dedicated priority support and custom SLAs.
+
+## Key Links & Resources
+- Main Website: https://gtmobserver.com
+- Pricing & Calculator: https://gtmobserver.com/pricing
+- Full Technical Documentation: https://gtmobserver.com/docs
+- API Reference: https://gtmobserver.com/api-reference
+- Community Modules: https://gtmobserver.com/community
+- Full LLM Knowledge Base: https://gtmobserver.com/llms-full.txt

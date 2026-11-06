@@ -4,35 +4,40 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Activity, Users, DollarSign, MousePointerClick } from 'lucide-react';
 
 export const GA4Dashboard = () => {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [properties, setProperties] = useState<any[]>([]);
   const [selectedProperty, setSelectedProperty] = useState('');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
+    if (isLoaded && isSignedIn) {
+      fetchProperties();
+    }
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
-    if (selectedProperty) {
+    if (selectedProperty && isLoaded && isSignedIn) {
       fetchReport(selectedProperty);
     } else {
       setData(null);
     }
-  }, [selectedProperty]);
-
-  const [errorMsg, setErrorMsg] = useState('');
+  }, [selectedProperty, isLoaded, isSignedIn]);
 
   const fetchProperties = async () => {
+    if (!isLoaded || !isSignedIn) return;
     try {
       const token = await getToken();
+      if (!token) return;
+
       const res = await fetch('/api/ga4/properties', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const d = await res.json();
       if (res.ok) {
         setProperties(d.properties || []);
+        setErrorMsg('');
         if (d.properties && d.properties.length > 0) {
           setSelectedProperty(d.properties[0].name);
         }
@@ -40,15 +45,20 @@ export const GA4Dashboard = () => {
         setErrorMsg(d.error || 'Failed to fetch properties');
       }
     } catch (e: any) {
-      setErrorMsg(e.message);
+      setErrorMsg(e.message || 'Error connecting to analytics');
     }
   };
 
   const fetchReport = async (propertyId: string) => {
+    if (!isLoaded || !isSignedIn || !propertyId) return;
     setLoading(true);
     setErrorMsg('');
     try {
       const token = await getToken();
+      if (!token) {
+        setErrorMsg('Session expired. Please refresh the page.');
+        return;
+      }
       const res = await fetch(`/api/ga4/report?propertyId=${encodeURIComponent(propertyId)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
+import { pushDataLayer } from '../utils/analytics';
 import './Dashboard.css';
 
 interface ConditionItem {
@@ -220,6 +221,7 @@ export const Observer = () => {
   const [testResult, setTestResult] = useState<TestReportResult | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [alertHistoryTab, setAlertHistoryTab] = useState<'automated' | 'manual'>('automated');
+  const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('pro');
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -233,7 +235,18 @@ export const Observer = () => {
   useEffect(() => {
     fetchProperties();
     fetchMonitors();
-  }, []);
+    if (user?.id) {
+      const email = user.primaryEmailAddress?.emailAddress || '';
+      fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(email)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.subscription_tier) {
+            setUserTier(data.subscription_tier);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user?.id]);
 
   const fetchProperties = async () => {
     try {
@@ -344,6 +357,12 @@ export const Observer = () => {
     e.preventDefault();
     setErrorMsg('');
 
+    if (userTier === 'free') {
+      alert("A paid subscription (Pro or Custom) is required to create autonomous GA4 anomaly monitors. Please choose a plan on our pricing page.");
+      window.location.href = '/pricing';
+      return;
+    }
+
     let finalEmails = [...alertEmails];
     if (emailInput.trim() && emailInput.includes('@')) {
       finalEmails = Array.from(new Set([...finalEmails, emailInput.trim()]));
@@ -415,6 +434,12 @@ export const Observer = () => {
       });
       const data = await res.json().catch(() => null);
       if (res.ok && data) {
+        pushDataLayer('ga4_test_dispatched', {
+          monitor_id: id,
+          property_name: data.propertyName || monitorObj?.property_name,
+          is_triggered: data.isTriggered
+        });
+
         const recipientsList = (data.recipients && data.recipients.length > 0)
           ? data.recipients
           : (monitorObj?.alert_email 
@@ -545,14 +570,60 @@ export const Observer = () => {
             <p className="dashboard-subtitle">Automated GA4 Anomaly Detection & Monitoring</p>
           </div>
           <div className="topbar-actions">
-            <Link to="/" className="btn-home-link">
+            <a href="https://gtmobserver.com" className="btn-home-link" style={{ textDecoration: 'none' }}>
               <Home size={14} /> Home
-            </Link>
+            </a>
             <button onClick={() => signOut()} className="btn-home-link" style={{ cursor: 'pointer' }}>
               <LogOut size={14} /> Log out
             </button>
           </div>
         </motion.div>
+
+        {userTier === 'free' && (
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(79, 70, 229, 0.15) 0%, rgba(0, 240, 255, 0.15) 100%)',
+            border: '1px solid rgba(0, 240, 255, 0.35)',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            boxShadow: '0 4px 20px rgba(0, 240, 255, 0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div style={{ background: 'rgba(0, 240, 255, 0.15)', padding: '0.5rem', borderRadius: '10px', display: 'flex' }}>
+                <Sparkles size={22} color="#00F0FF" />
+              </div>
+              <div>
+                <p style={{ margin: 0, color: '#FFFFFF', fontWeight: 700, fontSize: '1rem' }}>
+                  Subscription Required to Activate Monitors
+                </p>
+                <p style={{ margin: '0.25rem 0 0 0', color: '#9CA3AF', fontSize: '0.875rem' }}>
+                  Please purchase a plan to create autonomous 24/7 GA4 anomaly monitors and receive multi-email incident alerts.
+                </p>
+              </div>
+            </div>
+            <Link to="/pricing" style={{
+              background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
+              color: '#FFFFFF',
+              padding: '0.65rem 1.4rem',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 12px rgba(0, 240, 255, 0.35)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}>
+              Choose a Plan &rarr;
+            </Link>
+          </div>
+        )}
 
         <motion.div 
           initial={{ opacity: 0 }}

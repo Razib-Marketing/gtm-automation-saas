@@ -1,0 +1,46 @@
+# GTMObserver Robots Configuration
+# https://gtmobserver.com
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /observer
+Disallow: /projects
+Disallow: /analytics
+Disallow: /settings
+
+# Generative Engine Optimization (GEO) & AI Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Cohere-ai
+Allow: /
+
+# Sitemap & LLMs Knowledge Base
+Sitemap: https://gtmobserver.com/sitemap.xml
+Host: https://gtmobserver.com

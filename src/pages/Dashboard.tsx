@@ -5,25 +5,26 @@ import { useLocation } from 'react-router-dom';
 import { useUser, useAuth, RedirectToSignIn, UserButton } from '@clerk/clerk-react';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
-import { Tag, CheckCircle2, LayoutDashboard, Settings, Layers, Code2, AlertCircle, Loader2, Key, HelpCircle, X, ShieldAlert, Activity, Play, LogOut, Home, FileText, Download, ChevronRight, Lock } from 'lucide-react';
+import { Tag, CheckCircle2, LayoutDashboard, Settings, Layers, Code2, AlertCircle, Loader2, Key, HelpCircle, X, ShieldAlert, Activity, Play, LogOut, Home, FileText, Download, ChevronRight, Lock, Sparkles } from 'lucide-react';
 import { AuditModal } from '../components/ui/AuditModal';
+import { pushDataLayer } from '../utils/analytics';
 import { Link } from 'react-router-dom';
 import './Dashboard.css';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const TRACKING_MODULES = [
-  { id: 'basic_phone', category: 'Basic & Outbound Clicks', title: 'Phone Click', description: 'Tracks clicks on tel: links' },
-  { id: 'basic_email', category: 'Basic & Outbound Clicks', title: 'Email Click', description: 'Tracks clicks on mailto: links' },
-  { id: 'basic_facebook', category: 'Basic & Outbound Clicks', title: 'Facebook Click', description: 'Tracks outbound clicks to Facebook' },
-  { id: 'basic_instagram', category: 'Basic & Outbound Clicks', title: 'Instagram Click', description: 'Tracks outbound clicks to Instagram' },
-  { id: 'basic_gmb', category: 'Basic & Outbound Clicks', title: 'Google My Business Click', description: 'Tracks clicks to Google Maps/GMB listings' },
-  { id: 'basic_direction', category: 'Basic & Outbound Clicks', title: 'Direction/Map Click', description: 'Tracks clicks to Apple Maps or Waze' },
-  { id: 'basic_tripadvisor', category: 'Basic & Outbound Clicks', title: 'TripAdvisor Click', description: 'Tracks outbound clicks to TripAdvisor' },
-  { id: 'basic_booking', category: 'Basic & Outbound Clicks', title: 'Booking.com Click', description: 'Tracks outbound clicks to Booking.com' },
-  { id: 'basic_expedia', category: 'Basic & Outbound Clicks', title: 'Expedia Click', description: 'Tracks outbound clicks to Expedia' },
-  { id: 'basic_agoda', category: 'Basic & Outbound Clicks', title: 'Agoda Click', description: 'Tracks outbound clicks to Agoda' },
-  { id: 'basic_generic_outbound', category: 'Basic & Outbound Clicks', title: 'Generic Outbound Click', description: 'Tracks clicks to any external website' },
+  { id: 'basic_phone', category: 'Basic & Outbound Clicks', title: 'Phone Link Click', description: 'Tracks clicks on tel: links' },
+  { id: 'basic_email', category: 'Basic & Outbound Clicks', title: 'Email Link Click', description: 'Tracks clicks on mailto: links' },
+  { id: 'basic_facebook', category: 'Basic & Outbound Clicks', title: 'Facebook Link Click', description: 'Tracks outbound clicks to Facebook' },
+  { id: 'basic_instagram', category: 'Basic & Outbound Clicks', title: 'Instagram Link Click', description: 'Tracks outbound clicks to Instagram' },
+  { id: 'basic_gmb', category: 'Basic & Outbound Clicks', title: 'Google My Business Link Click', description: 'Tracks clicks to Google Maps/GMB listings' },
+  { id: 'basic_direction', category: 'Basic & Outbound Clicks', title: 'Direction/Map Link Click', description: 'Tracks clicks to Apple Maps or Waze' },
+  { id: 'basic_tripadvisor', category: 'Basic & Outbound Clicks', title: 'TripAdvisor Link Click', description: 'Tracks outbound clicks to TripAdvisor' },
+  { id: 'basic_booking', category: 'Basic & Outbound Clicks', title: 'Booking.com Link Click', description: 'Tracks outbound clicks to Booking.com' },
+  { id: 'basic_expedia', category: 'Basic & Outbound Clicks', title: 'Expedia Link Click', description: 'Tracks outbound clicks to Expedia' },
+  { id: 'basic_agoda', category: 'Basic & Outbound Clicks', title: 'Agoda Link Click', description: 'Tracks outbound clicks to Agoda' },
+  { id: 'basic_generic_outbound', category: 'Basic & Outbound Clicks', title: 'Generic Outbound Link Click', description: 'Tracks clicks to any external website' },
   { id: 'social_media', category: 'General', title: 'Universal Social Tracking', description: 'Tracks Facebook, LinkedIn, Twitter, etc.' },
   { id: 'scroll_depth', category: 'General', title: 'Advanced Scroll Depth', description: 'Tracks 25%, 50%, 75%, 90% scroll' },
   { id: 'video_engagement', category: 'General', title: 'YouTube/Vimeo Tracking', description: 'Tracks play, pause, complete' },
@@ -214,6 +215,41 @@ export const Dashboard = () => {
   useEffect(() => { localStorage.setItem('gtm_verifyStatus', verifyStatus); }, [verifyStatus]);
   useEffect(() => { localStorage.setItem('gtm_isNewGtmConfig', String(isNewGtmConfig)); }, [isNewGtmConfig]);
   useEffect(() => { localStorage.setItem('gtm_debugGtmData', debugGtmData ? JSON.stringify(debugGtmData) : ''); }, [debugGtmData]);
+
+  // Handle successful purchase redirection from Polar.sh for GA4 E-Commerce
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('checkout') === 'success') {
+      const storageKey = `gtm_purchase_tracked_${user?.id || 'guest'}_${new Date().toDateString()}`;
+      if (!sessionStorage.getItem(storageKey)) {
+        sessionStorage.setItem(storageKey, 'true');
+        const approxValue = 149;
+        const transactionId = `POLAR_${Date.now()}`;
+
+        pushDataLayer('purchase', {
+          ecommerce: {
+            transaction_id: transactionId,
+            value: approxValue,
+            currency: 'USD',
+            tax: 0,
+            shipping: 0,
+            items: [
+              {
+                item_id: userTier === 'custom' ? 'plan_custom' : 'plan_pro',
+                item_name: userTier === 'custom' ? 'GTMObserver Custom Tier' : 'GTMObserver Pro Tier',
+                item_category: 'Subscription',
+                price: approxValue,
+                quantity: 1
+              }
+            ]
+          },
+          transaction_id: transactionId,
+          value: approxValue,
+          currency: 'USD'
+        });
+      }
+    }
+  }, [location.search, userTier, user]);
 
   useEffect(() => {
     if (hasGoogleAuth && selectedAccount) {
@@ -410,8 +446,9 @@ export const Dashboard = () => {
   const handleRunAudit = async () => {
     if (!selectedWorkspace) return;
 
-    if (userTier === 'free' && recentAudits.length >= 5) {
-      alert("Free tier users can only run 5 GTM Workspace Audits. Please upgrade to Pro or Custom.");
+    if (userTier === 'free') {
+      alert("A paid subscription (Pro or Custom) is required to run workspace audits. Please choose a plan on our pricing page.");
+      window.location.href = '/pricing';
       return;
     }
 
@@ -515,10 +552,9 @@ export const Dashboard = () => {
       return;
     }
 
-    // Tier validations
-    const hasPremiumModules = Array.from(selectedModules).some(id => id !== 'basic_phone' && id !== 'basic_email');
-    if (userTier === 'free' && hasPremiumModules) {
-      alert("Free tier users can only deploy Base GA4, Phone Click, and Email Click modules. Please upgrade to Pro.");
+    // Tier validations: Paid plan required to deploy
+    if (userTier === 'free') {
+      alert("A paid subscription (Pro or Custom) is required to deploy tracking recipes to Google Tag Manager. Please choose a plan on our pricing page.");
       window.location.href = '/pricing';
       return;
     }
@@ -725,6 +761,12 @@ export const Dashboard = () => {
         }
       }
 
+      pushDataLayer('gtm_recipe_deployed', {
+        modules_count: selectedModules.size,
+        container_path: selectedContainer,
+        workspace_path: selectedWorkspace
+      });
+
       setDeploying(false);
 
       // Re-verify the GA4 configuration to update the UI dynamically if the user just created it
@@ -776,14 +818,60 @@ export const Dashboard = () => {
             <p className="dashboard-subtitle">Welcome back, {user?.firstName}! Manage your deployed GTM modules.</p>
           </div>
           <div className="topbar-actions">
-            <Link to="/" className="btn-home-link">
+            <a href="https://gtmobserver.com" className="btn-home-link" style={{ textDecoration: 'none' }}>
               <Home size={14} /> Home
-            </Link>
+            </a>
             <button onClick={() => signOut()} className="btn-home-link" style={{ cursor: 'pointer' }}>
               <LogOut size={14} /> Log out
             </button>
           </div>
         </motion.div>
+
+        {userTier === 'free' && (
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(79, 70, 229, 0.15) 0%, rgba(0, 240, 255, 0.15) 100%)',
+            border: '1px solid rgba(0, 240, 255, 0.35)',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap',
+            boxShadow: '0 4px 20px rgba(0, 240, 255, 0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+              <div style={{ background: 'rgba(0, 240, 255, 0.15)', padding: '0.5rem', borderRadius: '10px', display: 'flex' }}>
+                <Sparkles size={22} color="#00F0FF" />
+              </div>
+              <div>
+                <p style={{ margin: 0, color: '#FFFFFF', fontWeight: 700, fontSize: '1rem' }}>
+                  Subscription Required to Deploy & Audit
+                </p>
+                <p style={{ margin: '0.25rem 0 0 0', color: '#9CA3AF', fontSize: '0.875rem' }}>
+                  Please purchase a plan to unlock automated GTM deployments, audits, and real-time GA4 anomaly monitoring.
+                </p>
+              </div>
+            </div>
+            <Link to="/pricing" style={{
+              background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
+              color: '#FFFFFF',
+              padding: '0.65rem 1.4rem',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 12px rgba(0, 240, 255, 0.35)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}>
+              Choose a Plan &rarr;
+            </Link>
+          </div>
+        )}
 
         {!hasGoogleAuth ? (
           <motion.div 
@@ -1072,8 +1160,7 @@ export const Dashboard = () => {
                                   const renderModule = (m: any, isSubModule = false) => {
                                     const isSelected = selectedModules.has(m.id);
                                     const isDeployed = deployedModules.has(m.id);
-                                    const isFreeTierAllowed = m.id === 'basic_phone' || m.id === 'basic_email';
-                                  const isLocked = userTier === 'free' && !isFreeTierAllowed;
+                                    const isLocked = userTier === 'free';
                                   const isGroup = !!m.subModules;
                                   const isExpanded = isGroup && expandedGroups.has(m.id);
                                   const hasSelectedSub = isGroup && m.subModules.some((sub: any) => selectedModules.has(sub.id));

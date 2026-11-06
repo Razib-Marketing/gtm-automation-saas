@@ -10,7 +10,9 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="global-sidebar">
       <div className="sidebar-header">
-        <img src="/tagobserver-logo.webp" alt="TagObserver Logo" style={{ height: '34px', width: 'auto' }} />
+        <a href="https://gtmobserver.com" title="Back to GTMObserver Home" style={{ display: 'inline-block' }}>
+          <img src="/gtmobserver-logo.webp" alt="GTMObserver Logo" style={{ height: '34px', width: 'auto' }} />
+        </a>
       </div>
 
       <nav className="sidebar-nav">
@@ -42,7 +44,7 @@ export const Sidebar: React.FC = () => {
           <span>Support & Docs</span>
         </NavLink>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
-          <UserButton afterSignOutUrl="/" appearance={{ elements: { userButtonAvatarBox: { width: '2.5rem', height: '2.5rem' } } }} />
+          <UserButton afterSignOutUrl="https://gtmobserver.com" appearance={{ elements: { userButtonAvatarBox: { width: '2.5rem', height: '2.5rem' } } }} />
           <div className="sidebar-user-info">
             <span className="sidebar-user-name">{user?.firstName} {user?.lastName}</span>
             <span className="sidebar-user-email">{user?.primaryEmailAddress?.emailAddress}</span>

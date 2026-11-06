@@ -12,7 +12,7 @@ async function sendPurchaseSuccessEmail(env: any, email: string, name: string, t
     <body style="margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #ffffff;">
       <div style="max-width: 600px; margin: 30px auto; background-color: #111827; border-radius: 16px; overflow: hidden; border: 1px solid #1f2937; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         <div style="background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%); padding: 32px 24px; text-align: center; border-bottom: 1px solid #1f2937;">
-          <h2 style="margin: 0; color: #00F0FF; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;">TagObserver</h2>
+          <h2 style="margin: 0; color: #00F0FF; font-size: 26px; font-weight: 800; letter-spacing: 0.5px;">GTMObserver</h2>
           <p style="margin: 6px 0 0 0; color: #9ca3af; font-size: 14px;">Automated GTM Deployment & GA4 Observer Intelligence</p>
         </div>
         <div style="padding: 32px 28px;">
@@ -36,7 +36,7 @@ async function sendPurchaseSuccessEmail(env: any, email: string, name: string, t
           </div>
           
           <div style="text-align: center; margin: 32px 0;">
-            <a href="https://gtm-automation-saas.ovi-e69.workers.dev/dashboard" style="background: linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%); color: #ffffff; text-decoration: none; padding: 14px 34px; border-radius: 10px; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 14px rgba(0, 240, 255, 0.35);">Open Dashboard</a>
+            <a href="https://app.gtmobserver.com/dashboard" style="background: linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%); color: #ffffff; text-decoration: none; padding: 14px 34px; border-radius: 10px; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 14px rgba(0, 240, 255, 0.35);">Open Dashboard</a>
           </div>
           
           <hr style="border: none; border-top: 1px solid #1f2937; margin: 28px 0;" />
@@ -71,9 +71,9 @@ async function sendPurchaseSuccessEmail(env: any, email: string, name: string, t
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: `TagObserver <${senderEmail}>`,
+          from: `GTMObserver <${senderEmail}>`,
           to: [email],
-          subject: `Payment Confirmed: Welcome to TagObserver ${planName}!`,
+          subject: `Payment Confirmed: Welcome to GTMObserver ${planName}!`,
           html: htmlContent
         })
       });
@@ -89,9 +89,9 @@ async function sendPurchaseSuccessEmail(env: any, email: string, name: string, t
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email, name: name || 'TagObserver User' }] }],
-        from: { email: 'no-reply@gtm-automation-saas.ovi-e69.workers.dev', name: 'TagObserver' },
-        subject: `Payment Confirmed: Welcome to TagObserver ${planName}!`,
+        personalizations: [{ to: [{ email, name: name || 'GTMObserver User' }] }],
+        from: { email: 'no-reply@gtm-automation-saas.ovi-e69.workers.dev', name: 'GTMObserver' },
+        subject: `Payment Confirmed: Welcome to GTMObserver ${planName}!`,
         content: [{ type: 'text/html', value: htmlContent }]
       })
     });

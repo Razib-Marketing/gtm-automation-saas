@@ -581,7 +581,7 @@ export async function onRequest(context: any) {
           }
         } catch (_) {}
 
-        const senderFrom = `TagObserver <${senderEmail}>`;
+        const senderFrom = `GTMObserver <${senderEmail}>`;
 
         // Attempt sending to all recipients
         const resendRes = await fetch('https://api.resend.com/emails', {

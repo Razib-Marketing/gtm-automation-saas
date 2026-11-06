@@ -27,7 +27,7 @@ const reviews = [
   {
     name: 'David Smith',
     role: 'E-commerce Director, ShopWave',
-    content: 'TagObserver revolutionized how we handle data layers for new store rollouts. It took our deployment time from weeks to literally seconds.',
+    content: 'GTMObserver revolutionized how we handle data layers for new store rollouts. It took our deployment time from weeks to literally seconds.',
     avatar: 'https://i.pravatar.cc/150?img=59'
   },
   {
@@ -45,7 +45,7 @@ const reviews = [
   {
     name: 'Chloe Dubois',
     role: 'SEO Specialist, RankHigher',
-    content: 'Not having to rely on our dev team to setup standard events is a massive win. TagObserver pays for itself on day one.',
+    content: 'Not having to rely on our dev team to setup standard events is a massive win. GTMObserver pays for itself on day one.',
     avatar: 'https://i.pravatar.cc/150?img=20'
   }
 ];

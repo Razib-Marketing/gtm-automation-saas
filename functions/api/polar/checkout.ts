@@ -46,8 +46,7 @@ export async function onRequestPost(context: any) {
       }
     } catch (_) {}
 
-    const origin = new URL(request.url).origin;
-    const successUrl = `${origin}/dashboard?checkout=success`;
+    const successUrl = 'https://app.gtmobserver.com/dashboard?checkout=success';
 
     // 1. Check for manual/direct checkout URL override
     const directUrl = tier === 'custom' 

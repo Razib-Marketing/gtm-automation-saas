@@ -7,15 +7,20 @@ import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { Fireflies } from '../components/ui/Fireflies';
 import { FeatureCard } from '../components/ui/FeatureCard';
 import { ClientsSection } from '../components/sections/ClientsSection';
+import { HowItWorksSection } from '../components/sections/HowItWorksSection';
 import { ObserverSection } from '../components/sections/ObserverSection';
+import { CompetitorComparisonSection } from '../components/sections/CompetitorComparisonSection';
 import { ReviewsSection } from '../components/sections/ReviewsSection';
 import { PricingSection } from '../components/sections/PricingSection';
+import { FAQSection } from '../components/sections/FAQSection';
 import { ContactSection } from '../components/sections/ContactSection';
+import { pushDataLayer } from '../utils/analytics';
 import { Link } from 'react-router-dom';
-import { SignUpButton, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
 import './Home.css';
 
 export const Home = () => {
+  const { isSignedIn } = useAuth();
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
@@ -59,24 +64,36 @@ export const Home = () => {
           </motion.p>
 
           <motion.div variants={itemVariants} className="hero-actions">
-            <SignedOut>
-              <SignUpButton mode="modal">
-                <button className="btn-primary">Get Started for Free</button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              <Link to="/dashboard" className="btn-primary">
+            {isSignedIn ? (
+              <a 
+                href="https://app.gtmobserver.com/dashboard" 
+                className="btn-primary" 
+                style={{ textDecoration: 'none' }}
+                onClick={() => pushDataLayer('cta_click', { cta_text: 'Go to Dashboard', cta_location: 'hero' })}
+              >
                 Go to Dashboard
+              </a>
+            ) : (
+              <Link 
+                to="/sign-up" 
+                className="btn-primary"
+                onClick={() => pushDataLayer('cta_click', { cta_text: 'Get Started for Free', cta_location: 'hero' })}
+              >
+                Get Started for Free
               </Link>
-            </SignedIn>
-            <a href="#features" className="btn-secondary">
+            )}
+            <a 
+              href="#features" 
+              className="btn-secondary"
+              onClick={() => pushDataLayer('cta_click', { cta_text: 'Explore Modules', cta_location: 'hero' })}
+            >
               Explore Modules
             </a>
           </motion.div>
         </motion.div>
 
-        {/* CLIENTS MARQUEE */}
-        <ClientsSection />
+        {/* CLIENTS MARQUEE (Hidden temporarily) */}
+        {/* <ClientsSection /> */}
 
         {/* FEATURES GRID */}
         <div className="features-section" id="features">
@@ -129,14 +146,23 @@ export const Home = () => {
           </div>
         </div>
 
+        {/* HOW IT WORKS SECTION */}
+        <HowItWorksSection />
+
         {/* GA4 OBSERVER & ANOMALY ALERTING SECTION */}
         <ObserverSection />
 
-        {/* REVIEWS SECTION */}
-        <ReviewsSection />
+        {/* COMPETITOR COMPARISON SECTION */}
+        <CompetitorComparisonSection />
+
+        {/* REVIEWS SECTION (Hidden temporarily) */}
+        {/* <ReviewsSection /> */}
 
         {/* PRICING SECTION */}
         <PricingSection />
+
+        {/* FREQUENTLY ASKED QUESTIONS SECTION */}
+        <FAQSection />
 
         {/* CONTACT SECTION */}
         <ContactSection />

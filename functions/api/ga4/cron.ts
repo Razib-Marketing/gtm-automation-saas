@@ -519,7 +519,7 @@ export async function onRequestGet(context: any) {
                 }
               } catch (_) {}
 
-              const cronSenderFrom = `TagObserver <${cronSenderEmail}>`;
+              const cronSenderFrom = `GTMObserver <${cronSenderEmail}>`;
 
               const resendRes = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -566,7 +566,7 @@ export async function onRequestGet(context: any) {
               for (const r of recipients) {
                 await env.EMAIL.send({
                   to: r,
-                  from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'TagObserver' },
+                  from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GTMObserver' },
                   subject: subject,
                   html: htmlBody,
                   text: `GA4 Alert: ${monitor.property_name}`
@@ -584,7 +584,7 @@ export async function onRequestGet(context: any) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   personalizations: [{ to: recipients.map((r: string) => ({ email: r })) }],
-                  from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'TagObserver' },
+                  from: { email: 'alerts@gtm-automation-saas.ovi-e69.workers.dev', name: 'GTMObserver' },
                   subject: subject,
                   content: [
                     { type: 'text/html', value: htmlBody },

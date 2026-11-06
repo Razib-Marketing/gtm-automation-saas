@@ -6,30 +6,67 @@ export async function onRequestGet(context: any) {
     return new Response(JSON.stringify({ error: 'Missing or invalid clerkUserId' }), { status: 400 });
   }
 
+  const rawEmail = (new URL(request.url).searchParams.get('email') || '').toLowerCase().trim();
+  const ADMIN_EMAILS = [
+    'ovi.cse23@gmail.com',
+    'ovi@razibmarketing.net',
+    'ovi@razibmarekting.net',
+    'support@cogwheelmarketing.com'
+  ];
+  const isAdmin = ADMIN_EMAILS.includes(rawEmail);
+
   try {
     let dbResult = await env.DB.prepare(
       'SELECT subscription_tier, account_deployment_count FROM users WHERE id = ?'
     ).bind(clerkUserId).first();
 
+    const email = rawEmail || 'unknown@example.com';
+
     if (!dbResult) {
-       // Create user if not exists
-       const email = new URL(request.url).searchParams.get('email') || 'unknown@example.com';
-       await env.DB.prepare(
-         "INSERT INTO users (id, email, subscription_tier) VALUES (?, ?, 'free')"
-       ).bind(clerkUserId, email).run();
-       dbResult = { subscription_tier: 'free', account_deployment_count: 0 };
+       // Check if user exists by email
+       const existingUser: any = await env.DB.prepare(
+         'SELECT id, email, subscription_tier, account_deployment_count FROM users WHERE LOWER(email) = LOWER(?)'
+       ).bind(email).first();
+
+       if (existingUser) {
+         if (existingUser.id !== clerkUserId) {
+           try {
+             await env.DB.prepare('PRAGMA foreign_keys = OFF;').run();
+             await env.DB.batch([
+               env.DB.prepare('UPDATE users SET id = ? WHERE id = ?').bind(clerkUserId, existingUser.id),
+               env.DB.prepare('UPDATE gtm_connections SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id),
+               env.DB.prepare('UPDATE audit_logs SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id),
+               env.DB.prepare('UPDATE ga4_monitors SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id)
+             ]);
+             await env.DB.prepare('PRAGMA foreign_keys = ON;').run();
+           } catch (e) {
+             console.warn('Re-key user ID notice:', e);
+           }
+         }
+         dbResult = existingUser;
+       } else {
+         const initialTier = isAdmin ? 'custom' : 'free';
+         await env.DB.prepare(
+           "INSERT INTO users (id, email, subscription_tier) VALUES (?, ?, ?)"
+         ).bind(clerkUserId, email, initialTier).run();
+         dbResult = { email, subscription_tier: initialTier, account_deployment_count: 0 };
+       }
     }
 
-    if (dbResult) {
-      // Temporary backdoor for specific admin user
-      const email = new URL(request.url).searchParams.get('email') || '';
-      if (email === 'ovi@razibmarketing.net' || email === 'ovi@razibmarekting.net' || email === 'support@cogwheelmarketing.com') {
-        dbResult.subscription_tier = 'custom';
-      }
+    const resolvedEmail = (dbResult.email || rawEmail).toLowerCase().trim();
+    if (isAdmin || ADMIN_EMAILS.includes(resolvedEmail)) {
+      dbResult.subscription_tier = 'custom';
+      dbResult.account_deployment_count = 0;
+      // Ensure DB also permanently stores custom tier for this admin
+      try {
+        await env.DB.prepare("UPDATE users SET subscription_tier = 'custom' WHERE id = ? OR LOWER(email) = LOWER(?)")
+          .bind(clerkUserId, resolvedEmail)
+          .run();
+      } catch (_) {}
     }
 
-    return new Response(JSON.stringify(dbResult), { status: 200 });
+    return new Response(JSON.stringify(dbResult), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }

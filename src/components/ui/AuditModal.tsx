@@ -215,7 +215,7 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
           <div className="audit-report-wrapper" id="audit-report-content" ref={reportRef}>
             
             <div className="audit-pdf-header">
-              <div className="audit-pdf-logo"><img src="/tagobserver-logo.webp" alt="TagObserver" style={{ height: '34px' }} /></div>
+              <div className="audit-pdf-logo"><img src="/gtmobserver-logo.webp" alt="GTMObserver" style={{ height: '34px' }} /></div>
               <div className="audit-pdf-gtm-id">Container: {gtmId}</div>
             </div>
 
@@ -304,8 +304,8 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
             </div>
 
             <div className="audit-pdf-footer-greeting">
-              <div className="audit-pdf-logo large"><img src="/tagobserver-logo.webp" alt="TagObserver" style={{ height: '44px' }} /></div>
-              <p>Thank you for using TagObserver to keep your tracking flawless!</p>
+              <div className="audit-pdf-logo large"><img src="/gtmobserver-logo.webp" alt="GTMObserver" style={{ height: '44px' }} /></div>
+              <p>Thank you for using GTMObserver to keep your tracking flawless!</p>
             </div>
             
             <div className="audit-modal-bottom-actions">
