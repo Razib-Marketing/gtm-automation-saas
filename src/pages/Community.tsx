@@ -29,7 +29,7 @@ export const Community = () => {
           <section style={{ marginTop: '4rem' }}>
             <h2>Contribute a Recipe</h2>
             <p>Have a custom tracking module for an obscure booking engine or SaaS platform? The GTMObserver community thrives on shared knowledge.</p>
-            <p>If you have an exported JSON container that you'd like to convert into a GTMObserver module, please email our integration team at <a href="mailto:hello@gtmobserver.com">hello@gtmobserver.com</a> and we'll add it to the platform directory!</p>
+            <p>If you have an exported JSON container that you'd like to convert into a GTMObserver module, please email our integration team at <a href="mailto:info@gtmobserver.com" style={{ color: '#00F0FF', textDecoration: 'none' }}>info@gtmobserver.com</a> and we'll add it to the platform directory!</p>
           </section>
         </motion.div>
       </div>

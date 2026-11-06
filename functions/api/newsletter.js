@@ -222,8 +222,9 @@ export async function onRequestPost(context) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'GTMObserver <alerts@gtmobserver.com>',
-        to: ['ovi.cse23@gmail.com'],
+        from: 'GTMObserver <info@gtmobserver.com>',
+        to: ['ovi@razibmarketing.net'],
+        reply_to: email,
         subject: `📬 New Newsletter Subscriber: ${email}`,
         html: adminHtml
       })
@@ -249,8 +250,9 @@ export async function onRequestPost(context) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'GTMObserver Team <alerts@gtmobserver.com>',
+            from: 'GTMObserver Team <info@gtmobserver.com>',
             to: [email],
+            reply_to: 'info@gtmobserver.com',
             subject: `Welcome to GTMObserver Insider 🚀 + Free Tracking Blueprint`,
             html: subscriberHtml
           })

@@ -57,7 +57,7 @@ export const PrivacyPolicy = () => {
 
           <section>
             <h2>6. Contact Us</h2>
-            <p>If you have any questions about this Privacy Policy, please contact us at support@gtmobserver.com.</p>
+            <p>If you have any questions about this Privacy Policy, please contact us at <a href="mailto:info@gtmobserver.com" style={{ color: '#00F0FF', textDecoration: 'none' }}>info@gtmobserver.com</a>.</p>
           </section>
         </motion.div>
       </div>

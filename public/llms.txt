@@ -49,3 +49,5 @@ GTMObserver (https://gtmobserver.com) is an enterprise analytics automation SaaS
 - API Reference: https://gtmobserver.com/api-reference
 - Community Modules: https://gtmobserver.com/community
 - Full LLM Knowledge Base: https://gtmobserver.com/llms-full.txt
+- General Inquiries: info@gtmobserver.com
+- Technical & Form Direct: contact@gtmobserver.com

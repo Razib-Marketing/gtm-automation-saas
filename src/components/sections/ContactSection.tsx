@@ -65,15 +65,15 @@ export const ContactSection = () => {
             <div className="contact-method">
               <div className="method-icon"><Mail size={24} /></div>
               <div>
-                <h4>Email Us</h4>
-                <p>ovi.cse23@gmail.com</p>
+                <h4>Contact Direct</h4>
+                <p><a href="mailto:contact@gtmobserver.com" style={{ color: '#00F0FF', textDecoration: 'none' }}>contact@gtmobserver.com</a></p>
               </div>
             </div>
             <div className="contact-method">
               <div className="method-icon"><MessageSquare size={24} /></div>
               <div>
-                <h4>Live Chat</h4>
-                <p>Available 9am - 5pm EST</p>
+                <h4>General Inquiries</h4>
+                <p><a href="mailto:info@gtmobserver.com" style={{ color: '#E2E8F0', textDecoration: 'none' }}>info@gtmobserver.com</a></p>
               </div>
             </div>
             <div className="contact-method">

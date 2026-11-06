@@ -54,7 +54,7 @@ export const TermsOfService = () => {
 
           <section>
             <h2>7. Contact Information</h2>
-            <p>If you have any questions regarding these Terms, please contact us at support@gtmobserver.com.</p>
+            <p>If you have any questions regarding these Terms, please contact us at <a href="mailto:info@gtmobserver.com" style={{ color: '#00F0FF', textDecoration: 'none' }}>info@gtmobserver.com</a>.</p>
           </section>
         </motion.div>
       </div>

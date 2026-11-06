@@ -18,7 +18,7 @@ GTMObserver (https://gtmobserver.com) is an edge-native cloud platform that auto
 - **Runtime**: Cloudflare Workers (Edge Serverless) with zero cold-starts and global sub-50ms execution.
 - **Database**: Cloudflare D1 (Distributed SQLite at the edge) for ultra-fast, encrypted storage of monitor configurations and dual history logs.
 - **Authentication**: Clerk Enterprise Auth with OAuth2 tokens for Google Analytics and Google Tag Manager.
-- **Email Infrastructure**: Resend API with custom verified domain (DKIM, SPF, MX) sending from `alerts@gtmobserver.com`.
+- **Email Infrastructure**: Resend API with custom verified domain (DKIM, SPF, MX) sending from `contact@gtmobserver.com` and `info@gtmobserver.com`.
 - **Scheduled Monitoring**: Cloudflare Cron Triggers running every hour to evaluate all active client monitors.
 
 ## Supported Tag Modules
