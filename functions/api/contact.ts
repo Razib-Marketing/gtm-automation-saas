@@ -1,3 +1,5 @@
+import { GTM_LOGO_BASE64 } from './_email_assets';
+
 export async function onRequestPost(context: any) {
   const { request, env, waitUntil } = context;
 
@@ -17,81 +19,84 @@ export async function onRequestPost(context: any) {
     const clientIp = request.headers.get('cf-connecting-ip') || 'Unknown IP';
     const clientCountry = request.headers.get('cf-ipcountry') || 'Global';
     const clientCity = request.headers.get('cf-ipcity') || '';
-    const rayId = request.headers.get('cf-ray') || 'Edge';
     const submittedAt = new Date().toLocaleString('en-US', {
       timeZone: 'UTC',
       dateStyle: 'medium',
       timeStyle: 'short'
     }) + ' UTC';
 
-    // 1. Enterprise Admin Notification Email Template
+    // 1. Human-Crafted Admin Notification Email Template
     const adminHtml = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          title, style { display: none !important; }
-        </style>
+        <title>New Inquiry</title>
       </head>
-      <body style="margin: 0; padding: 0; background-color: #030712; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-        <!-- Preheader snippet -->
+      <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A; -webkit-font-smoothing: antialiased;">
         <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 0px; line-height: 0px; max-width: 0px; opacity: 0;">
-          New high-priority inquiry from ${name} (${email}) — GTMObserver Platform Contact
+          New message from ${name} (${email}) via gtmobserver.com contact form
         </div>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #030712; margin: 0; padding: 24px 12px; width: 100%;">
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F1F5F9; padding: 40px 16px;">
           <tr>
             <td align="center">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #0F172A; border: 1px solid #1E293B; border-radius: 12px; overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,0.5);">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 580px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05); text-align: left;">
                 
-                <!-- Header Banner -->
+                <!-- Sleek Brand Header -->
                 <tr>
-                  <td style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); padding: 28px 24px; text-align: left; border-bottom: 1px solid #1E293B;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                  <td style="background-color: #0F172A; padding: 24px 32px; border-bottom: 2px solid #00E5FF;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="left" valign="middle">
+                        <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="https://gtmobserver.com/gtmobserver-logo.png" 
+                            <img src="cid:gtmobserver-logo" 
                                  alt="GTMObserver" 
-                                 width="190" 
-                                 height="35" 
-                                 border="0"
-                                 style="display: block; width: 190px !important; max-width: 190px !important; height: 35px !important; border: 0; outline: none; text-decoration: none;" />
+                                 width="170" 
+                                 height="31" 
+                                 border="0" 
+                                 style="display: block; width: 170px; height: 31px; border: 0; outline: none; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 18px; font-weight: 800; color: #FFFFFF;" />
                           </a>
                         </td>
                       </tr>
                     </table>
-                    <div style="margin-top: 14px;">
-                      <span style="display: inline-block; background-color: rgba(0, 240, 255, 0.12); color: #00F0FF; border: 1px solid rgba(0, 240, 255, 0.3); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px;">
-                        ⚡ NEW INQUIRY / LEAD DETECTED
-                      </span>
-                    </div>
-                    <h1 style="margin: 12px 0 0 0; font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em;">New Message from ${name}</h1>
-                    <p style="margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;">Submitted via GTMObserver Edge-Native Platform</p>
                   </td>
                 </tr>
 
-                <!-- Content Body -->
+                <!-- Content Area -->
                 <tr>
-                  <td style="padding: 24px 20px;">
+                  <td style="padding: 32px 32px 28px 32px;">
                     
-                    <!-- Lead Profile Card -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #131E32; border: 1px solid #1E293B; border-radius: 8px; margin-bottom: 18px;">
+                    <h1 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 700; color: #0F172A; letter-spacing: -0.01em;">
+                      New contact form submission
+                    </h1>
+                    
+                    <p style="margin: 0 0 24px 0; font-size: 15px; line-height: 1.5; color: #475569;">
+                      You received a new message through the contact form on <a href="https://gtmobserver.com" style="color: #0284C7; text-decoration: none;">gtmobserver.com</a>:
+                    </p>
+
+                    <!-- Sender Details Card -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 24px;">
                       <tr>
-                        <td style="padding: 16px 18px;">
+                        <td style="padding: 16px 20px;">
                           <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
                             <tr>
-                              <td style="vertical-align: top; width: 44px;">
-                                <div style="width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: linear-gradient(135deg, #00F0FF, #3B82F6); color: #0F172A; text-align: center; font-weight: 800; font-size: 16px;">
-                                  ${(name.charAt(0) || 'U').toUpperCase()}
-                                </div>
+                              <td style="padding: 4px 0; font-size: 14px;">
+                                <span style="color: #64748B; font-weight: 500; display: inline-block; width: 80px;">Name:</span>
+                                <strong style="color: #0F172A; font-weight: 600;">${name}</strong>
                               </td>
-                              <td style="vertical-align: top; padding-left: 14px;">
-                                <div style="font-size: 16px; font-weight: 700; color: #FFFFFF;">${name}</div>
-                                <div style="font-size: 13px; color: #94A3B8; margin-top: 2px;">
-                                  <a href="mailto:${email}" style="color: #00F0FF; text-decoration: none; font-weight: 500;">${email}</a>
-                                </div>
+                            </tr>
+                            <tr>
+                              <td style="padding: 4px 0; font-size: 14px;">
+                                <span style="color: #64748B; font-weight: 500; display: inline-block; width: 80px;">Email:</span>
+                                <a href="mailto:${email}" style="color: #0284C7; text-decoration: none; font-weight: 600;">${email}</a>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="padding: 4px 0; font-size: 14px;">
+                                <span style="color: #64748B; font-weight: 500; display: inline-block; width: 80px;">Sent at:</span>
+                                <span style="color: #334155;">${submittedAt}</span>
                               </td>
                             </tr>
                           </table>
@@ -99,35 +104,18 @@ export async function onRequestPost(context: any) {
                       </tr>
                     </table>
 
-                    <!-- Message Card -->
-                    <div style="font-size: 11px; text-transform: uppercase; color: #94A3B8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px;">
-                      Inquiry Details & Message
+                    <!-- Message Section -->
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">
+                      Message
                     </div>
-                    <div style="background-color: #090D16; border: 1px solid #1E293B; border-left: 4px solid #00F0FF; border-radius: 6px; padding: 18px; margin-bottom: 20px; font-size: 14px; line-height: 1.65; color: #E2E8F0; white-space: pre-wrap;">${message}</div>
+                    <div style="background-color: #FFFFFF; border: 1px solid #CBD5E1; border-left: 3px solid #00E5FF; border-radius: 6px; padding: 18px 20px; font-size: 15px; line-height: 1.6; color: #1E293B; margin-bottom: 28px; white-space: pre-wrap;">${message}</div>
 
-                    <!-- Telemetry & Edge Metadata -->
-                    <div style="font-size: 11px; text-transform: uppercase; color: #64748B; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px;">
-                      Edge Telemetry Metadata
-                    </div>
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #0B1120; border: 1px solid #1E293B; border-radius: 8px; margin-bottom: 24px;">
+                    <!-- CTA Button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td style="padding: 12px 16px; font-size: 12px; color: #94A3B8;">
-                          <div style="margin-bottom: 4px;"><strong>Timestamp:</strong> <span style="color: #F8FAFC;">${submittedAt}</span></div>
-                          <div style="margin-bottom: 4px;"><strong>Client Location:</strong> <span style="color: #F8FAFC;">${clientCountry}${clientCity ? ' &bull; ' + clientCity : ''} (IP: ${clientIp})</span></div>
-                          <div><strong>Cloudflare Ray ID:</strong> <span style="color: #00F0FF; font-family: monospace;">${rayId}</span></div>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <!-- Action Buttons -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-                      <tr>
-                        <td align="left">
-                          <a href="mailto:${email}?subject=Re:%20Inquiry%20regarding%20GTMObserver" style="display: inline-block; background-color: #00F0FF; color: #050B14; font-size: 13px; font-weight: 700; padding: 12px 22px; border-radius: 6px; text-decoration: none; margin-right: 10px;">
+                        <td>
+                          <a href="mailto:${email}?subject=Re:%20Inquiry%20regarding%20GTMObserver" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">
                             Reply to ${name} &rarr;
-                          </a>
-                          <a href="https://app.gtmobserver.com" style="display: inline-block; background-color: #1E293B; color: #FFFFFF; font-size: 13px; font-weight: 600; padding: 12px 20px; border-radius: 6px; text-decoration: none; border: 1px solid #334155;">
-                            Open Dashboard
                           </a>
                         </td>
                       </tr>
@@ -136,10 +124,11 @@ export async function onRequestPost(context: any) {
                   </td>
                 </tr>
 
-                <!-- Footer -->
+                <!-- Subtle Footer -->
                 <tr>
-                  <td style="background-color: #0B1120; padding: 18px 20px; text-align: center; border-top: 1px solid #1E293B; font-size: 11px; color: #64748B;">
-                    Delivered via GTMObserver Edge Architecture &bull; <a href="https://gtmobserver.com" style="color: #94A3B8; text-decoration: none;">gtmobserver.com</a>
+                  <td style="padding: 20px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; font-size: 12px; color: #94A3B8; text-align: center; line-height: 1.5;">
+                    Sent via GTMObserver &bull; <a href="https://gtmobserver.com" style="color: #64748B; text-decoration: none;">gtmobserver.com</a><br>
+                    <span style="font-size: 11px; color: #CBD5E1;">IP: ${clientIp}${clientCity ? ' &bull; ' + clientCity : ''} &bull; Location: ${clientCountry}</span>
                   </td>
                 </tr>
 
@@ -151,99 +140,99 @@ export async function onRequestPost(context: any) {
       </html>
     `;
 
-    // 2. Customer Confirmation Autoresponder Email Template
+    // 2. Human-Crafted Customer Confirmation Email Template
     const customerHtml = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          title, style { display: none !important; }
-        </style>
+        <title>We received your message</title>
       </head>
-      <body style="margin: 0; padding: 0; background-color: #030712; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-        <!-- Preheader -->
+      <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A; -webkit-font-smoothing: antialiased;">
+        
         <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 0px; line-height: 0px; max-width: 0px; opacity: 0;">
-          We have received your message regarding GTMObserver. Our engineering team will review it shortly.
+          We have received your message regarding GTMObserver. Our team will get back to you shortly.
         </div>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #030712; margin: 0; padding: 24px 12px; width: 100%;">
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F1F5F9; padding: 40px 16px;">
           <tr>
             <td align="center">
-              <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 600px; margin: 0 auto; background-color: #0F172A; border: 1px solid #1E293B; border-radius: 12px; overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,0.5);">
+              <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; max-width: 580px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05); text-align: left;">
                 
-                <!-- Header Banner -->
+                <!-- Sleek Brand Header -->
                 <tr>
-                  <td style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); padding: 28px 24px; text-align: left; border-bottom: 1px solid #1E293B;">
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                  <td style="background-color: #0F172A; padding: 24px 32px; border-bottom: 2px solid #00E5FF;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="left" valign="middle">
+                        <td valign="middle">
                           <a href="https://gtmobserver.com" target="_blank" style="text-decoration: none; display: inline-block;">
-                            <img src="https://gtmobserver.com/gtmobserver-logo.png" 
+                            <img src="cid:gtmobserver-logo" 
                                  alt="GTMObserver" 
-                                 width="190" 
-                                 height="35" 
-                                 border="0"
-                                 style="display: block; width: 190px !important; max-width: 190px !important; height: 35px !important; border: 0; outline: none; text-decoration: none;" />
+                                 width="170" 
+                                 height="31" 
+                                 border="0" 
+                                 style="display: block; width: 170px; height: 31px; border: 0; outline: none;" />
                           </a>
                         </td>
                       </tr>
                     </table>
-                    <span style="display: inline-block; background-color: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px;">
-                      ✔ INQUIRY RECEIVED
-                    </span>
-                    <h1 style="margin: 12px 0 0 0; font-size: 22px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.02em;">We've Received Your Message</h1>
-                    <p style="margin: 6px 0 0 0; font-size: 13px; color: #94A3B8;">GTMObserver Engineering & Telemetry Architecture</p>
                   </td>
                 </tr>
 
-                <!-- Content Body -->
+                <!-- Content Area -->
                 <tr>
-                  <td style="padding: 24px 20px;">
-                    <p style="font-size: 15px; color: #E2E8F0; margin: 0 0 14px 0; line-height: 1.6;">
+                  <td style="padding: 32px 32px 28px 32px;">
+                    
+                    <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #0F172A;">
+                      We received your message
+                    </h1>
+                    
+                    <p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.6; color: #334155;">
                       Hi <strong>${name}</strong>,
                     </p>
-                    <p style="font-size: 14px; color: #94A3B8; margin: 0 0 18px 0; line-height: 1.6;">
-                      Thank you for contacting the GTMObserver engineering team. We have received your inquiry and our tracking architects will review your project requirements. One of our engineers will follow up with you within <strong>2 to 4 business hours</strong>.
+                    
+                    <p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.6; color: #334155;">
+                      Thanks for reaching out to GTMObserver! We've received your note and a member of our engineering team will get back to you shortly (typically within 2 to 4 business hours).
                     </p>
 
-                    <!-- Summary Box -->
-                    <div style="font-size: 11px; text-transform: uppercase; color: #94A3B8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 8px;">
-                      Your Submitted Inquiry:
+                    <!-- Message Copy -->
+                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">
+                      Your message:
                     </div>
-                    <div style="background-color: #090D16; border: 1px solid #1E293B; border-left: 3px solid #10B981; border-radius: 6px; padding: 16px; margin-bottom: 24px; font-size: 13px; line-height: 1.6; color: #CBD5E1; white-space: pre-wrap;">${message}</div>
+                    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 3px solid #00E5FF; border-radius: 6px; padding: 16px 18px; font-size: 14px; line-height: 1.6; color: #334155; margin-bottom: 24px; white-space: pre-wrap;">${message}</div>
 
-                    <!-- Free Resource Download Card -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background: linear-gradient(135deg, #131E32 0%, #172554 100%); border: 1px solid #1E40AF; border-radius: 8px; margin-bottom: 24px;">
+                    <!-- Helpful Resource Card -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 24px;">
                       <tr>
                         <td style="padding: 18px 20px;">
-                          <div style="font-size: 12px; text-transform: uppercase; color: #38BDF8; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px;">
-                            Free Architecture Asset
+                          <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">
+                            Free Resource: Tracking Architecture Blueprint
                           </div>
-                          <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; margin-bottom: 6px;">
-                            GTMObserver Tracking Architecture Blueprint (PDF)
-                          </div>
-                          <p style="font-size: 13px; color: #94A3B8; margin: 0 0 14px 0; line-height: 1.5;">
-                            Explore our comprehensive blueprint covering edge data layers, server-side GA4 pipelines, and anomaly detection rules.
+                          <p style="margin: 0 0 14px 0; font-size: 13px; line-height: 1.5; color: #64748B;">
+                            While you wait, feel free to review our architecture blueprint covering edge data layers, server-side pipelines, and GA4 telemetry monitoring.
                           </p>
-                          <a href="https://gtmobserver.com/GTMObserver-Tracking-Architecture-Blueprint.pdf" target="_blank" style="display: inline-block; background-color: #00F0FF; color: #050B14; font-size: 12px; font-weight: 800; padding: 10px 18px; border-radius: 6px; text-decoration: none;">
-                            📥 Download Free Blueprint PDF &rarr;
+                          <a href="https://gtmobserver.com/GTMObserver-Tracking-Architecture-Blueprint.pdf" target="_blank" style="display: inline-block; background-color: #0F172A; color: #FFFFFF; font-size: 13px; font-weight: 600; text-decoration: none; padding: 10px 18px; border-radius: 6px;">
+                            Download Blueprint (PDF) &rarr;
                           </a>
                         </td>
                       </tr>
                     </table>
 
-                    <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.5;">
-                      Need immediate assistance? Feel free to reply directly to this email or visit our <a href="https://gtmobserver.com" style="color: #00F0FF; text-decoration: none;">platform documentation</a>.
+                    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #64748B;">
+                      If you have additional details to share, just reply directly to this email.<br>
+                      <br>
+                      Best regards,<br>
+                      <strong style="color: #0F172A;">The GTMObserver Team</strong>
                     </p>
 
                   </td>
                 </tr>
 
-                <!-- Footer -->
+                <!-- Subtle Footer -->
                 <tr>
-                  <td style="background-color: #0B1120; padding: 18px 20px; text-align: center; border-top: 1px solid #1E293B; font-size: 11px; color: #64748B;">
-                    &copy; ${new Date().getFullYear()} GTMObserver. All rights reserved. &bull; <a href="https://gtmobserver.com" style="color: #94A3B8; text-decoration: none;">gtmobserver.com</a>
+                  <td style="padding: 20px 32px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; font-size: 12px; color: #94A3B8; text-align: center; line-height: 1.5;">
+                    &copy; ${new Date().getFullYear()} GTMObserver &bull; <a href="https://gtmobserver.com" style="color: #64748B; text-decoration: none;">gtmobserver.com</a>
                   </td>
                 </tr>
 
@@ -255,7 +244,14 @@ export async function onRequestPost(context: any) {
       </html>
     `;
 
-    // Send Admin Notification Email via Resend
+    const logoAttachment = {
+      filename: 'gtmobserver-logo.png',
+      content: GTM_LOGO_BASE64,
+      content_type: 'image/png',
+      cid: 'gtmobserver-logo'
+    };
+
+    // Send Admin Notification Email via Resend with embedded CID logo
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -266,8 +262,9 @@ export async function onRequestPost(context: any) {
         from: 'GTMObserver Contact <contact@gtmobserver.com>',
         to: ['ovi@razibmarketing.net'],
         reply_to: email,
-        subject: `⚡ New Contact Request from ${name}`,
-        html: adminHtml
+        subject: `New inquiry from ${name}`,
+        html: adminHtml,
+        attachments: [logoAttachment]
       })
     });
 
@@ -283,7 +280,7 @@ export async function onRequestPost(context: any) {
       });
     }
 
-    // Send Customer Confirmation Autoresponder Email (Non-blocking)
+    // Send Customer Confirmation Autoresponder Email (Non-blocking) with embedded CID logo
     const sendAutoresponder = async () => {
       try {
         await fetch('https://api.resend.com/emails', {
@@ -296,8 +293,9 @@ export async function onRequestPost(context: any) {
             from: 'GTMObserver Contact <contact@gtmobserver.com>',
             to: [email],
             reply_to: 'contact@gtmobserver.com',
-            subject: `We've received your inquiry — GTMObserver Engineering`,
-            html: customerHtml
+            subject: `We received your message – GTMObserver`,
+            html: customerHtml,
+            attachments: [logoAttachment]
           })
         });
       } catch (e) {
