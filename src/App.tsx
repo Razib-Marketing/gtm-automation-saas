@@ -164,14 +164,24 @@ const AppLayout = () => {
   );
 };
 
+const getDashboardUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return '/dashboard';
+    }
+  }
+  return 'https://app.gtmobserver.com/dashboard';
+};
+
 function App() {
   return (
     <ClerkProvider 
       publishableKey={PUBLISHABLE_KEY} 
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      afterSignInUrl="https://gtmobserver.com"
-      afterSignUpUrl="https://gtmobserver.com"
+      afterSignInUrl={getDashboardUrl()}
+      afterSignUpUrl={getDashboardUrl()}
       appearance={{ baseTheme: dark, variables: { colorPrimary: '#00F0FF', colorBackground: '#121212', colorText: 'white' } }}
     >
       <Router>

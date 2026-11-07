@@ -4,6 +4,16 @@ import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import '../components/layout/Navbar.css';
 
+const getDashboardUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return '/dashboard';
+    }
+  }
+  return 'https://app.gtmobserver.com/dashboard';
+};
+
 export const SignInPage = () => {
   const [tookTooLong, setTookTooLong] = useState(false);
 
@@ -49,7 +59,7 @@ export const SignInPage = () => {
           </div>
         </ClerkLoading>
         <ClerkLoaded>
-          <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" forceRedirectUrl="https://gtmobserver.com" fallbackRedirectUrl="https://gtmobserver.com" />
+          <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" forceRedirectUrl={getDashboardUrl()} fallbackRedirectUrl={getDashboardUrl()} />
         </ClerkLoaded>
       </div>
     </div>
