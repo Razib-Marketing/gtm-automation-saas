@@ -99,6 +99,30 @@ const AppRoutes = () => {
     } else {
       window.scrollTo(0, 0);
     }
+
+    if (typeof window !== 'undefined') {
+      const currentPath = location.pathname;
+      const hostname = window.location.hostname;
+      const isApp = hostname === 'app.gtmobserver.com' || hostname === 'dashboard.gtmobserver.com';
+      const cleanPath = currentPath === '' ? '/' : currentPath;
+      const canonicalHref = isApp 
+        ? `https://app.gtmobserver.com${cleanPath}`
+        : `https://gtmobserver.com${cleanPath === '/' ? '/' : cleanPath}`;
+
+      let canonicalLink = document.querySelector('link[rel="canonical"]');
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonicalLink);
+      }
+      canonicalLink.setAttribute('href', canonicalHref);
+
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl) ogUrl.setAttribute('content', canonicalHref);
+
+      const twitterUrl = document.querySelector('meta[name="twitter:url"]');
+      if (twitterUrl) twitterUrl.setAttribute('content', canonicalHref);
+    }
   }, [location]);
 
   return (
