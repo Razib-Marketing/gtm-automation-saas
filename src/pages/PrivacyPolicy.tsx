@@ -42,7 +42,12 @@ export const PrivacyPolicy = () => {
             </ul>
             <h3>Google API Services User Data Policy</h3>
             <p>GTMObserver's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
-            <p>Specifically, we require the <code>https://www.googleapis.com/auth/tagmanager.edit.containers</code> scope to programmatically create, edit, and publish tags, triggers, and variables inside your designated Google Tag Manager containers. We do not sell this data, and we do not use this data for serving advertisements.</p>
+            <p>Specifically, we request access to the following Google API scopes:</p>
+            <ul>
+              <li><code>https://www.googleapis.com/auth/tagmanager.edit.containers</code> &amp; <code>https://www.googleapis.com/auth/tagmanager.readonly</code>: Required to audit, inspect, and automate the deployment of tags, triggers, and variables inside designated Google Tag Manager containers on behalf of the user.</li>
+              <li><code>https://www.googleapis.com/auth/analytics.readonly</code>: Required to monitor Google Analytics 4 (GA4) property performance, run daily telemetry audits, and detect tracking anomalies.</li>
+            </ul>
+            <p>We do not sell Google user data, we do not share it with third parties, and we do not use this data for serving advertisements.</p>
           </section>
 
           <section>

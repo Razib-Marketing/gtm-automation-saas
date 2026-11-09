@@ -4,7 +4,7 @@ export async function onRequest(context) {
   
   const clientId = env.GOOGLE_CLIENT_ID;
   const redirectUri = `${url.origin}/api/auth/google/callback`;
-  const scope = 'https://www.googleapis.com/auth/tagmanager.edit.containers https://www.googleapis.com/auth/tagmanager.manage.accounts https://www.googleapis.com/auth/tagmanager.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/analytics.readonly';
+  const scope = 'https://www.googleapis.com/auth/tagmanager.edit.containers https://www.googleapis.com/auth/tagmanager.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/analytics.readonly';
   
   const clerkUserId = url.searchParams.get('clerkUserId') || 'unknown';
   
