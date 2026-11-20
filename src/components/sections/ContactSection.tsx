@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, MessageSquare, Mail, MapPin, Globe, CheckCircle, AlertCircle } from 'lucide-react';
+import { Send, MessageSquare, Mail, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 import { pushDataLayer } from '../../utils/analytics';
 import './ContactSection.css';
 
@@ -84,22 +84,6 @@ export const ContactSection = () => {
                   4427 NW 44th Street<br />
                   Coconut Creek, Florida 33073<br />
                   United States
-                </p>
-              </div>
-            </div>
-            <div className="contact-method">
-              <div className="method-icon"><Globe size={24} /></div>
-              <div>
-                <h4>Parent Agency</h4>
-                <p style={{ margin: 0 }}>
-                  <a 
-                    href="https://razibmarketing.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    style={{ color: '#00F0FF', textDecoration: 'none', fontWeight: 600 }}
-                  >
-                    Razib Marketing &rarr;
-                  </a>
                 </p>
               </div>
             </div>
