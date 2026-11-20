@@ -7,6 +7,7 @@ import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { Fireflies } from '../components/ui/Fireflies';
 import { FeatureCard } from '../components/ui/FeatureCard';
 import { ClientsSection } from '../components/sections/ClientsSection';
+import { AboutPlatformSection } from '../components/sections/AboutPlatformSection';
 import { HowItWorksSection } from '../components/sections/HowItWorksSection';
 import { ObserverSection } from '../components/sections/ObserverSection';
 import { CompetitorComparisonSection } from '../components/sections/CompetitorComparisonSection';
@@ -145,6 +146,9 @@ export const Home = () => {
             />
           </div>
         </div>
+
+        {/* ABOUT / WHAT IS GTM OBSERVER & WHAT WE DO */}
+        <AboutPlatformSection />
 
         {/* HOW IT WORKS SECTION */}
         <HowItWorksSection />

@@ -65,6 +65,7 @@ export const FooterSection = () => {
           <div className="footer-links">
             <h4>Platform</h4>
             <ul>
+              <li><Link to="/#about">About Platform</Link></li>
               <li><Link to="/#features">Features</Link></li>
               <li><Link to="/#how-it-works">How It Works</Link></li>
               <li><Link to="/#observer">GA4 Observer</Link></li>

@@ -29,6 +29,7 @@ export const Navbar = () => {
         </Link>
 
         <div className="navbar-links">
+          <Link to="/#about">About</Link>
           <Link to="/#features">Features</Link>
           <Link to="/#how-it-works">How It Works</Link>
           <Link to="/#observer">GA4 Observer</Link>
@@ -75,6 +76,7 @@ export const Navbar = () => {
             aria-label="Mobile Navigation Menu"
           >
             <div className="mobile-menu-content">
+              <Link to="/#about" onClick={toggleMobileMenu}>About</Link>
               <Link to="/#features" onClick={toggleMobileMenu}>Features</Link>
               <Link to="/#how-it-works" onClick={toggleMobileMenu}>How It Works</Link>
               <Link to="/#observer" onClick={toggleMobileMenu}>GA4 Observer</Link>
