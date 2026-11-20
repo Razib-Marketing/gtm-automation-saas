@@ -57,7 +57,7 @@ export const FAQSection: React.FC = () => {
             <span className="title-highlight">About GTM Automation & GA4 Audits</span>
           </h2>
           <p className="section-subtitle">
-            Got questions? We've got answers. If you need custom enterprise requirements or agency volume pricing, reach out to our team anytime.
+            Got questions? We've got answers. If you need custom enterprise requirements or agency volume setups, reach out to our team anytime.
           </p>
         </motion.div>
 

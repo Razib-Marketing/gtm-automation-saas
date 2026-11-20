@@ -100,10 +100,6 @@ const ROUTE_SEO: Record<string, { title: string; description: string }> = {
     title: 'GTMObserver — Automated GTM Deployment & 24/7 GA4 Anomaly Detection',
     description: 'Deploy validated Google Tag Manager tracking architectures in seconds and monitor GA4 telemetry 24/7 at the Cloudflare edge. Detect tracking crashes, conversion drops, and anomaly alerts before clients notice.'
   },
-  '/pricing': {
-    title: 'Pricing & Plans — GTMObserver Tag Governance & GA4 Telemetry',
-    description: 'Simple, transparent pricing for automated GTM container deployment and 24/7 GA4 anomaly monitoring. Free tier, Pro, and Enterprise options available.'
-  },
   '/docs': {
     title: 'Documentation & Integration Guides — GTMObserver',
     description: 'Complete guides for connecting Google Tag Manager, GA4 Measurement Protocol, Cloudflare edge listeners, and automated recipe deployments.'
@@ -149,6 +145,12 @@ app.get('*', async (c) => {
   if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
     url.pathname = url.pathname.slice(0, -1);
     return c.redirect(url.toString(), 301);
+  }
+
+  // 3b. Temporary redirect for hidden pricing page -> homepage
+  if (url.pathname === '/pricing') {
+    url.pathname = '/';
+    return c.redirect(url.toString(), 302);
   }
 
   // 4. If visiting an app route on the marketing domain, redirect to app.gtmobserver.com

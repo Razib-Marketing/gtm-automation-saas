@@ -102,7 +102,7 @@ export async function onRequest(context: any) {
 
       if (tier === 'free') {
         return new Response(JSON.stringify({ 
-          error: 'An active paid subscription (Pro or Custom) is required to activate GA4 anomaly monitors. Please choose a plan on our pricing page.',
+          error: 'An active paid subscription (Pro or Custom) is required to activate GA4 anomaly monitors. Please contact support at info@gtmobserver.com to upgrade.',
           requiresUpgrade: true
         }), { status: 403, headers: { 'Content-Type': 'application/json' } });
       }

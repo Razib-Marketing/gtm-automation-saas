@@ -446,9 +446,8 @@ export const Dashboard = () => {
   const handleRunAudit = async () => {
     if (!selectedWorkspace) return;
 
-    if (userTier === 'free') {
-      alert("A paid subscription (Pro or Custom) is required to run workspace audits. Please choose a plan on our pricing page.");
-      window.location.href = '/pricing';
+    if (userTier === 'free' && recentAudits.length >= 5) {
+      alert("You have reached your limit of 5 free GTM workspace audits. Please contact support at info@gtmobserver.com to unlock unlimited audits.");
       return;
     }
 
@@ -464,6 +463,13 @@ export const Dashboard = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'Failed to complete workspace audit');
+        setIsAuditOpen(false);
+        return;
+      }
+
       setAuditData({ 
         tags: data.tags || [], 
         triggers: data.triggers || [],
@@ -554,16 +560,12 @@ export const Dashboard = () => {
 
     // Tier validations: Paid plan required to deploy
     if (userTier === 'free') {
-      alert("A paid subscription (Pro or Custom) is required to deploy tracking recipes to Google Tag Manager. Please choose a plan on our pricing page.");
-      window.location.href = '/pricing';
+      alert("A paid subscription is required to deploy tracking recipes to Google Tag Manager. Free accounts include 5 workspace audits. Contact info@gtmobserver.com to upgrade.");
       return;
     }
 
     if (userTier === 'pro' && deploymentCount >= 10) {
-      // Need to check if this is a new account or existing
-      // We will assume if they reached 10, we warn them. For a better UX, we'd check if this specific account is already deployed to.
-      alert("Pro tier limit reached: You can only deploy to 10 distinct GTM accounts. Please contact sales to upgrade.");
-      window.location.href = '/pricing';
+      alert("Pro tier limit reached: You can only deploy to 10 distinct GTM accounts. Please contact info@gtmobserver.com to upgrade.");
       return;
     }
 
@@ -847,29 +849,34 @@ export const Dashboard = () => {
               </div>
               <div>
                 <p style={{ margin: 0, color: '#FFFFFF', fontWeight: 700, fontSize: '1rem' }}>
-                  Subscription Required to Deploy & Audit
+                  Free Plan: 5 GTM Workspace Audits Included
                 </p>
                 <p style={{ margin: '0.25rem 0 0 0', color: '#9CA3AF', fontSize: '0.875rem' }}>
-                  Please purchase a plan to unlock automated GTM deployments, audits, and real-time GA4 anomaly monitoring.
+                  {recentAudits.length >= 5 
+                    ? 'You have used all 5 of your free workspace audits. Contact us to upgrade for unlimited audits & automated deployments.'
+                    : `You have ${Math.max(0, 5 - recentAudits.length)} of 5 free GTM audits remaining. Select a workspace below and click "Run Audit".`
+                  }
                 </p>
               </div>
             </div>
-            <Link to="/pricing" style={{
-              background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
-              color: '#FFFFFF',
-              padding: '0.65rem 1.4rem',
-              borderRadius: '8px',
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              textDecoration: 'none',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 12px rgba(0, 240, 255, 0.35)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}>
-              Choose a Plan &rarr;
-            </Link>
+            {recentAudits.length >= 5 && (
+              <a href="mailto:info@gtmobserver.com?subject=GTMObserver%20Upgrade%20Inquiry" style={{
+                background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
+                color: '#FFFFFF',
+                padding: '0.65rem 1.4rem',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                boxShadow: '0 2px 12px rgba(0, 240, 255, 0.35)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}>
+                Contact Support &rarr;
+              </a>
+            )}
           </div>
         )}
 
@@ -929,13 +936,33 @@ export const Dashboard = () => {
             <div className="selection-card">
               <div className="selection-header">
                 <h3 className="section-title" style={{ margin: 0 }}>Select Target Workspace</h3>
-                <button 
-                  className="btn-audit" 
-                  onClick={handleRunAudit}
-                  disabled={!selectedWorkspace}
-                >
-                  <Activity className="w-4 h-4 mr-2 inline" /> Run Audit
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {userTier === 'free' && (
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      color: recentAudits.length >= 5 ? '#EF4444' : '#00F0FF',
+                      background: recentAudits.length >= 5 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0, 240, 255, 0.12)',
+                      border: `1px solid ${recentAudits.length >= 5 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(0, 240, 255, 0.3)'}`,
+                      padding: '0.3rem 0.65rem',
+                      borderRadius: '9999px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}>
+                      <Activity size={12} />
+                      {recentAudits.length >= 5 ? '5/5 Free Audits Used' : `${5 - recentAudits.length} / 5 Free Audits Left`}
+                    </span>
+                  )}
+                  <button 
+                    className="btn-audit" 
+                    onClick={handleRunAudit}
+                    disabled={!selectedWorkspace || (userTier === 'free' && recentAudits.length >= 5)}
+                    title={userTier === 'free' && recentAudits.length >= 5 ? 'You have used all 5 free audits' : undefined}
+                  >
+                    <Activity className="w-4 h-4 mr-2 inline" /> Run Audit
+                  </button>
+                </div>
               </div>
               
               <div className="dropdowns-row">
@@ -1172,7 +1199,7 @@ export const Dashboard = () => {
                                         whileTap={!isLocked ? { scale: 0.99 } : {}}
                                         onClick={() => {
                                           if (isLocked) {
-                                             window.location.href = '/pricing';
+                                             alert("A paid subscription is required to select and deploy automated GTM modules. Free accounts include 5 workspace audits.");
                                              return;
                                           }
                                           if (isGroup) {

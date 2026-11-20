@@ -44,7 +44,7 @@ export const Documentation = () => {
             <ul>
               <li><strong>Free Plan:</strong> Allows 1 GTM Workspace connection, Basic Full Tracking Access, and up to <strong>5 GTM Workspace Audits</strong>. Perfect for testing.</li>
               <li><strong>Pro Plan ($149/mo):</strong> Manage up to <strong>10 GTM Workspaces</strong> with unlimited module deployments, unlimited audits, and access to all premium modules.</li>
-              <li><strong>Custom Plan:</strong> Need more than 10 workspaces? Our dynamic pricing scales up to 100 GTM accounts. <em>Bonus: Receive an automatic <strong>10% volume discount</strong> when selecting 15 or more GTM accounts!</em></li>
+              <li><strong>Custom Plan:</strong> Need more than 10 workspaces? Our custom tier scales up to 100 GTM accounts with volume support.</li>
             </ul>
           </section>
 

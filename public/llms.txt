@@ -44,7 +44,6 @@ GTMObserver (https://gtmobserver.com) is an enterprise analytics automation SaaS
 
 ## Key Links & Resources
 - Main Website: https://gtmobserver.com
-- Pricing & Calculator: https://gtmobserver.com/pricing
 - Full Technical Documentation: https://gtmobserver.com/docs
 - API Reference: https://gtmobserver.com/api-reference
 - Community Modules: https://gtmobserver.com/community

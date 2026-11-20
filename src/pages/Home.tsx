@@ -158,8 +158,8 @@ export const Home = () => {
         {/* REVIEWS SECTION (Hidden temporarily) */}
         {/* <ReviewsSection /> */}
 
-        {/* PRICING SECTION */}
-        <PricingSection />
+        {/* PRICING SECTION (Hidden temporarily) */}
+        {/* <PricingSection /> */}
 
         {/* FREQUENTLY ASKED QUESTIONS SECTION */}
         <FAQSection />

@@ -65,6 +65,14 @@ export async function onRequestGet(context: any) {
       } catch (_) {}
     }
 
+    let auditCount = 0;
+    try {
+      const auditRow: any = await env.DB.prepare('SELECT COUNT(*) as cnt FROM audit_logs WHERE user_id = ?').bind(clerkUserId).first();
+      auditCount = auditRow ? (auditRow.cnt || 0) : 0;
+    } catch (_) {}
+
+    dbResult.audit_count = auditCount;
+
     return new Response(JSON.stringify(dbResult), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
