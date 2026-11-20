@@ -54,7 +54,14 @@ export const TermsOfService = () => {
 
           <section>
             <h2>7. Contact Information</h2>
-            <p>If you have any questions regarding these Terms, please contact us at <a href="mailto:info@gtmobserver.com" style={{ color: '#00F0FF', textDecoration: 'none' }}>info@gtmobserver.com</a>.</p>
+            <p>If you have any questions regarding these Terms, please contact us at <a href="mailto:info@gtmobserver.com" style={{ color: '#00F0FF', textDecoration: 'none' }}>info@gtmobserver.com</a> or write to us at:</p>
+            <p style={{ color: '#CBD5E1', lineHeight: '1.6' }}>
+              <strong>Razib Marketing (GTMObserver)</strong><br />
+              4427 NW 44th Street<br />
+              Coconut Creek, Florida 33073<br />
+              United States<br />
+              Website: <a href="https://razibmarketing.com" target="_blank" rel="noopener noreferrer" style={{ color: '#00F0FF', textDecoration: 'none' }}>razibmarketing.com</a>
+            </p>
           </section>
         </motion.div>
       </div>

@@ -60,6 +60,23 @@ export const FooterSection = () => {
             <p className="footer-description">
               The Edge-Native Analytics Platform. Deploy validated Google Tag Manager tracking architectures in seconds and monitor GA4 telemetry 24/7 with zero latency.
             </p>
+            <div style={{ marginTop: '1.25rem', fontSize: '0.85rem', color: '#94A3B8', lineHeight: '1.5' }}>
+              <p style={{ margin: '0 0 0.35rem 0' }}>
+                <strong style={{ color: '#E2E8F0' }}>Headquarters:</strong><br />
+                4427 NW 44th Street, Coconut Creek, Florida 33073, United States
+              </p>
+              <p style={{ margin: '0.5rem 0 0 0' }}>
+                A digital analytics product by{' '}
+                <a 
+                  href="https://razibmarketing.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{ color: '#00F0FF', textDecoration: 'none', fontWeight: 600 }}
+                >
+                  Razib Marketing &rarr;
+                </a>
+              </p>
+            </div>
           </div>
           
           <div className="footer-links">
@@ -117,7 +134,17 @@ export const FooterSection = () => {
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} GTMObserver. All rights reserved. Edge-Native Analytics Intelligence.</p>
+          <p>
+            &copy; {new Date().getFullYear()} GTMObserver. All rights reserved. Built by{' '}
+            <a 
+              href="https://razibmarketing.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ color: '#00F0FF', textDecoration: 'none', fontWeight: 600 }}
+            >
+              Razib Marketing
+            </a>.
+          </p>
           <div className="footer-legal">
             <Link to="/privacy-policy">Privacy Policy</Link>
             <Link to="/terms-of-service">Terms of Service</Link>
