@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Activity, Bell, Zap, Send, CheckCircle2, 
-  ArrowRight, Filter 
+  ArrowRight, Filter, Sparkles 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
@@ -190,28 +190,89 @@ export const ObserverSection: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Action Callout */}
-        <div className="observer-cta-actions" style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'center' }}>
-          {isSignedIn ? (
-            <a 
-              href="https://app.gtmobserver.com/observer" 
-              className="btn-primary" 
-              style={{ padding: '0.85rem 2rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
-              onClick={() => pushDataLayer('cta_click', { cta_text: 'Open GA4 Observer', cta_location: 'observer_section' })}
-            >
-              Open GA4 Observer <ArrowRight size={18} style={{ marginLeft: '6px' }} />
-            </a>
-          ) : (
+        {/* Pricing & Plan Integration Callout */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="observer-pricing-callout"
+        >
+          <div className="pricing-callout-header">
+            <Sparkles size={22} color="#00F0FF" />
+            <div>
+              <h3>How GA4 Observer is Included in Your Plan</h3>
+              <p>Observer is fully built into your GTMObserver subscription with tiered monitor limits.</p>
+            </div>
+          </div>
+
+          <div className="observer-tier-summary-grid">
+            <div className="observer-tier-item">
+              <div className="tier-tag">Free Tier ($0/mo)</div>
+              <h4>1 Active Monitor</h4>
+              <p>Ideal for personal websites or testing single property health checks.</p>
+              <ul>
+                <li>✓ Daily background anomaly check</li>
+                <li>✓ Single email alert recipient</li>
+                <li>✓ On-demand manual test reports</li>
+              </ul>
+            </div>
+
+            <div className="observer-tier-item active">
+              <div className="tier-tag popular">Pro Tier ($149/mo)</div>
+              <h4>Up to 10 Active Monitors</h4>
+              <p>Built for freelancers and agencies managing multiple client GA4 properties.</p>
+              <ul>
+                <li>✓ Real-time automated incident alerts</li>
+                <li>✓ Multi-recipient email delivery (team & clients)</li>
+                <li>✓ Compound rules (AND / OR logic)</li>
+                <li>✓ Channel & medium traffic segmentation</li>
+                <li>✓ Complete Dual History audit logs</li>
+              </ul>
+            </div>
+
+            <div className="observer-tier-item">
+              <div className="tier-tag">Custom Tier ($149+/mo)</div>
+              <h4>10 to 100+ Monitors</h4>
+              <p>Unlimited scale for mid-to-large agencies and high-volume multi-brand setups.</p>
+              <ul>
+                <li>✓ 10 to 100+ custom property monitors</li>
+                <li>✓ White-label sender domain support</li>
+                <li>✓ Volume discounts from 15+ containers</li>
+                <li>✓ Dedicated priority support & SLAs</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="observer-cta-actions">
+            {isSignedIn ? (
+              <a 
+                href="https://app.gtmobserver.com/observer" 
+                className="btn-primary" 
+                style={{ padding: '0.85rem 2rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
+                onClick={() => pushDataLayer('cta_click', { cta_text: 'Open GA4 Observer', cta_location: 'observer_section' })}
+              >
+                Open GA4 Observer <ArrowRight size={18} style={{ marginLeft: '6px' }} />
+              </a>
+            ) : (
+              <Link 
+                to="/sign-up" 
+                className="btn-primary" 
+                style={{ padding: '0.85rem 2rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center' }}
+                onClick={() => pushDataLayer('cta_click', { cta_text: 'Start Monitoring for Free', cta_location: 'observer_section' })}
+              >
+                Start Monitoring for Free <ArrowRight size={18} style={{ marginLeft: '6px' }} />
+              </Link>
+            )}
             <Link 
-              to="/sign-up" 
-              className="btn-primary" 
-              style={{ padding: '0.85rem 2rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center' }}
-              onClick={() => pushDataLayer('cta_click', { cta_text: 'Start Monitoring for Free', cta_location: 'observer_section' })}
+              to="/pricing" 
+              className="btn-secondary" 
+              style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem' }}
+              onClick={() => pushDataLayer('cta_click', { cta_text: 'View All Pricing Details', cta_location: 'observer_section' })}
             >
-              Start Monitoring for Free <ArrowRight size={18} style={{ marginLeft: '6px' }} />
+              View All Pricing Details
             </Link>
-          )}
-        </div>
+          </div>
+        </motion.div>
 
       </div>
     </section>

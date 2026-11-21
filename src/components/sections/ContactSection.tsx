@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Send, MessageSquare, Mail, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
+import { Send, MessageSquare, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import { pushDataLayer } from '../../utils/analytics';
 import './ContactSection.css';
 
@@ -74,17 +74,6 @@ export const ContactSection = () => {
               <div>
                 <h4>General Inquiries</h4>
                 <p><a href="mailto:info@gtmobserver.com" style={{ color: '#E2E8F0', textDecoration: 'none' }}>info@gtmobserver.com</a></p>
-              </div>
-            </div>
-            <div className="contact-method">
-              <div className="method-icon"><MapPin size={24} /></div>
-              <div>
-                <h4>Headquarters</h4>
-                <p style={{ color: '#E2E8F0', lineHeight: '1.45', margin: 0 }}>
-                  4427 NW 44th Street<br />
-                  Coconut Creek, Florida 33073<br />
-                  United States
-                </p>
               </div>
             </div>
           </div>

@@ -447,7 +447,8 @@ export const Dashboard = () => {
     if (!selectedWorkspace) return;
 
     if (userTier === 'free' && recentAudits.length >= 5) {
-      alert("You have reached your limit of 5 free GTM workspace audits. Please contact support at info@gtmobserver.com to unlock unlimited audits.");
+      alert("You have reached your limit of 5 free GTM workspace audits. Please choose a plan on our pricing page to continue.");
+      window.location.href = '/pricing';
       return;
     }
 
@@ -560,12 +561,14 @@ export const Dashboard = () => {
 
     // Tier validations: Paid plan required to deploy
     if (userTier === 'free') {
-      alert("A paid subscription is required to deploy tracking recipes to Google Tag Manager. Free accounts include 5 workspace audits. Contact info@gtmobserver.com to upgrade.");
+      alert("A paid subscription (Pro or Custom) is required to deploy tracking recipes to Google Tag Manager. Please choose a plan on our pricing page.");
+      window.location.href = '/pricing';
       return;
     }
 
     if (userTier === 'pro' && deploymentCount >= 10) {
-      alert("Pro tier limit reached: You can only deploy to 10 distinct GTM accounts. Please contact info@gtmobserver.com to upgrade.");
+      alert("Pro tier limit reached: You can only deploy to 10 distinct GTM accounts. Please choose a plan on our pricing page to upgrade.");
+      window.location.href = '/pricing';
       return;
     }
 
@@ -853,30 +856,28 @@ export const Dashboard = () => {
                 </p>
                 <p style={{ margin: '0.25rem 0 0 0', color: '#9CA3AF', fontSize: '0.875rem' }}>
                   {recentAudits.length >= 5 
-                    ? 'You have used all 5 of your free workspace audits. Contact us to upgrade for unlimited audits & automated deployments.'
-                    : `You have ${Math.max(0, 5 - recentAudits.length)} of 5 free GTM audits remaining. Select a workspace below and click "Run Audit".`
+                    ? 'You have used all 5 of your free workspace audits. Upgrade to Pro for unlimited audits & automated deployments.'
+                    : `You have ${Math.max(0, 5 - recentAudits.length)} of 5 free GTM audits remaining. Upgrade to Pro for automated deployments.`
                   }
                 </p>
               </div>
             </div>
-            {recentAudits.length >= 5 && (
-              <a href="mailto:info@gtmobserver.com?subject=GTMObserver%20Upgrade%20Inquiry" style={{
-                background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
-                color: '#FFFFFF',
-                padding: '0.65rem 1.4rem',
-                borderRadius: '8px',
-                fontWeight: 700,
-                fontSize: '0.9rem',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                boxShadow: '0 2px 12px rgba(0, 240, 255, 0.35)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}>
-                Contact Support &rarr;
-              </a>
-            )}
+            <Link to="/pricing" style={{
+              background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
+              color: '#FFFFFF',
+              padding: '0.65rem 1.4rem',
+              borderRadius: '8px',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 12px rgba(0, 240, 255, 0.35)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem'
+            }}>
+              Choose a Plan &rarr;
+            </Link>
           </div>
         )}
 
@@ -1199,7 +1200,7 @@ export const Dashboard = () => {
                                         whileTap={!isLocked ? { scale: 0.99 } : {}}
                                         onClick={() => {
                                           if (isLocked) {
-                                             alert("A paid subscription is required to select and deploy automated GTM modules. Free accounts include 5 workspace audits.");
+                                             window.location.href = '/pricing';
                                              return;
                                           }
                                           if (isGroup) {

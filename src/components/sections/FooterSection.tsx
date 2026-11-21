@@ -70,6 +70,7 @@ export const FooterSection = () => {
               <li><Link to="/#how-it-works">How It Works</Link></li>
               <li><Link to="/#observer">GA4 Observer</Link></li>
               <li><Link to="/#comparison">Why Us</Link></li>
+              <li><Link to="/pricing">Pricing</Link></li>
               <li><a href="https://app.gtmobserver.com/dashboard">Dashboard</a></li>
             </ul>
           </div>

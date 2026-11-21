@@ -34,6 +34,7 @@ export const Navbar = () => {
           <Link to="/#how-it-works">How It Works</Link>
           <Link to="/#observer">GA4 Observer</Link>
           <Link to="/#comparison">Why Us</Link>
+          <Link to="/pricing">Pricing</Link>
           <Link to="/#faq">FAQ</Link>
           <Link to="/#contact">Contact</Link>
         </div>
@@ -81,6 +82,7 @@ export const Navbar = () => {
               <Link to="/#how-it-works" onClick={toggleMobileMenu}>How It Works</Link>
               <Link to="/#observer" onClick={toggleMobileMenu}>GA4 Observer</Link>
               <Link to="/#comparison" onClick={toggleMobileMenu}>Why Us</Link>
+              <Link to="/pricing" onClick={toggleMobileMenu}>Pricing</Link>
               <Link to="/#faq" onClick={toggleMobileMenu}>FAQ</Link>
               <Link to="/#contact" onClick={toggleMobileMenu}>Contact</Link>
               

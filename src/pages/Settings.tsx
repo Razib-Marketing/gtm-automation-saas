@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { UserProfile, useUser, useAuth, RedirectToSignIn } from '@clerk/clerk-react';
+import { useNavigate } from 'react-router-dom';
 import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
@@ -8,6 +9,7 @@ import './Settings.css';
 export const Settings = () => {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
+  const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'subscription' | 'profile'>('subscription');
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
@@ -144,9 +146,9 @@ export const Settings = () => {
                         {isPro && (
                           <button 
                             className="btn-home-link"
-                            onClick={() => window.location.href = 'mailto:info@gtmobserver.com?subject=GTMObserver%20Custom%20Tier%20Upgrade'}
+                            onClick={() => navigate('/pricing')}
                           >
-                            <ArrowUpCircle size={14} /> Contact to Scale
+                            <ArrowUpCircle size={14} /> Enhance Plan
                           </button>
                         )}
                       </div>

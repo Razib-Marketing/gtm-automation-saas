@@ -5,6 +5,7 @@ import {
   Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info, Zap 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { pushDataLayer } from '../utils/analytics';
@@ -396,7 +397,8 @@ export const Observer = () => {
     setErrorMsg('');
 
     if (userTier === 'free') {
-      alert("A paid subscription (Pro or Custom) is required to create autonomous GA4 anomaly monitors. Free accounts include 5 GTM workspace audits on the Dashboard.");
+      alert("A paid subscription (Pro or Custom) is required to create autonomous GA4 anomaly monitors. Please choose a plan on our pricing page.");
+      window.location.href = '/pricing';
       return;
     }
 
@@ -636,14 +638,14 @@ export const Observer = () => {
               </div>
               <div>
                 <p style={{ margin: 0, color: '#FFFFFF', fontWeight: 700, fontSize: '1rem' }}>
-                  Pro Account Required for 24/7 GA4 Monitors
+                  Subscription Required to Activate Monitors
                 </p>
                 <p style={{ margin: '0.25rem 0 0 0', color: '#9CA3AF', fontSize: '0.875rem' }}>
-                  Upgrade to create autonomous 24/7 GA4 anomaly monitors and receive multi-email incident alerts. Free tier accounts include 5 GTM workspace audits.
+                  Please purchase a plan to create autonomous 24/7 GA4 anomaly monitors and receive multi-email incident alerts.
                 </p>
               </div>
             </div>
-            <a href="mailto:info@gtmobserver.com?subject=GTMObserver%20Pro%20Upgrade" style={{
+            <Link to="/pricing" style={{
               background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
               color: '#FFFFFF',
               padding: '0.65rem 1.4rem',
@@ -657,8 +659,8 @@ export const Observer = () => {
               alignItems: 'center',
               gap: '0.4rem'
             }}>
-              Contact Us &rarr;
-            </a>
+              Choose a Plan &rarr;
+            </Link>
           </div>
         )}
 

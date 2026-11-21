@@ -373,7 +373,7 @@ export async function onRequest(context) {
 
     if (tier === 'free') {
       return new Response(JSON.stringify({ 
-        error: 'An active paid subscription (Pro or Custom) is required to deploy tracking recipes. Free accounts include 5 GTM workspace audits. Contact info@gtmobserver.com to upgrade.',
+        error: 'An active paid subscription (Pro or Custom) is required to deploy tracking recipes. Please choose a plan on our pricing page.',
         requiresUpgrade: true
       }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }

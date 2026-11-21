@@ -162,8 +162,8 @@ export const Home = () => {
         {/* REVIEWS SECTION (Hidden temporarily) */}
         {/* <ReviewsSection /> */}
 
-        {/* PRICING SECTION (Hidden temporarily) */}
-        {/* <PricingSection /> */}
+        {/* PRICING SECTION */}
+        <PricingSection />
 
         {/* FREQUENTLY ASKED QUESTIONS SECTION */}
         <FAQSection />
