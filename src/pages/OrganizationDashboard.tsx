@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@clerk/clerk-react';
 import {
   FolderKanban,
   PlusCircle,
@@ -16,23 +17,134 @@ import {
   FlaskConical,
   RotateCcw,
   Sparkles,
-  CreditCard
+  CreditCard,
+  Pencil,
+  Trash2,
+  X,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { WEBSITE_TYPES, getWebsiteTypeMeta } from '../types/project';
-import { resetSandboxToNewUser, seedSandboxSampleProjects } from '../utils/localDemoStore';
+import type { Project, WebsitePerspective } from '../types/project';
+import {
+  resetSandboxToNewUser,
+  seedSandboxSampleProjects,
+  updateSandboxProject,
+  deleteSandboxProject
+} from '../utils/localDemoStore';
 import './Dashboard.css';
 import './OrganizationDashboard.css';
 
 export const OrganizationDashboard: React.FC = () => {
   const { projects, userTier, isSandboxMode, refreshWorkspace } = useWorkspace();
+  const { getToken } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+
+  // Quick Edit Project Modal state
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editUrl, setEditUrl] = useState('');
+  const [editType, setEditType] = useState<WebsitePerspective>('general');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  // Delete Project Modal state
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const handleOpenEdit = (project: Project) => {
+    setProjectToEdit(project);
+    setEditName(project.name || '');
+    setEditUrl(project.website_url || '');
+    setEditType((project.website_type as WebsitePerspective) || 'general');
+    setEditError('');
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectToEdit) return;
+    if (!editName.trim()) {
+      setEditError('Project name cannot be empty.');
+      return;
+    }
+    setSavingEdit(true);
+    setEditError('');
+    try {
+      if (isSandboxMode) {
+        updateSandboxProject(projectToEdit.id, {
+          name: editName.trim(),
+          website_url: editUrl.trim(),
+          website_type: editType
+        });
+        await refreshWorkspace();
+        setProjectToEdit(null);
+        return;
+      }
+      const token = await getToken();
+      const res = await fetch('/api/projects', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          id: projectToEdit.id,
+          name: editName.trim(),
+          websiteUrl: editUrl.trim(),
+          websiteType: editType
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update project');
+      }
+      await refreshWorkspace();
+      setProjectToEdit(null);
+    } catch (err: any) {
+      setEditError(err.message || 'Error updating project');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!projectToDelete) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      if (isSandboxMode) {
+        deleteSandboxProject(projectToDelete.id);
+        await refreshWorkspace();
+        setProjectToDelete(null);
+        return;
+      }
+      const token = await getToken();
+      const res = await fetch(`/api/projects?id=${encodeURIComponent(projectToDelete.id)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete project');
+      }
+      await refreshWorkspace();
+      setProjectToDelete(null);
+    } catch (err: any) {
+      setDeleteError(err.message || 'Error deleting project');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const params = new URLSearchParams(location.search);
   const createdProjectId = params.get('created');
@@ -440,13 +552,34 @@ export const OrganizationDashboard: React.FC = () => {
                         )}
                       </div>
 
-                      <Link
-                        to={`/projects/${project.id}/settings`}
-                        title="Project Settings"
-                        className="org-project-settings-btn"
-                      >
-                        <Sliders size={15} />
-                      </Link>
+                      <div className="org-project-actions">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(project)}
+                          title="Quick Edit Project"
+                          aria-label="Edit Project"
+                          className="org-action-btn edit-btn"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <Link
+                          to={`/projects/${project.id}/settings`}
+                          title="Full Project Settings & Integrations"
+                          aria-label="Project Settings"
+                          className="org-action-btn settings-btn"
+                        >
+                          <Sliders size={14} />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setProjectToDelete(project)}
+                          title="Delete Project"
+                          aria-label="Delete Project"
+                          className="org-action-btn delete-btn"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Connected Bindings */}
@@ -531,6 +664,220 @@ export const OrganizationDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Quick Edit Project Modal */}
+      <AnimatePresence>
+        {projectToEdit && (
+          <div className="org-modal-overlay" onClick={() => !savingEdit && setProjectToEdit(null)}>
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="org-modal-card"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="org-modal-header">
+                <h3 className="org-modal-title">Edit Project</h3>
+                <button
+                  type="button"
+                  className="org-modal-close-btn"
+                  onClick={() => !savingEdit && setProjectToEdit(null)}
+                  aria-label="Close"
+                  disabled={savingEdit}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEdit} className="org-modal-body">
+                {editError && (
+                  <div
+                    style={{
+                      padding: '0.65rem 0.85rem',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '8px',
+                      color: '#FCA5A5',
+                      fontSize: '0.82rem',
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
+                  >
+                    <AlertTriangle size={15} color="#EF4444" />
+                    <span>{editError}</span>
+                  </div>
+                )}
+
+                <div className="org-modal-field">
+                  <label className="org-modal-label">Project Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="module-input"
+                    style={{ width: '100%' }}
+                    placeholder="e.g. My Website Tracker"
+                  />
+                </div>
+
+                <div className="org-modal-field">
+                  <label className="org-modal-label">Website URL</label>
+                  <input
+                    type="text"
+                    value={editUrl}
+                    onChange={(e) => setEditUrl(e.target.value)}
+                    className="module-input"
+                    style={{ width: '100%' }}
+                    placeholder="https://example.com"
+                  />
+                </div>
+
+                <div className="org-modal-field">
+                  <label className="org-modal-label">Website Perspective / Type</label>
+                  <select
+                    value={editType}
+                    onChange={(e) => setEditType(e.target.value as WebsitePerspective)}
+                    className="module-input"
+                    style={{ width: '100%' }}
+                  >
+                    {WEBSITE_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label} ({t.badge})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#9CA3AF' }}>
+                  Need to change GTM accounts, containers, or GA4 properties?{' '}
+                  <Link
+                    to={`/projects/${projectToEdit.id}/settings`}
+                    style={{ color: '#00F0FF', textDecoration: 'underline' }}
+                    onClick={() => setProjectToEdit(null)}
+                  >
+                    Open Full Project Settings &rarr;
+                  </Link>
+                </div>
+
+                <div className="org-modal-actions">
+                  <button
+                    type="button"
+                    className="org-btn-secondary"
+                    onClick={() => setProjectToEdit(null)}
+                    disabled={savingEdit}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="org-btn-primary"
+                    disabled={savingEdit}
+                  >
+                    {savingEdit ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Project Confirmation Modal */}
+      <AnimatePresence>
+        {projectToDelete && (
+          <div className="org-modal-overlay" onClick={() => !deleting && setProjectToDelete(null)}>
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="org-modal-card"
+              style={{ maxWidth: '460px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="org-modal-header" style={{ borderBottomColor: 'rgba(239, 68, 68, 0.2)' }}>
+                <h3 className="org-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#EF4444' }}>
+                  <AlertTriangle size={20} /> Delete Project
+                </h3>
+                <button
+                  type="button"
+                  className="org-modal-close-btn"
+                  onClick={() => !deleting && setProjectToDelete(null)}
+                  aria-label="Close"
+                  disabled={deleting}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="org-modal-body">
+                {deleteError && (
+                  <div
+                    style={{
+                      padding: '0.65rem 0.85rem',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: '8px',
+                      color: '#FCA5A5',
+                      fontSize: '0.82rem',
+                      marginBottom: '1rem'
+                    }}
+                  >
+                    {deleteError}
+                  </div>
+                )}
+
+                <p style={{ margin: '0 0 0.85rem', color: '#FFFFFF', fontSize: '1rem', fontWeight: 600 }}>
+                  Are you sure you want to delete <span style={{ color: '#00F0FF' }}>&ldquo;{projectToDelete.name}&rdquo;</span>?
+                </p>
+
+                <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                  This will permanently delete this project workspace, associated automated GA4 monitors, and historical audit records from your organization. This action cannot be undone.
+                </p>
+
+                <div className="org-modal-actions">
+                  <button
+                    type="button"
+                    className="org-btn-secondary"
+                    onClick={() => setProjectToDelete(null)}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="org-btn-danger"
+                    onClick={handleConfirmDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={16} /> Delete Project
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </PageTransition>
   );
 };

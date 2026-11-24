@@ -304,6 +304,18 @@ export async function onRequest(context: any) {
           .run();
       } catch (_) {}
 
+      // Clean up audit logs strictly under this project
+      try {
+        await env.DB.prepare('DELETE FROM ga4_audit_logs WHERE project_id = ? AND user_id = ?')
+          .bind(projectId, userId)
+          .run();
+      } catch (_) {}
+      try {
+        await env.DB.prepare('DELETE FROM audit_logs WHERE project_id = ? AND user_id = ?')
+          .bind(projectId, userId)
+          .run();
+      } catch (_) {}
+
       await env.DB.prepare('DELETE FROM projects WHERE id = ? AND user_id = ?')
         .bind(projectId, userId)
         .run();
