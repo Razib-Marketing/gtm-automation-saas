@@ -13,6 +13,12 @@ export async function onRequestPost(context: any) {
     }
 
     const resendApiKey = env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      return new Response(JSON.stringify({ error: { message: 'Email service is not configured.' } }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const clientIp = request.headers.get('cf-connecting-ip') || 'Unknown IP';
     const clientCountry = request.headers.get('cf-ipcountry') || 'Global';

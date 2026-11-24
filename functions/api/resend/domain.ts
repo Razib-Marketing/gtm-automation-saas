@@ -27,6 +27,12 @@ export async function onRequest(context: any) {
   }
 
   const resendApiKey = env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    return new Response(JSON.stringify({ error: 'RESEND_API_KEY is not configured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
   // GET: Fetch current domain status on Resend
   if (request.method === 'GET') {
