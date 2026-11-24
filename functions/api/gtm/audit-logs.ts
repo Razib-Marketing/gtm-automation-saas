@@ -15,7 +15,7 @@ export async function onRequest(context: any) {
 async function handleSaveLog(request: Request, env: any) {
   try {
     await ensureProjectsSchema(env.DB);
-    const { userId, projectId, gtmId, healthScore, issueCount, rawData } = await request.json();
+    const { userId, projectId, gtmId, healthScore, issueCount, rawData } = (await request.json()) as any;
 
     if (!userId || !gtmId || healthScore === undefined || issueCount === undefined || !rawData) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });

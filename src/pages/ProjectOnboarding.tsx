@@ -185,6 +185,8 @@ export const ProjectOnboarding: React.FC = () => {
 
   // Load GTM containers when GTM account changes
   useEffect(() => {
+    setGtmWorkspaces([]);
+    setSelectedGtmWorkspaceId('');
     if (!selectedGtmAccountId) {
       setGtmContainers([]);
       setSelectedGtmContainerId('');
@@ -208,9 +210,16 @@ export const ProjectOnboarding: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json().catch(() => ({}));
-        setGtmContainers(Array.isArray(data.container) ? data.container : []);
+        const containerList = Array.isArray(data.container) ? data.container : [];
+        setGtmContainers(containerList);
+        if (containerList.length === 0) {
+          setSelectedGtmContainerId('');
+        } else if (!containerList.some((c: any) => c.containerId === selectedGtmContainerId)) {
+          setSelectedGtmContainerId(containerList[0].containerId);
+        }
       } catch (_) {
         setGtmContainers([]);
+        setSelectedGtmContainerId('');
       } finally {
         setLoadingGtm(false);
       }
@@ -239,18 +248,22 @@ export const ProjectOnboarding: React.FC = () => {
       setLoadingGtm(true);
       try {
         const token = await getToken();
+        const containerPath = `accounts/${selectedGtmAccountId}/containers/${selectedGtmContainerId}`;
         const res = await fetch(
-          `/api/gtm/workspaces?accountId=${selectedGtmAccountId}&containerId=${selectedGtmContainerId}`,
+          `/api/gtm/workspaces?containerPath=${encodeURIComponent(containerPath)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = await res.json().catch(() => ({}));
         const wsList = Array.isArray(data.workspace) ? data.workspace : [];
         setGtmWorkspaces(wsList);
-        if (wsList[0]) {
+        if (wsList.length === 0) {
+          setSelectedGtmWorkspaceId('');
+        } else if (!wsList.some((w: any) => w.workspaceId === selectedGtmWorkspaceId)) {
           setSelectedGtmWorkspaceId(wsList[0].workspaceId);
         }
       } catch (_) {
         setGtmWorkspaces([]);
+        setSelectedGtmWorkspaceId('');
       } finally {
         setLoadingGtm(false);
       }
@@ -1010,7 +1023,13 @@ export const ProjectOnboarding: React.FC = () => {
                         style={{ width: '100%' }}
                         disabled={!selectedGtmContainerId || loadingGtm}
                       >
-                        <option value="">Select Workspace...</option>
+                        <option value="">
+                          {loadingGtm
+                            ? 'Loading Workspaces...'
+                            : !selectedGtmContainerId
+                            ? 'Select Container first...'
+                            : 'Select Workspace...'}
+                        </option>
                         {gtmWorkspaces.map((w) => (
                           <option key={w.workspaceId} value={w.workspaceId}>
                             {w.name}

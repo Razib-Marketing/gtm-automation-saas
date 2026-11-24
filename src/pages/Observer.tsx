@@ -347,7 +347,7 @@ export const Observer: React.FC<{ project?: Project }> = ({ project }) => {
   const handleViewHistoricalGa4Audit = (audit: any) => {
     if (!audit.report) return;
     setGa4AuditError('');
-    setGa4AuditReport(audit.report);
+    setGa4AuditReport({ ...audit.report, savedAuditId: audit.id, id: audit.id });
     setGa4AuditLoading(false);
     setIsGa4AuditOpen(true);
   };
@@ -2219,6 +2219,8 @@ export const Observer: React.FC<{ project?: Project }> = ({ project }) => {
         auditReport={ga4AuditReport}
         loading={ga4AuditLoading}
         errorMsg={ga4AuditError}
+        auditId={ga4AuditReport?.savedAuditId || ga4AuditReport?.id}
+        projectId={project?.id}
       />
 
       {/* Animated Cool Test Report Popup Modal */}

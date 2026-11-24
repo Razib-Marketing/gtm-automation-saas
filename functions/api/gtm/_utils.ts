@@ -57,7 +57,7 @@ export async function getGoogleAccessToken(env: any, request: Request) {
     })
   });
 
-  const tokenData = await tokenResponse.json();
+  const tokenData: any = await tokenResponse.json();
   if (!tokenResponse.ok) {
     const detail = tokenData.error_description || tokenData.error || JSON.stringify(tokenData);
     throw new Error(`Failed to refresh Google token (${detail}). Please re-authenticate your Google account on the Dashboard.`);

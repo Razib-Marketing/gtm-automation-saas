@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "types": ["@cloudflare/workers-types"],
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": [
+    "src/worker.ts",
+    "functions/api/_types.ts",
+    "functions/api/_pdf.ts",
+    "functions/api/_pdfTemplates.ts",
+    "functions/api/ga4/auditPdf.ts",
+    "functions/api/gtm/auditPdf.ts",
+    "functions/api/ga4/test.ts",
+    "functions/api/ga4/cron.ts"
+  ]
+}

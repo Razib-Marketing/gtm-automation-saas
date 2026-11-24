@@ -59,9 +59,9 @@ export async function onRequest(context) {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
 
-    const tagsData = await tagsRes.json();
-    const triggersData = await triggersRes.json();
-    const variablesData = await variablesRes.json();
+    const tagsData: any = await tagsRes.json();
+    const triggersData: any = await triggersRes.json();
+    const variablesData: any = await variablesRes.json();
 
     if (!tagsRes.ok) {
       return new Response(JSON.stringify({ error: tagsData.error?.message || 'Failed to fetch tags' }), { status: 500 });

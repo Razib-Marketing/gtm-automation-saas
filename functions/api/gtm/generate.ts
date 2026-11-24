@@ -387,7 +387,7 @@ export async function onRequest(context) {
         headers: { 'Authorization': authHeader }
       });
       if (varsRes.ok) {
-        const varsData = await varsRes.json();
+        const varsData: any = await varsRes.json();
         const existingVars = varsData.variable || [];
         const cleanMeasurementId = measurementId.trim().toLowerCase();
         for (const v of existingVars) {

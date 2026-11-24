@@ -18,7 +18,7 @@ async function fetchJsonSafe(
 ): Promise<{ ok: boolean; status: number; data: any }> {
   try {
     const res = await fetch(url, { headers });
-    const data = await res.json().catch(() => ({}));
+    const data: any = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data?.error?.message || res.statusText || `HTTP ${res.status}`;
       apiAccessNotes.push(`${label}: HTTP ${res.status} (${msg})`);

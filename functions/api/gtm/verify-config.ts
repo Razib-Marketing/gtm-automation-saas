@@ -27,7 +27,7 @@ export async function onRequest(context) {
     const cleanMeasurementId = measurementId.trim().toLowerCase();
     
     if (varsRes.ok) {
-      const varsData = await varsRes.json();
+      const varsData: any = await varsRes.json();
       const existingVars = varsData.variable || [];
       for (const v of existingVars) {
         if (v.parameter) {
@@ -43,7 +43,7 @@ export async function onRequest(context) {
 
     let debugTags = [];
     if (!isConfigured && tagsRes.ok) {
-      const tagsData = await tagsRes.json();
+      const tagsData: any = await tagsRes.json();
       const existingTags = tagsData.tag || [];
       debugTags = existingTags; // Dump the entire tags array to see what types exist!
       

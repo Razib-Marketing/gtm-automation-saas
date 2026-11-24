@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   X,
@@ -10,8 +10,10 @@ import {
   CheckCircle2,
   FileDown,
   Link2,
-  Globe
+  Globe,
+  Loader2
 } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 import html2pdf from 'html2pdf.js';
 import './AuditModal.css';
 
@@ -21,6 +23,8 @@ interface Ga4AuditModalProps {
   auditReport: any | null;
   loading: boolean;
   errorMsg?: string;
+  auditId?: string;
+  projectId?: string;
 }
 
 export const Ga4AuditModal = ({
@@ -28,9 +32,13 @@ export const Ga4AuditModal = ({
   onClose,
   auditReport,
   loading,
-  errorMsg
+  errorMsg,
+  auditId,
+  projectId
 }: Ga4AuditModalProps) => {
   const reportRef = useRef<HTMLDivElement>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const { getToken } = useAuth();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -65,6 +73,41 @@ export const Ga4AuditModal = ({
   const keyEventsStatus: any[] = auditReport?.forensics?.keyEventsStatus || [];
 
   const handleDownloadPdf = async () => {
+    const effectiveAuditId = auditId || auditReport?.savedAuditId || auditReport?.id;
+    const isDemo = auditReport?.isDemo;
+
+    // 1. Attempt high-fidelity Cloudflare Browser Run PDF if auditId exists and not demo
+    if (effectiveAuditId && !isDemo) {
+      try {
+        setIsExportingPdf(true);
+        const token = await getToken().catch(() => null);
+        if (token) {
+          const projectQuery = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+          const res = await fetch(`/api/ga4/audits/${encodeURIComponent(effectiveAuditId)}/pdf${projectQuery}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok && res.headers.get('content-type')?.includes('application/pdf')) {
+            const blob = await res.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            const safeName = (meta.displayName || 'GA4-Property').replace(/[^a-zA-Z0-9_-]/g, '_');
+            link.download = `${safeName}-ga4-audit-${effectiveAuditId}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+            return;
+          }
+        }
+      } catch (serverPdfErr) {
+        console.warn('Server GA4 PDF generation failed, falling back to client-side html2pdf', serverPdfErr);
+      } finally {
+        setIsExportingPdf(false);
+      }
+    }
+
+    // 2. Client-side fallback via html2pdf.js
     if (!reportRef.current || !auditReport) return;
     const element = reportRef.current;
 
@@ -87,6 +130,7 @@ export const Ga4AuditModal = ({
     element.style.borderBottom = '6px solid #00f0ff';
 
     try {
+      setIsExportingPdf(true);
       const safeName = (meta.displayName || 'GA4-Property').replace(/[^a-zA-Z0-9_-]/g, '_');
       const opt: any = {
         margin: 0,
@@ -108,6 +152,7 @@ export const Ga4AuditModal = ({
       console.error('Failed to generate PDF', err);
       alert('Failed to generate PDF.');
     } finally {
+      setIsExportingPdf(false);
       if (bottomActions) bottomActions.style.display = 'flex';
       element.style.minHeight = originalMinHeight;
       element.style.borderBottom = originalBorderBottom;
@@ -136,8 +181,16 @@ export const Ga4AuditModal = ({
         <div className="audit-header-row">
           <h2 id="ga4-audit-modal-title" className="audit-modal-title">GA4 Property Audit</h2>
           {!loading && auditReport && (
-            <button className="btn-download-pdf" onClick={handleDownloadPdf}>
-              <FileDown size={16} /> Export PDF
+            <button className="btn-download-pdf" onClick={handleDownloadPdf} disabled={isExportingPdf}>
+              {isExportingPdf ? (
+                <>
+                  <Loader2 size={16} className="animate-spin inline mr-1" /> Generating PDF...
+                </>
+              ) : (
+                <>
+                  <FileDown size={16} /> Export PDF
+                </>
+              )}
             </button>
           )}
         </div>

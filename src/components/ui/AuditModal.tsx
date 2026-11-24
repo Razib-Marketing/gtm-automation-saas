@@ -1,6 +1,7 @@
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Tag, Zap, AlertTriangle, Info, CheckCircle2, FileDown, Box } from 'lucide-react';
+import { X, Tag, Zap, AlertTriangle, Info, CheckCircle2, FileDown, Box, Loader2 } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
 import html2pdf from 'html2pdf.js';
 import './AuditModal.css';
 
@@ -12,11 +13,31 @@ interface AuditModalProps {
   gtmId?: string;
   userId?: string;
   projectId?: string;
-  onAuditSaved?: () => void;
+  auditId?: string;
+  onAuditSaved?: (savedId?: string) => void;
 }
 
-export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-XXXXX', userId, projectId, onAuditSaved }: AuditModalProps) => {
+export const AuditModal = ({
+  isOpen,
+  onClose,
+  auditData,
+  loading,
+  gtmId = 'GTM-XXXXX',
+  userId,
+  projectId,
+  auditId,
+  onAuditSaved
+}: AuditModalProps) => {
   const reportRef = useRef<HTMLDivElement>(null);
+  const [savedAuditId, setSavedAuditId] = useState<string | undefined>(auditId);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    if (auditId) {
+      setSavedAuditId(auditId);
+    }
+  }, [auditId]);
 
   const issues = useMemo(() => {
     const res = { critical: [] as any[], moderate: [] as any[] };
@@ -100,7 +121,7 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
       hasSavedRef.current = true;
       const saveLog = async () => {
         try {
-          await fetch('/api/gtm/audit-logs', {
+          const res = await fetch('/api/gtm/audit-logs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -112,7 +133,13 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
               rawData: auditData
             })
           });
-          if (onAuditSaved) onAuditSaved();
+          const data = await res.json().catch(() => ({}));
+          if (data?.id) {
+            setSavedAuditId(data.id);
+            if (onAuditSaved) onAuditSaved(data.id);
+          } else {
+            if (onAuditSaved) onAuditSaved();
+          }
         } catch (err) {
           console.error('Failed to save audit log', err);
         }
@@ -129,6 +156,39 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
   const healthText = healthScore === 100 ? 'Perfect Tracking Health' : healthScore >= 70 ? 'Good, Some Optimization Needed' : 'Requires immediate attention';
 
   const handleDownloadPdf = async () => {
+    const effectiveAuditId = auditId || savedAuditId;
+
+    // 1. Attempt high-fidelity Cloudflare Browser Run PDF if auditId exists
+    if (effectiveAuditId) {
+      try {
+        setIsExportingPdf(true);
+        const token = await getToken().catch(() => null);
+        if (token) {
+          const projectQuery = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+          const res = await fetch(`/api/gtm/audits/${encodeURIComponent(effectiveAuditId)}/pdf${projectQuery}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok && res.headers.get('content-type')?.includes('application/pdf')) {
+            const blob = await res.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `${gtmId}-audit-${effectiveAuditId}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+            return;
+          }
+        }
+      } catch (serverPdfErr) {
+        console.warn('Server PDF generation failed, falling back to client-side html2pdf', serverPdfErr);
+      } finally {
+        setIsExportingPdf(false);
+      }
+    }
+
+    // 2. Client-side fallback via html2pdf.js
     if (!reportRef.current) return;
     const element = reportRef.current;
     
@@ -156,6 +216,7 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
     element.style.borderBottom = '6px solid #00f0ff';
 
     try {
+      setIsExportingPdf(true);
       const opt: any = {
         margin:       0,
         filename:     `${gtmId} Audit-Report.pdf`,
@@ -176,6 +237,7 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
       console.error('Failed to generate PDF', err);
       alert('Failed to generate PDF.');
     } finally {
+      setIsExportingPdf(false);
       // Restore styles
       if (bottomActions) bottomActions.style.display = 'flex';
       element.style.minHeight = originalMinHeight;
@@ -206,8 +268,16 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
         <div className="audit-header-row">
           <h2 id="gtm-audit-modal-title" className="audit-modal-title">GTM Workspace Audit</h2>
           {!loading && auditData && (
-            <button className="btn-download-pdf" onClick={handleDownloadPdf}>
-              <FileDown size={16} /> Export PDF
+            <button className="btn-download-pdf" onClick={handleDownloadPdf} disabled={isExportingPdf}>
+              {isExportingPdf ? (
+                <>
+                  <Loader2 size={16} className="animate-spin inline mr-1" /> Generating PDF...
+                </>
+              ) : (
+                <>
+                  <FileDown size={16} /> Export PDF
+                </>
+              )}
             </button>
           )}
         </div>

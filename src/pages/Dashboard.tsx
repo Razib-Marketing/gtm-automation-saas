@@ -390,6 +390,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditData, setAuditData] = useState<{tags: any[], triggers: any[], variables: any[]} | null>(null);
   const [auditGtmId, setAuditGtmId] = useState('');
+  const [currentAuditId, setCurrentAuditId] = useState<string | undefined>(undefined);
 
   const [recentAudits, setRecentAudits] = useState<any[]>([]);
   const [auditCurrentPage, setAuditCurrentPage] = useState(1);
@@ -543,6 +544,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
     if (!selectedWorkspace && !isSandboxMode) return;
 
     if (isSandboxMode) {
+      setCurrentAuditId(undefined);
       setIsAuditOpen(true);
       setAuditLoading(false);
       setAuditGtmId(project?.gtm_container_public_id || 'GTM-DEMO01');
@@ -571,6 +573,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
       return;
     }
 
+    setCurrentAuditId(undefined);
     setIsAuditOpen(true);
     setAuditLoading(true);
     
@@ -603,6 +606,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
   };
 
   const handleViewHistoricalAudit = (audit: any) => {
+    setCurrentAuditId(audit.id);
     setAuditGtmId(audit.gtmId);
     setAuditData(audit.rawData);
     setAuditLoading(false);
@@ -927,7 +931,11 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
         gtmId={auditGtmId}
         userId={user?.id}
         projectId={project?.id}
-        onAuditSaved={fetchRecentAudits}
+        auditId={currentAuditId}
+        onAuditSaved={(savedId) => {
+          if (savedId) setCurrentAuditId(savedId);
+          fetchRecentAudits();
+        }}
       />
       
 

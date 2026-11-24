@@ -1,5 +1,8 @@
 
 import { Hono } from 'hono';
+import type { WorkerBindings } from '../functions/api/_types.ts';
+import { handleGa4AuditPdf } from '../functions/api/ga4/auditPdf.ts';
+import { handleGtmAuditPdf } from '../functions/api/gtm/auditPdf.ts';
 
 import * as route_0 from '../functions/api/auth/google/callback.ts';
 import * as route_1 from '../functions/api/auth/google/login.ts';
@@ -72,31 +75,35 @@ const routes = {
 };
 
 
-const app = new Hono();
+const app = new Hono<{ Bindings: WorkerBindings }>();
 
 for (const [route, module] of Object.entries(routes)) {
-  const handler = async (c) => {
+  const handler = async (c: any) => {
     const context = {
       request: c.req.raw,
       env: c.env,
       params: c.req.param(),
       waitUntil: c.executionCtx.waitUntil.bind(c.executionCtx)
     };
-    
-    if (c.req.method === 'GET' && module.onRequestGet) {
-      return module.onRequestGet(context);
+    const mod = module as any;
+
+    if (c.req.method === 'GET' && mod.onRequestGet) {
+      return mod.onRequestGet(context);
     }
-    if (c.req.method === 'POST' && module.onRequestPost) {
-      return module.onRequestPost(context);
+    if (c.req.method === 'POST' && mod.onRequestPost) {
+      return mod.onRequestPost(context);
     }
-    if (module.onRequest) {
-      return module.onRequest(context);
+    if (mod.onRequest) {
+      return mod.onRequest(context);
     }
     return c.json({ error: 'Method not allowed' }, 405);
   };
   
   app.all(route, handler);
 }
+
+app.get('/api/ga4/audits/:auditId/pdf', handleGa4AuditPdf);
+app.get('/api/gtm/audits/:auditId/pdf', handleGtmAuditPdf);
 
 
 const ROUTE_SEO: Record<string, { title: string; description: string }> = {
@@ -253,7 +260,7 @@ app.get('*', async (c) => {
 
 export default {
   fetch: app.fetch,
-  async scheduled(event, env, ctx) {
+  async scheduled(_event: ScheduledEvent, env: WorkerBindings, ctx: ExecutionContext) {
     // Migrate the CRON trigger logic here
     const cronModule = routes['/api/ga4/cron'];
     if (cronModule && cronModule.onRequestGet) {

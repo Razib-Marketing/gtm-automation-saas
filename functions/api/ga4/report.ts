@@ -39,7 +39,7 @@ export async function onRequestGet(context: any) {
       })
     });
 
-    const dailyData = await dailyReportRes.json();
+    const dailyData: any = await dailyReportRes.json();
     if (!dailyReportRes.ok) {
       return new Response(JSON.stringify({ 
         error: dailyData.error?.message || `Failed to fetch daily GA4 data (${dailyReportRes.status})` 
@@ -64,7 +64,7 @@ export async function onRequestGet(context: any) {
       })
     });
 
-    const summaryData = await summaryReportRes.json();
+    const summaryData: any = await summaryReportRes.json();
     if (!summaryReportRes.ok) {
       return new Response(JSON.stringify({ 
         error: summaryData.error?.message || `Failed to fetch GA4 summary (${summaryReportRes.status})` 
@@ -87,7 +87,7 @@ export async function onRequestGet(context: any) {
       })
     });
 
-    const eventsData = await eventsReportRes.json();
+    const eventsData: any = await eventsReportRes.json();
 
     // Format data for Recharts
     const chartData = (dailyData.rows || []).map((row: any) => {

@@ -29,7 +29,7 @@ export async function onRequest(context) {
       body: JSON.stringify(payload)
     });
 
-    const data = await res.json().catch(() => ({}));
+    const data: any = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       // 400 with "already exists" is considered a success for variables/triggers/tags that are duplicated across modules

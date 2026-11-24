@@ -3,10 +3,18 @@ import { getGoogleAccessToken } from './_utils';
 export async function onRequest(context) {
   const { env, request } = context;
   const url = new URL(request.url);
-  const containerPath = url.searchParams.get('containerPath');
+  const rawContainerPath = url.searchParams.get('containerPath');
+  const accountId = url.searchParams.get('accountId');
+  const containerId = url.searchParams.get('containerId');
+  const containerPath =
+    rawContainerPath ||
+    (accountId && containerId ? `accounts/${accountId}/containers/${containerId}` : '');
 
   if (!containerPath) {
-    return new Response(JSON.stringify({ error: 'containerPath is required' }), { status: 400 });
+    return new Response(
+      JSON.stringify({ error: 'containerPath (or accountId and containerId) is required' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   try {

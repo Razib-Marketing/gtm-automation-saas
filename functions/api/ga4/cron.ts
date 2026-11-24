@@ -12,6 +12,29 @@ import {
   formatCleanPropertyName,
   MonitorConditionInput
 } from './_shared';
+import { renderPdfFromHtml, responseToBase64, sanitizeFilename } from '../_pdf';
+import { buildGa4AlertReportPdfHtml } from '../_pdfTemplates';
+
+const MAX_BROWSER_CONCURRENCY = 3;
+
+function createLimiter(maxConcurrency: number) {
+  let active = 0;
+  const queue: Array<() => void> = [];
+
+  return async function limit<T>(task: () => Promise<T>): Promise<T> {
+    if (active >= maxConcurrency) {
+      await new Promise<void>(resolve => queue.push(resolve));
+    }
+    active++;
+    try {
+      return await task();
+    } finally {
+      active--;
+      const next = queue.shift();
+      if (next) next();
+    }
+  };
+}
 
 export async function onRequestGet(context: any) {
   const { env, request } = context;
@@ -24,7 +47,10 @@ export async function onRequestGet(context: any) {
   }
 
   const forceRun = url.searchParams.get('force') === 'true';
+  const attachPdf = url.searchParams.get('attachPdf') !== 'false';
   const nowUtc = new Date();
+  const limitMonitor = createLimiter(MAX_BROWSER_CONCURRENCY);
+  const limitBrowser = createLimiter(MAX_BROWSER_CONCURRENCY);
 
   try {
     await ensureUsersSchema(env.DB);
@@ -40,12 +66,12 @@ export async function onRequestGet(context: any) {
 
     const logs: string[] = [];
 
-    for (const monitor of monitors || []) {
+    const processMonitor = async (monitor: any) => {
       try {
         const dueCheck = isMonitorDue(monitor, nowUtc, forceRun);
         if (!dueCheck.due) {
           logs.push(`Skipped ${monitor.id} (${monitor.property_name}): ${dueCheck.reason} [target ${dueCheck.targetTime} ${dueCheck.timeZone}]`);
-          continue;
+          return;
         }
 
         // 1. Get User's Refresh Token
@@ -55,7 +81,7 @@ export async function onRequestGet(context: any) {
 
         if (!userConn || !userConn.encrypted_refresh_token || userConn.encrypted_refresh_token === 'no_refresh_token_provided') {
           logs.push(`Skipped ${monitor.id} (${monitor.property_name}): missing Google refresh token`);
-          continue;
+          return;
         }
 
         // 2. Exchange for Access Token
@@ -74,7 +100,7 @@ export async function onRequestGet(context: any) {
         const accessToken = tokenData.access_token;
         if (!accessToken) {
           logs.push(`Skipped ${monitor.id} (${monitor.property_name}): failed to refresh access token`);
-          continue;
+          return;
         }
 
         // 3. Configure Exact Timezone-Aware Date Windows (Daily / WoW / MoM / YoY)
@@ -173,7 +199,7 @@ export async function onRequestGet(context: any) {
           }
         }
 
-        if (fetchFailed) continue;
+        if (fetchFailed) return;
 
         // Evaluate all conditions & compound logic
         const { evaluatedConditions, isTriggered } = evaluateConditions(
@@ -358,6 +384,37 @@ export async function onRequestGet(context: any) {
 
           let emailSent = false;
           const resendApiKey = env.RESEND_API_KEY;
+          let pdfAttachments: Array<{ filename: string; content: string }> | undefined;
+
+          if (resendApiKey && attachPdf && env.BROWSER) {
+            try {
+              pdfAttachments = await limitBrowser(async () => {
+                const pdfHtml = buildGa4AlertReportPdfHtml({
+                  propertyName: cleanName,
+                  isTriggered: true,
+                  matchType,
+                  comparisonLabel: dateInfo.label,
+                  comparedDatesLabel,
+                  scheduleLabel,
+                  conditions: evaluatedConditions
+                });
+                const pdfRes = await renderPdfFromHtml(env.BROWSER, {
+                  title: `GA4 Anomaly Alert: ${cleanName}`,
+                  subtitle: `Match ${matchType} • ${dateInfo.label}`,
+                  bodyHtml: pdfHtml
+                });
+                const base64Pdf = await responseToBase64(pdfRes);
+                return [
+                  {
+                    filename: `ga4-alert-${sanitizeFilename(cleanName, 'report')}.pdf`,
+                    content: base64Pdf
+                  }
+                ];
+              });
+            } catch (pdfErr: any) {
+              console.error('Cron PDF generation failed (continuing with HTML email):', pdfErr?.message || pdfErr);
+            }
+          }
 
           // 1. Try Resend
           if (resendApiKey) {
@@ -388,7 +445,8 @@ export async function onRequestGet(context: any) {
                   from: cronSenderFrom,
                   to: recipients,
                   subject: subject,
-                  html: htmlBody
+                  html: htmlBody,
+                  ...(pdfAttachments ? { attachments: pdfAttachments } : {})
                 })
               });
               if (resendRes.ok) {
@@ -406,7 +464,8 @@ export async function onRequestGet(context: any) {
                         from: cronSenderFrom,
                         to: [r],
                         subject: subject,
-                        html: htmlBody
+                        html: htmlBody,
+                        ...(pdfAttachments ? { attachments: pdfAttachments } : {})
                       })
                     });
                     if (sRes.ok) emailSent = true;
@@ -504,7 +563,9 @@ export async function onRequestGet(context: any) {
       } catch (err: any) {
         logs.push(`Error checking monitor ${monitor.id}: ${err.message}`);
       }
-    }
+    };
+
+    await Promise.all((monitors || []).map((monitor: any) => limitMonitor(() => processMonitor(monitor))));
 
     return new Response(JSON.stringify({ status: 'ok', logs }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (e: any) {

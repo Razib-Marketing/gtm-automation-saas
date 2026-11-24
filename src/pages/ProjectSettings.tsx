@@ -128,13 +128,16 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
     const loadWorkspaces = async () => {
       try {
         const token = await getToken();
+        const containerPath = `accounts/${gtmAccountId}/containers/${gtmContainerId}`;
         const res = await fetch(
-          `/api/gtm/workspaces?accountId=${gtmAccountId}&containerId=${gtmContainerId}`,
+          `/api/gtm/workspaces?containerPath=${encodeURIComponent(containerPath)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = await res.json().catch(() => ({}));
         setGtmWorkspaces(Array.isArray(data.workspace) ? data.workspace : []);
-      } catch (_) {}
+      } catch (_) {
+        setGtmWorkspaces([]);
+      }
     };
     loadWorkspaces();
   }, [gtmAccountId, gtmContainerId, isSandboxMode, getToken]);

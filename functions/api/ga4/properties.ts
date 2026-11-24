@@ -15,7 +15,7 @@ export async function onRequest(context: any) {
       headers: { 'Authorization': `Bearer ${accessToken}` }
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
     
     if (!response.ok) {
         return new Response(JSON.stringify({ 

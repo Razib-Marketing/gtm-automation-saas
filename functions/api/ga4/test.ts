@@ -13,6 +13,8 @@ import {
   formatCleanPropertyName,
   MonitorConditionInput
 } from './_shared';
+import { renderPdfFromHtml, responseToBase64, sanitizeFilename } from '../_pdf';
+import { buildGa4AlertReportPdfHtml } from '../_pdfTemplates';
 
 export async function onRequest(context: any) {
   const { env, request } = context;
@@ -34,7 +36,8 @@ export async function onRequest(context: any) {
   }
 
   try {
-    const { monitorId } = await request.json();
+    const body = await request.json();
+    const { monitorId, includePdf = true } = body || {};
     if (!monitorId) {
       return new Response(JSON.stringify({ error: 'Missing monitorId' }), {
         status: 400,
@@ -406,13 +409,41 @@ export async function onRequest(context: any) {
     let sandboxRestricted = false;
     let verifiedDomainName: string | null = null;
     let emailDelivered = false;
+    const resendApiKey = env.RESEND_API_KEY;
+    let pdfAttachments: Array<{ filename: string; content: string }> | undefined;
+
+    if (resendApiKey && includePdf !== false && env.BROWSER) {
+      try {
+        const pdfHtml = buildGa4AlertReportPdfHtml({
+          propertyName: cleanName,
+          isTriggered,
+          matchType,
+          comparisonLabel: dateInfo.label,
+          comparedDatesLabel,
+          scheduleLabel,
+          conditions: evaluatedConditions
+        });
+        const pdfRes = await renderPdfFromHtml(env.BROWSER, {
+          title: `GA4 Observer: ${cleanName}`,
+          subtitle: isTriggered ? 'Anomaly Alert Report' : 'Monitor Health Check',
+          bodyHtml: pdfHtml
+        });
+        const base64Pdf = await responseToBase64(pdfRes);
+        pdfAttachments = [
+          {
+            filename: `ga4-observer-${sanitizeFilename(cleanName, 'report')}.pdf`,
+            content: base64Pdf
+          }
+        ];
+      } catch (pdfErr: any) {
+        console.error('GA4 test PDF generation failed (sending HTML email without attachment):', pdfErr?.message || pdfErr);
+      }
+    }
 
     const alertEmails = monitor.alert_email
       ? monitor.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.length > 0 && e.includes('@'))
       : [];
     const recipients = alertEmails.length > 0 ? alertEmails : [monitor.alert_email.trim()];
-
-    const resendApiKey = env.RESEND_API_KEY;
 
     // 1. Try Resend
     if (resendApiKey) {
@@ -444,7 +475,8 @@ export async function onRequest(context: any) {
             from: senderFrom,
             to: recipients,
             subject: subject,
-            html: htmlBody
+            html: htmlBody,
+            ...(pdfAttachments ? { attachments: pdfAttachments } : {})
           })
         });
 
@@ -467,7 +499,8 @@ export async function onRequest(context: any) {
                   from: senderFrom,
                   to: [r],
                   subject: subject,
-                  html: htmlBody
+                  html: htmlBody,
+                  ...(pdfAttachments ? { attachments: pdfAttachments } : {})
                 })
               });
               const singleData: any = await singleRes.json().catch(() => ({}));
@@ -613,6 +646,7 @@ export async function onRequest(context: any) {
       pastVal: primaryCond.pastVal,
       emailStatus,
       emailError,
+      pdfAttached: Boolean(pdfAttachments?.length),
       recipients,
       successfulRecipients,
       failedRecipients,
