@@ -24,44 +24,44 @@ export const AboutPlatformSection: React.FC = () => {
 
   const capabilities = [
     {
-      badge: "Automation Engine",
+      badge: "Organization & GTM",
       badgeColor: "#00F0FF",
-      title: "1-Click GTM Container Automation",
-      subtitle: "Deploy complex tracking architectures directly into Google Tag Manager in seconds without manual copy-pasting.",
+      title: "Project Workspaces & 1-Click GTM Automation",
+      subtitle: "Organize every client inside isolated project workspaces and deploy validated GTM architectures via API in seconds.",
       icon: <Zap size={26} color="#00F0FF" />,
       features: [
-        "Pre-built verified recipes: Form tracking, Calendly, Phone/Email clicks, Social links",
-        "Full standard GA4 E-Commerce data layers (view_item, add_to_cart, purchase)",
-        "Direct Google Tag Manager API deployment with zero syntax or naming mistakes",
+        "Dedicated Organization Dashboard with strict project-by-project workspace isolation",
+        "Pre-built recipes: Form suites, Outbound/Phone/OTA clicks, WooCommerce & 6 Hotel Booking Engines",
+        "Guided Onboarding Wizard to name projects, bind GA4 + GTM, and set initial rules",
         "Workspace safe: Never overwrites your existing custom tags, triggers, or variables"
       ],
-      result: "Saves 3–5 hours per website setup & eliminates human configuration errors."
+      result: "Saves 3–5 hours per project setup while keeping every client isolated cleanly."
     },
     {
-      badge: "Diagnostic Tool",
+      badge: "Dual Diagnostics",
       badgeColor: "#A855F7",
-      title: "Workspace Health & Redundancy Audits",
-      subtitle: "Instant container health score and deep forensic analysis to catch duplicate tags, conflicting triggers, and orphaned variables.",
+      title: "GTM & 22-Point GA4 Property Audits",
+      subtitle: "Deep forensic container and GA4 property auditing with 0–100% health scoring and downloadable A4 PDF reports.",
       icon: <Activity size={26} color="#C084FC" />,
       features: [
-        "Automated workspace scanning across all tags, triggers, and variables",
-        "Identifies duplicate tags firing on identical triggers causing double-counted events",
-        "Calculates an instant 0–100% Health Score with prioritized critical & moderate issues",
-        "Downloadable professional PDF executive reports for client presentations & onboarding"
+        "22-Point GA4 Property Audit: cross-domain gaps, self-referrals, and 9 product links (GSC, Ads, BigQuery, Signals)",
+        "Automatic PII leak scanning in GA4 page URLs with masked forensics and remediation steps",
+        "GTM Workspace scanning to catch duplicate conversion tags, shared triggers, and orphaned variables",
+        "Executive A4 PDF export buttons built into both GTM and GA4 audit reports"
       ],
-      result: "Free tier includes 5 complete GTM workspace audits with PDF exports."
+      result: "Catch silent attribution leaks, missing GSC/Ads links, and broken GTM tags in seconds."
     },
     {
       badge: "24/7 Monitoring",
       badgeColor: "#38BDF8",
-      title: "Autonomous GA4 Telemetry & Anomaly Alerts",
-      subtitle: "Edge-native monitoring running 24/7 on Cloudflare Workers to detect tracking crashes and conversion dropoffs immediately.",
+      title: "Autonomous GA4 Telemetry & Custom Alerts",
+      subtitle: "Edge-native monitoring running at Cloudflare Workers on your chosen schedule, timezone, and industry perspective.",
       icon: <Bell size={26} color="#38BDF8" />,
       features: [
-        "Automated background cron checks monitoring GA4 events and conversions",
-        "Custom threshold alerting (e.g., alert if purchase conversions drop by >20%)",
-        "Instant multi-recipient email alerts to your team and clients via authenticated Resend",
-        "Historical incident telemetry logs recording every anomaly for post-mortem analysis"
+        "Per-account and per-monitor custom schedules (HH:MM, IANA timezone, Daily/Weekly/Monthly) via 15-min edge cron",
+        "20 categorized rule templates (incl. Hospitality & Hotels), 14 metrics, 6 operators, and device/channel filters",
+        "11 comparison periods: Yesterday, rolling & calendar WoW, MoM, 28d cycles, and YoY",
+        "Instant multi-recipient Resend email alerts + Dual History for Automated vs Manual checks"
       ],
       result: "Protects your ad spend & conversion signals before clients notice tracking drops."
     }
@@ -169,8 +169,8 @@ export const AboutPlatformSection: React.FC = () => {
 
           <div className="about-cta-bar">
             {isSignedIn ? (
-              <a href="https://app.gtmobserver.com/dashboard" className="btn-primary" style={{ textDecoration: 'none' }}>
-                Open Your Dashboard <ArrowRight size={16} />
+              <a href="https://app.gtmobserver.com/organization" className="btn-primary" style={{ textDecoration: 'none' }}>
+                Open Organization Dashboard <ArrowRight size={16} />
               </a>
             ) : (
               <Link to="/sign-up" className="btn-primary" style={{ textDecoration: 'none' }}>

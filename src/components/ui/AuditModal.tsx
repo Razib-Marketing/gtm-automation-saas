@@ -11,10 +11,11 @@ interface AuditModalProps {
   loading: boolean;
   gtmId?: string;
   userId?: string;
+  projectId?: string;
   onAuditSaved?: () => void;
 }
 
-export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-XXXXX', userId, onAuditSaved }: AuditModalProps) => {
+export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-XXXXX', userId, projectId, onAuditSaved }: AuditModalProps) => {
   const reportRef = useRef<HTMLDivElement>(null);
 
   const issues = useMemo(() => {
@@ -104,6 +105,7 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId,
+              projectId: projectId || null,
               gtmId,
               healthScore,
               issueCount: issues.critical.length + issues.moderate.length,
@@ -121,7 +123,7 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
     if (!isOpen) {
       hasSavedRef.current = false;
     }
-  }, [isOpen, auditData, healthScore, issues, userId, gtmId, onAuditSaved]);
+  }, [isOpen, auditData, healthScore, issues, userId, projectId, gtmId, onAuditSaved]);
 
   const healthColor = healthScore === 100 ? '#4ADE80' : healthScore >= 70 ? '#FACC15' : '#F87171';
   const healthText = healthScore === 100 ? 'Perfect Tracking Health' : healthScore >= 70 ? 'Good, Some Optimization Needed' : 'Requires immediate attention';
@@ -185,20 +187,24 @@ export const AuditModal = ({ isOpen, onClose, auditData, loading, gtmId = 'GTM-X
   if (!isOpen) return null;
 
   return (
-    <div className="audit-modal-overlay">
+    <div className="audit-modal-overlay" onClick={onClose}>
       <motion.div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="gtm-audit-modal-title"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="audit-modal-content"
+        onClick={e => e.stopPropagation()}
       >
         <div className="audit-modal-sticky-header">
-          <button className="audit-modal-close" onClick={onClose}>
+          <button className="audit-modal-close" onClick={onClose} aria-label="Close modal">
             <X size={20} />
           </button>
         </div>
 
         <div className="audit-header-row">
-          <h2 className="audit-modal-title">GTM Workspace Audit</h2>
+          <h2 id="gtm-audit-modal-title" className="audit-modal-title">GTM Workspace Audit</h2>
           {!loading && auditData && (
             <button className="btn-download-pdf" onClick={handleDownloadPdf}>
               <FileDown size={16} /> Export PDF

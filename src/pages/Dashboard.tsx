@@ -9,6 +9,14 @@ import { Tag, CheckCircle2, LayoutDashboard, Settings, Layers, Code2, AlertCircl
 import { AuditModal } from '../components/ui/AuditModal';
 import { pushDataLayer } from '../utils/analytics';
 import { Link } from 'react-router-dom';
+import { useWorkspace } from '../context/WorkspaceContext';
+import type { Project } from '../types/project';
+import {
+  SANDBOX_GTM_ACCOUNTS,
+  SANDBOX_GTM_CONTAINERS,
+  SANDBOX_GTM_WORKSPACES,
+  getSandboxState
+} from '../utils/localDemoStore';
 import './Dashboard.css';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -157,22 +165,40 @@ export const TRACKING_MODULES = [
   }
 ];
 
-export const Dashboard = () => {
+export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
   const { isSignedIn, user, isLoaded } = useUser();
   const { getToken, signOut } = useAuth();
+  const { isSandboxMode, userTier: ctxTier } = useWorkspace();
   const [hasGoogleAuth, setHasGoogleAuth] = useState(false);
   const location = useLocation();
+
+  const projectContainerPath =
+    project?.gtm_account_id && project?.gtm_container_id
+      ? `accounts/${project.gtm_account_id}/containers/${project.gtm_container_id}`
+      : '';
+  const projectWorkspacePath =
+    projectContainerPath && project?.gtm_workspace_id
+      ? `${projectContainerPath}/workspaces/${project.gtm_workspace_id}`
+      : '';
 
   const [accounts, setAccounts] = useState<any[]>([]);
   const [containers, setContainers] = useState<any[]>([]);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
 
-  const [selectedAccount, setSelectedAccount] = useState(() => localStorage.getItem('gtm_selectedAccount') || '');
-  const [selectedContainer, setSelectedContainer] = useState(() => localStorage.getItem('gtm_selectedContainer') || '');
-  const [selectedWorkspace, setSelectedWorkspace] = useState(() => localStorage.getItem('gtm_selectedWorkspace') || '');
+  const [selectedAccount, setSelectedAccount] = useState(() =>
+    project ? (project.gtm_account_id || '') : (localStorage.getItem('gtm_selectedAccount') || '')
+  );
+  const [selectedContainer, setSelectedContainer] = useState(() =>
+    project ? projectContainerPath : (localStorage.getItem('gtm_selectedContainer') || '')
+  );
+  const [selectedWorkspace, setSelectedWorkspace] = useState(() =>
+    project ? projectWorkspacePath : (localStorage.getItem('gtm_selectedWorkspace') || '')
+  );
 
   // Bulk Deployment State
-  const [measurementId, setMeasurementId] = useState(() => localStorage.getItem('gtm_measurementId') || '');
+  const [measurementId, setMeasurementId] = useState(() =>
+    project ? (project.measurement_id || '') : (localStorage.getItem('gtm_measurementId') || '')
+  );
   const [fbPixelId, setFbPixelId] = useState(() => localStorage.getItem('gtm_fbPixelId') || '');
   const [googleAdsId, setGoogleAdsId] = useState(() => localStorage.getItem('gtm_googleAdsId') || '');
   const [customFormEventsText, setCustomFormEventsText] = useState('');
@@ -206,10 +232,35 @@ export const Dashboard = () => {
     }
   }, [deploying, deployStatus]);
 
-  useEffect(() => { localStorage.setItem('gtm_selectedAccount', selectedAccount); }, [selectedAccount]);
-  useEffect(() => { localStorage.setItem('gtm_selectedContainer', selectedContainer); }, [selectedContainer]);
-  useEffect(() => { localStorage.setItem('gtm_selectedWorkspace', selectedWorkspace); }, [selectedWorkspace]);
-  useEffect(() => { localStorage.setItem('gtm_measurementId', measurementId); }, [measurementId]);
+  useEffect(() => {
+    if (!project) {
+      localStorage.setItem('gtm_selectedAccount', selectedAccount);
+    }
+  }, [selectedAccount, project]);
+  useEffect(() => {
+    if (!project) {
+      localStorage.setItem('gtm_selectedContainer', selectedContainer);
+    }
+  }, [selectedContainer, project]);
+  useEffect(() => {
+    if (!project) {
+      localStorage.setItem('gtm_selectedWorkspace', selectedWorkspace);
+    }
+  }, [selectedWorkspace, project]);
+  useEffect(() => {
+    if (!project) {
+      localStorage.setItem('gtm_measurementId', measurementId);
+    }
+  }, [measurementId, project]);
+
+  // Sync GTM selection whenever active project switches
+  useEffect(() => {
+    if (!project) return;
+    setSelectedAccount(project.gtm_account_id || '');
+    setSelectedContainer(projectContainerPath);
+    setSelectedWorkspace(projectWorkspacePath);
+    setMeasurementId(project.measurement_id || '');
+  }, [project?.id, projectContainerPath, projectWorkspacePath, project?.measurement_id]);
   useEffect(() => { localStorage.setItem('gtm_fbPixelId', fbPixelId); }, [fbPixelId]);
   useEffect(() => { localStorage.setItem('gtm_googleAdsId', googleAdsId); }, [googleAdsId]);
   useEffect(() => { localStorage.setItem('gtm_verifyStatus', verifyStatus); }, [verifyStatus]);
@@ -252,6 +303,20 @@ export const Dashboard = () => {
   }, [location.search, userTier, user]);
 
   useEffect(() => {
+    if (isSandboxMode) {
+      setHasGoogleAuth(true);
+      setAccounts(SANDBOX_GTM_ACCOUNTS);
+      if (selectedAccount) {
+        const cList = (SANDBOX_GTM_CONTAINERS[selectedAccount] || []).map((c) => ({
+          ...c,
+          path: `accounts/${selectedAccount}/containers/${c.containerId}`
+        }));
+        setContainers(cList);
+      } else {
+        setContainers([]);
+      }
+      return;
+    }
     if (hasGoogleAuth && selectedAccount) {
       getToken().then(token => {
         if (!token) return;
@@ -279,9 +344,18 @@ export const Dashboard = () => {
     } else {
       setContainers([]);
     }
-  }, [hasGoogleAuth, selectedAccount]);
+  }, [hasGoogleAuth, selectedAccount, isSandboxMode]);
 
   useEffect(() => {
+    if (isSandboxMode) {
+      if (selectedContainer) {
+        const containerIdPart = selectedContainer.split('/containers/')[1] || '';
+        setWorkspaces(SANDBOX_GTM_WORKSPACES[containerIdPart] || [{ workspaceId: '1', name: 'Default Workspace' }]);
+      } else {
+        setWorkspaces([]);
+      }
+      return;
+    }
     if (hasGoogleAuth && selectedContainer) {
       getToken().then(token => {
         if (!token) return;
@@ -309,7 +383,7 @@ export const Dashboard = () => {
     } else {
       setWorkspaces([]);
     }
-  }, [hasGoogleAuth, selectedContainer]);
+  }, [hasGoogleAuth, selectedContainer, isSandboxMode]);
 
   // Audit State
   const [isAuditOpen, setIsAuditOpen] = useState(false);
@@ -322,14 +396,35 @@ export const Dashboard = () => {
   const AUDITS_PER_PAGE = 5;
 
   useEffect(() => {
+    if (isSandboxMode) {
+      setUserTier(ctxTier || getSandboxState().tier);
+      setHasGoogleAuth(true);
+      fetchRecentAudits();
+      return;
+    }
     if (user?.id) {
       fetchRecentAudits();
     }
-  }, [user?.id]);
+  }, [user?.id, project?.id, project?.gtm_container_public_id, isSandboxMode, ctxTier]);
 
   const fetchRecentAudits = async () => {
+    if (isSandboxMode) {
+      const s = getSandboxState();
+      const filtered = project
+        ? s.gtmAudits.filter(
+            (a) =>
+              a.projectId === project.id ||
+              (project.gtm_container_public_id && a.gtmId === project.gtm_container_public_id)
+          )
+        : s.gtmAudits;
+      setRecentAudits(filtered);
+      return;
+    }
     try {
-      const res = await fetch(`/api/gtm/audit-logs?userId=${user?.id}`);
+      const auditUrl = project
+        ? `/api/gtm/audit-logs?userId=${user?.id}&projectId=${encodeURIComponent(project.id)}&gtmId=${encodeURIComponent(project.gtm_container_public_id || '')}`
+        : `/api/gtm/audit-logs?userId=${user?.id}`;
+      const res = await fetch(auditUrl);
       const data = await res.json();
       if (data.logs) {
         setRecentAudits(data.logs);
@@ -440,11 +535,35 @@ export const Dashboard = () => {
   };
 
   const handleGoogleOAuth = () => {
-    window.location.href = `/api/auth/google/login?clerkUserId=${user?.id}`;
+    const returnTo = project ? `/projects/${project.id}/gtm` : '/organization';
+    window.location.href = `/api/auth/google/login?clerkUserId=${user?.id}&returnTo=${encodeURIComponent(returnTo)}`;
   };
 
   const handleRunAudit = async () => {
-    if (!selectedWorkspace) return;
+    if (!selectedWorkspace && !isSandboxMode) return;
+
+    if (isSandboxMode) {
+      setIsAuditOpen(true);
+      setAuditLoading(false);
+      setAuditGtmId(project?.gtm_container_public_id || 'GTM-DEMO01');
+      setAuditData({
+        tags: [
+          { name: 'GA4 - Base Configuration', type: 'gaawc', firingTriggerId: ['tr_all'] },
+          { name: 'GA4 Event - purchase', type: 'gaawe', firingTriggerId: ['tr_purchase'] },
+          { name: 'GA4 Legacy - purchase_v1', type: 'gaawe', firingTriggerId: ['tr_purchase'] }
+        ],
+        triggers: [
+          { triggerId: 'tr_all', name: 'All Pages' },
+          { triggerId: 'tr_purchase', name: 'CE - purchase' },
+          { triggerId: 'tr_unused', name: 'Legacy Scroll 10%' }
+        ],
+        variables: [
+          { name: 'DLV - transaction_id' },
+          { name: 'DLV - legacy_hotel_code' }
+        ]
+      });
+      return;
+    }
 
     if (userTier === 'free' && recentAudits.length >= 5) {
       alert("You have reached your limit of 5 free GTM workspace audits. Please choose a plan on our pricing page to continue.");
@@ -788,8 +907,8 @@ export const Dashboard = () => {
     }
   };
 
-  if (!isLoaded) return null;
-  if (!isSignedIn) return <RedirectToSignIn />;
+  if (!isLoaded && !isSandboxMode) return null;
+  if (!isSignedIn && !isSandboxMode) return <RedirectToSignIn />;
 
   const groupedModules = TRACKING_MODULES.reduce((acc, mod) => {
     if (!acc[mod.category]) acc[mod.category] = [];
@@ -798,7 +917,7 @@ export const Dashboard = () => {
   }, {} as Record<string, typeof TRACKING_MODULES>);
 
   return (
-    <PageTransition locationKey="dashboard">
+    <PageTransition locationKey={`dashboard-${project?.id || 'global'}`}>
       <BackgroundMesh />
       <AuditModal 
         isOpen={isAuditOpen} 
@@ -807,6 +926,7 @@ export const Dashboard = () => {
         loading={auditLoading} 
         gtmId={auditGtmId}
         userId={user?.id}
+        projectId={project?.id}
         onAuditSaved={fetchRecentAudits}
       />
       
@@ -819,16 +939,30 @@ export const Dashboard = () => {
           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}
         >
           <div>
-            <h1 className="dashboard-title" style={{ marginTop: 0 }}>Analytics Dashboard</h1>
-            <p className="dashboard-subtitle">Welcome back, {user?.firstName}! Manage your deployed GTM modules.</p>
+            <h1 className="dashboard-title" style={{ marginTop: 0 }}>
+              {project ? `${project.name} — GTM Automation & Audit` : 'Analytics Dashboard'}
+            </h1>
+            <p className="dashboard-subtitle">
+              {project
+                ? `Scoped to ${project.gtm_container_public_id || 'this project'} (${project.gtm_workspace_name || 'GTM Workspace'}). Deploy tracking recipes and inspect container health.`
+                : `Welcome back, ${user?.firstName}! Manage your deployed GTM modules.`}
+            </p>
           </div>
           <div className="topbar-actions">
-            <a href="https://gtmobserver.com" className="btn-home-link" style={{ textDecoration: 'none' }}>
-              <Home size={14} /> Home
-            </a>
-            <button onClick={() => signOut()} className="btn-home-link" style={{ cursor: 'pointer' }}>
-              <LogOut size={14} /> Log out
-            </button>
+            {project ? (
+              <Link to={`/projects/${project.id}/settings`} className="btn-home-link" style={{ textDecoration: 'none' }}>
+                <Settings size={14} /> Project Bindings
+              </Link>
+            ) : (
+              <a href="https://gtmobserver.com" className="btn-home-link" style={{ textDecoration: 'none' }}>
+                <Home size={14} /> Home
+              </a>
+            )}
+            {!isSandboxMode && (
+              <button onClick={() => signOut()} className="btn-home-link" style={{ cursor: 'pointer' }}>
+                <LogOut size={14} /> Log out
+              </button>
+            )}
           </div>
         </motion.div>
 

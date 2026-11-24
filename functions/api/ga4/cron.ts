@@ -475,12 +475,13 @@ export async function onRequestGet(context: any) {
 
             try {
               await env.DB.prepare(
-                `INSERT INTO ga4_alerts (id, monitor_id, user_id, property_name, metric, condition_type, percent_change, alert_type, status, recipients)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'automated', 'anomaly', ?)`
+                `INSERT INTO ga4_alerts (id, monitor_id, user_id, project_id, property_name, metric, condition_type, percent_change, alert_type, status, recipients)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'automated', 'anomaly', ?)`
               ).bind(
                 alertId,
                 monitor.id,
                 monitor.user_id,
+                monitor.project_id || null,
                 monitor.property_name,
                 metricDisplay,
                 cond.conditionType,

@@ -46,7 +46,11 @@ export async function onRequestPost(context: any) {
       }
     } catch (_) {}
 
-    const successUrl = 'https://app.gtmobserver.com/dashboard?checkout=success';
+    const reqUrl = new URL(request.url);
+    const isLocal = reqUrl.hostname === 'localhost' || reqUrl.hostname === '127.0.0.1';
+    const successUrl = isLocal
+      ? `${reqUrl.origin}/onboarding?checkout=success`
+      : 'https://app.gtmobserver.com/onboarding?checkout=success';
 
     // 1. Check for manual/direct checkout URL override
     const directUrl = tier === 'custom' 

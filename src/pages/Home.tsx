@@ -50,7 +50,7 @@ export const Home = () => {
         >
           <motion.div variants={itemVariants} className="hero-badge">
             <Zap className="hero-badge-icon" />
-            <span>Automate Google Tag Manager Instantly</span>
+            <span>Multi-Project GTM Automation, 22-Point GA4 Audits &amp; 24/7 Anomaly Alerts</span>
           </motion.div>
           
           <motion.h1 variants={itemVariants} className="hero-title">
@@ -61,18 +61,18 @@ export const Home = () => {
           </motion.h1>
 
           <motion.p variants={itemVariants} className="hero-description">
-            Deploy advanced tracking architectures across your domains in seconds. Built natively on Cloudflare for zero-latency execution.
+            Manage isolated client projects, deploy validated GTM recipes in one click, run 22-point GA4 &amp; GTM PDF audits, and catch conversion drops 24/7 with custom-scheduled Cloudflare edge monitoring.
           </motion.p>
 
           <motion.div variants={itemVariants} className="hero-actions">
             {isSignedIn ? (
               <a 
-                href="https://app.gtmobserver.com/dashboard" 
+                href="https://app.gtmobserver.com/organization" 
                 className="btn-primary" 
                 style={{ textDecoration: 'none' }}
                 onClick={() => pushDataLayer('cta_click', { cta_text: 'Go to Dashboard', cta_location: 'hero' })}
               >
-                Go to Dashboard
+                Open Organization Dashboard
               </a>
             ) : (
               <Link 

@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import {
   ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell,
-  Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info, Zap, Clock
+  Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info, Zap, Clock,
+  FileText, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
+import { Ga4AuditModal } from '../components/ui/Ga4AuditModal';
 import { pushDataLayer } from '../utils/analytics';
 import {
   INCIDENT_TEMPLATES,
@@ -21,6 +23,14 @@ import {
   formatConditionRuleBadge
 } from '../data/observerTemplates';
 import type { IncidentTemplate, ConditionOperator, DeviceCategory } from '../data/observerTemplates';
+import { useWorkspace } from '../context/WorkspaceContext';
+import type { Project } from '../types/project';
+import {
+  SANDBOX_GA4_PROPERTIES,
+  getSandboxState,
+  addSandboxMonitor,
+  deleteSandboxMonitor
+} from '../utils/localDemoStore';
 import './Dashboard.css';
 
 interface ConditionItem {
@@ -99,16 +109,17 @@ const KNOWN_SOURCES = [
   'twitter'
 ];
 
-export const Observer = () => {
+export const Observer: React.FC<{ project?: Project }> = ({ project }) => {
   const { getToken, signOut } = useAuth();
   const { user } = useUser();
+  const { isSandboxMode, userTier: ctxTier } = useWorkspace();
   const [properties, setProperties] = useState<any[]>([]);
   const [monitors, setMonitors] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [selectedProperty, setSelectedProperty] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState(project?.ga4_property_id || '');
   const [conditions, setConditions] = useState<ConditionItem[]>([
     { id: '1', metric: 'sessions', source: 'all', medium: '', device: 'all', conditionType: 'drops_below', thresholdPercentage: 20 }
   ]);
@@ -123,7 +134,7 @@ export const Observer = () => {
   const [applyToExistingMonitors, setApplyToExistingMonitors] = useState(false);
   const [savingAccountSchedule, setSavingAccountSchedule] = useState(false);
   const [accountScheduleSaved, setAccountScheduleSaved] = useState(false);
-  const [websiteType, setWebsiteType] = useState('general');
+  const [websiteType, setWebsiteType] = useState(project?.website_type || 'general');
 
   const [alertEmails, setAlertEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
@@ -136,6 +147,19 @@ export const Observer = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [alertHistoryTab, setAlertHistoryTab] = useState<'automated' | 'manual'>('automated');
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('pro');
+
+  // GA4 Audit Modal & History state
+  const [isGa4AuditOpen, setIsGa4AuditOpen] = useState(false);
+  const [ga4AuditLoading, setGa4AuditLoading] = useState(false);
+  const [ga4AuditReport, setGa4AuditReport] = useState<any | null>(null);
+  const [ga4AuditError, setGa4AuditError] = useState('');
+  const [recentGa4Audits, setRecentGa4Audits] = useState<any[]>([]);
+  const [ga4AuditPage, setGa4AuditPage] = useState(1);
+  const GA4_AUDITS_PER_PAGE = 5;
+  const isLocalHost =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -147,8 +171,20 @@ export const Observer = () => {
   }, []);
 
   useEffect(() => {
+    if (project) {
+      setSelectedProperty(project.ga4_property_id || '');
+      setWebsiteType(project.website_type || 'general');
+    }
+  }, [project?.id, project?.ga4_property_id, project?.website_type]);
+
+  useEffect(() => {
     fetchProperties();
     fetchMonitors();
+    fetchGa4AuditHistory();
+    if (isSandboxMode) {
+      setUserTier(ctxTier || getSandboxState().tier);
+      return;
+    }
     if (user?.id) {
       const email = user.primaryEmailAddress?.emailAddress || '';
       fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(email)}`)
@@ -168,9 +204,14 @@ export const Observer = () => {
         })
         .catch(() => {});
     }
-  }, [user?.id]);
+  }, [user?.id, project?.id, isSandboxMode, ctxTier]);
 
   const fetchProperties = async () => {
+    if (isSandboxMode) {
+      setProperties(SANDBOX_GA4_PROPERTIES);
+      setErrorMsg('');
+      return;
+    }
     try {
       const token = await getToken();
       const res = await fetch('/api/ga4/properties', {
@@ -188,9 +229,28 @@ export const Observer = () => {
   };
 
   const fetchMonitors = async () => {
+    if (isSandboxMode) {
+      const s = getSandboxState();
+      const scopedMons = project
+        ? s.monitors.filter(
+            (m) => m.project_id === project.id || (!m.project_id && project.ga4_property_id && m.property_id === project.ga4_property_id)
+          )
+        : s.monitors;
+      const monIds = new Set(scopedMons.map((m) => m.id));
+      const scopedAlerts = project
+        ? s.alerts.filter((a) => a.project_id === project.id || monIds.has(a.monitor_id))
+        : s.alerts;
+      setMonitors(scopedMons);
+      setAlerts(scopedAlerts);
+      setLoading(false);
+      return;
+    }
     try {
       const token = await getToken();
-      const res = await fetch('/api/ga4/monitors', {
+      const url = project
+        ? `/api/ga4/monitors?projectId=${encodeURIComponent(project.id)}&propertyId=${encodeURIComponent(project.ga4_property_id || '')}`
+        : '/api/ga4/monitors';
+      const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -207,11 +267,98 @@ export const Observer = () => {
     }
   };
 
+  const fetchGa4AuditHistory = async () => {
+    if (isSandboxMode) {
+      const s = getSandboxState();
+      const scoped = project
+        ? s.ga4Audits.filter((a) => a.projectId === project.id || (project.ga4_property_id && a.propertyId === project.ga4_property_id))
+        : s.ga4Audits;
+      setRecentGa4Audits(scoped);
+      return;
+    }
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const url = project
+        ? `/api/ga4/audit?history=true&projectId=${encodeURIComponent(project.id)}&propertyId=${encodeURIComponent(project.ga4_property_id || '')}`
+        : '/api/ga4/audit?history=true';
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRecentGa4Audits(data.logs || []);
+      }
+    } catch (_) {}
+  };
+
+  const handleRunGa4Audit = async () => {
+    if (!selectedProperty) return;
+    if (isSandboxMode) {
+      await handleRunDemoGa4Audit();
+      return;
+    }
+    setIsGa4AuditOpen(true);
+    setGa4AuditLoading(true);
+    setGa4AuditError('');
+    setGa4AuditReport(null);
+
+    try {
+      const token = await getToken();
+      const projectQuery = project ? `&projectId=${encodeURIComponent(project.id)}` : '';
+      const res = await fetch(`/api/ga4/audit?propertyId=${encodeURIComponent(selectedProperty)}${projectQuery}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setGa4AuditError(data.error || `Failed to complete GA4 property audit (${res.status})`);
+      } else {
+        setGa4AuditReport(data);
+        await fetchGa4AuditHistory();
+      }
+    } catch (err: any) {
+      setGa4AuditError(err.message || 'Network error while auditing GA4 property.');
+    } finally {
+      setGa4AuditLoading(false);
+    }
+  };
+
+  const handleRunDemoGa4Audit = async () => {
+    setIsGa4AuditOpen(true);
+    setGa4AuditLoading(true);
+    setGa4AuditError('');
+    setGa4AuditReport(null);
+
+    try {
+      const res = await fetch('/api/ga4/audit?demo=true');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setGa4AuditError(data.error || 'Failed to load demo GA4 audit');
+      } else {
+        setGa4AuditReport(data);
+      }
+    } catch (err: any) {
+      setGa4AuditError(err.message || 'Failed to load demo GA4 audit');
+    } finally {
+      setGa4AuditLoading(false);
+    }
+  };
+
+  const handleViewHistoricalGa4Audit = (audit: any) => {
+    if (!audit.report) return;
+    setGa4AuditError('');
+    setGa4AuditReport(audit.report);
+    setGa4AuditLoading(false);
+    setIsGa4AuditOpen(true);
+  };
+
   useEffect(() => {
     if (user?.primaryEmailAddress?.emailAddress && alertEmails.length === 0) {
       setAlertEmails([user.primaryEmailAddress.emailAddress]);
+    } else if (isSandboxMode && alertEmails.length === 0) {
+      setAlertEmails(['alerts@harborgrandhotel.com']);
     }
-  }, [user]);
+  }, [user, isSandboxMode]);
 
   const addEmail = (raw: string) => {
     const cleaned = raw.trim();
@@ -351,6 +498,46 @@ export const Observer = () => {
 
     setCreating(true);
     try {
+      const mappedConditions = conditions.map(c => {
+        const finalSource = c.source === 'custom' ? (c.customSource?.trim() || 'all') : (c.source || 'all');
+        const finalMedium = c.medium?.trim() ? c.medium.trim() : 'all';
+        const finalDevice = c.device || 'all';
+        const parsedThresh = c.conditionType === 'equals_zero' ? 0 : parseFloat(String(c.thresholdPercentage || 0));
+        return {
+          metric: c.metric,
+          source: finalSource,
+          medium: finalMedium,
+          device: finalDevice,
+          conditionType: c.conditionType,
+          thresholdPercentage: Number.isFinite(parsedThresh) ? parsedThresh : 0
+        };
+      });
+
+      if (isSandboxMode) {
+        addSandboxMonitor({
+          id: editingId || undefined,
+          project_id: project?.id || null,
+          property_id: selectedProperty,
+          property_name: properties.find(p => p.name === selectedProperty)?.displayName || project?.ga4_property_name || selectedProperty,
+          metric: mappedConditions[0]?.metric || 'sessions',
+          threshold_percentage: mappedConditions[0]?.thresholdPercentage ?? 0,
+          comparison_period: period,
+          scheduleTime,
+          scheduleTimezone,
+          scheduleFrequency,
+          websiteType,
+          alert_email: finalEmails.join(', '),
+          matchType,
+          status: 'active',
+          conditions: mappedConditions
+        });
+        setEditingId(null);
+        setSelectedTemplateId(null);
+        setWebsiteType(project?.website_type || 'general');
+        await fetchMonitors();
+        return;
+      }
+
       const res = await fetch('/api/ga4/monitors', {
         method: 'POST',
         headers: {
@@ -359,8 +546,9 @@ export const Observer = () => {
         },
         body: JSON.stringify({
           id: editingId,
+          projectId: project?.id || null,
           propertyId: selectedProperty,
-          propertyName: properties.find(p => p.name === selectedProperty)?.displayName,
+          propertyName: properties.find(p => p.name === selectedProperty)?.displayName || project?.ga4_property_name,
           comparisonPeriod: period,
           scheduleTime,
           scheduleTimezone,
@@ -369,27 +557,14 @@ export const Observer = () => {
           alertEmail: finalEmails.join(', '),
           alertEmails: finalEmails,
           matchType,
-          conditions: conditions.map(c => {
-            const finalSource = c.source === 'custom' ? (c.customSource?.trim() || 'all') : (c.source || 'all');
-            const finalMedium = c.medium?.trim() ? c.medium.trim() : 'all';
-            const finalDevice = c.device || 'all';
-            const parsedThresh = c.conditionType === 'equals_zero' ? 0 : parseFloat(String(c.thresholdPercentage || 0));
-            return {
-              metric: c.metric,
-              source: finalSource,
-              medium: finalMedium,
-              device: finalDevice,
-              conditionType: c.conditionType,
-              thresholdPercentage: Number.isFinite(parsedThresh) ? parsedThresh : 0
-            };
-          })
+          conditions: mappedConditions
         })
       });
 
       if (res.ok) {
         setEditingId(null);
         setSelectedTemplateId(null);
-        setWebsiteType('general');
+        setWebsiteType(project?.website_type || 'general');
         await fetchMonitors();
       } else {
         const data = await res.json();
@@ -405,6 +580,42 @@ export const Observer = () => {
   const handleTest = async (id: string) => {
     setTestingId(id);
     const monitorObj = monitors.find(m => m.id === id);
+    if (isSandboxMode && monitorObj) {
+      const conds = (monitorObj.conditions || []).map((c: any) => ({
+        metric: c.metric,
+        source: c.source || 'all',
+        medium: c.medium || 'all',
+        device: c.device || 'all',
+        conditionType: c.conditionType,
+        thresholdPercentage: c.thresholdPercentage,
+        pastVal: 1240,
+        currentVal: 1385,
+        formattedPast: '1,240',
+        formattedCurrent: '1,385',
+        percentChange: 11.7,
+        isTriggered: false,
+        operatorLabel: formatConditionRuleBadge(c)
+      }));
+      setTestResult({
+        isOpen: true,
+        status: 'success',
+        propertyName: monitorObj.property_name || 'Local Sandbox Property',
+        comparisonPeriod: monitorObj.comparison_period || 'yesterday_vs_last_week',
+        schedule: {
+          time: monitorObj.scheduleTime || '08:00',
+          timezone: monitorObj.scheduleTimezone || 'UTC',
+          frequency: monitorObj.scheduleFrequency || 'daily'
+        },
+        matchType: monitorObj.matchType || 'ANY',
+        conditions: conds,
+        emailStatus: 'Simulated Local Test Dispatch',
+        recipients: [monitorObj.alert_email || 'alerts@localhost.test'],
+        successfulRecipients: [monitorObj.alert_email || 'alerts@localhost.test'],
+        failedRecipients: []
+      });
+      setTestingId(null);
+      return;
+    }
     try {
       const res = await fetch('/api/ga4/test', {
         method: 'POST',
@@ -528,13 +739,13 @@ export const Observer = () => {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setSelectedProperty('');
+    setSelectedProperty(project?.ga4_property_id || '');
     setConditions([{ id: '1', metric: 'sessions', source: 'all', medium: '', device: 'all', conditionType: 'drops_below', thresholdPercentage: 20 }]);
     setMatchType('ANY');
     setScheduleTime(accountScheduleTime || '08:00');
     setScheduleTimezone(accountScheduleTimezone || getBrowserTimezone());
     setScheduleFrequency('daily');
-    setWebsiteType('general');
+    setWebsiteType(project?.website_type || 'general');
     setAlertEmails(user?.primaryEmailAddress?.emailAddress ? [user.primaryEmailAddress.emailAddress] : []);
     setEmailInput('');
     setSelectedTemplateId(null);
@@ -542,6 +753,11 @@ export const Observer = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this monitor?')) return;
+    if (isSandboxMode) {
+      deleteSandboxMonitor(id);
+      await fetchMonitors();
+      return;
+    }
     try {
       const token = await getToken();
       await fetch(`/api/ga4/monitors?id=${id}`, {
@@ -558,7 +774,7 @@ export const Observer = () => {
   const manualReports = alerts.filter((a: any) => a.alert_type === 'manual');
 
   return (
-    <PageTransition locationKey="observer">
+    <PageTransition locationKey={`observer-${project?.id || 'global'}`}>
       <BackgroundMesh />
       <div className="dashboard-container">
         
@@ -571,17 +787,29 @@ export const Observer = () => {
           <div>
             <h1 className="dashboard-title" style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Activity className="w-8 h-8 text-blue-400" />
-              Observer
+              {project ? `GA4 Observer — ${project.name}` : 'GA4 Observer'}
             </h1>
-            <p className="dashboard-subtitle">Automated GA4 Anomaly Detection & Monitoring</p>
+            <p className="dashboard-subtitle">
+              {project
+                ? `Project-scoped anomaly monitoring & 22-point GA4 audit for ${project.ga4_property_name || project.name}`
+                : 'Automated GA4 Anomaly Detection, Monitoring & Account Auditing'}
+            </p>
           </div>
           <div className="topbar-actions">
-            <a href="https://gtmobserver.com" className="btn-home-link" style={{ textDecoration: 'none' }}>
-              <Home size={14} /> Home
-            </a>
-            <button onClick={() => signOut()} className="btn-home-link" style={{ cursor: 'pointer' }}>
-              <LogOut size={14} /> Log out
-            </button>
+            {project ? (
+              <Link to={`/projects/${project.id}/dashboard`} className="btn-home-link" style={{ textDecoration: 'none' }}>
+                <Home size={14} /> Project Overview
+              </Link>
+            ) : (
+              <a href="https://gtmobserver.com" className="btn-home-link" style={{ textDecoration: 'none' }}>
+                <Home size={14} /> Home
+              </a>
+            )}
+            {!isSandboxMode && (
+              <button onClick={() => signOut()} className="btn-home-link" style={{ cursor: 'pointer' }}>
+                <LogOut size={14} /> Log out
+              </button>
+            )}
           </div>
         </motion.div>
 
@@ -637,6 +865,66 @@ export const Observer = () => {
           className="dashboard-content"
           style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' }}
         >
+          {/* Select Target GA4 Property & Audit (mirrors GTM Dashboard workspace audit card) */}
+          <div className="selection-card">
+            <div className="selection-header" style={{ flexWrap: 'wrap', gap: '0.85rem' }}>
+              <div>
+                <h3 className="section-title" style={{ margin: 0 }}>
+                  {project ? 'Project GA4 Property & Audit' : 'Select Target GA4 Property'}
+                </h3>
+                {project?.ga4_property_id && (
+                  <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: '#9CA3AF' }}>
+                    Locked to {project.ga4_property_name || project.ga4_property_id} ({project.ga4_property_id})
+                  </p>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn-audit"
+                  onClick={handleRunGa4Audit}
+                  disabled={!selectedProperty}
+                  title={!selectedProperty ? 'Select a GA4 property first to run a full audit' : 'Run full 22-point GA4 Property Audit'}
+                >
+                  <Activity className="w-4 h-4 mr-2 inline" /> Run GA4 Audit
+                </button>
+                {(isLocalHost || isSandboxMode || !user) && (
+                  <button
+                    type="button"
+                    className="btn-audit"
+                    onClick={handleRunDemoGa4Audit}
+                    style={{
+                      background: 'rgba(0, 240, 255, 0.08)',
+                      border: '1px solid rgba(0, 240, 255, 0.3)',
+                      color: '#00F0FF'
+                    }}
+                    title="Preview simulated GA4 Property Audit report locally"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2 inline" /> Demo Audit
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {(!project || !project.ga4_property_id) && (
+              <div className="dropdowns-row" style={{ marginTop: '1rem' }}>
+                <select
+                  className="gtm-dropdown"
+                  value={selectedProperty}
+                  onChange={e => setSelectedProperty(e.target.value)}
+                >
+                  <option value="">Select GA4 Property to Audit or Monitor...</option>
+                  {properties.map(p => (
+                    <option key={p.name} value={p.name}>
+                      {p.displayName} ({p.name})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {errorMsg && <div style={{ color: '#EF4444', marginTop: '0.65rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
+          </div>
+
           {/* Create Monitor Form */}
           <div className="selection-card">
             <div className="selection-header">
@@ -770,22 +1058,30 @@ export const Observer = () => {
                 </h4>
 
                 {/* GA4 Property Selection */}
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>GA4 Property</label>
-                  <select
-                    value={selectedProperty}
-                    onChange={e => setSelectedProperty(e.target.value)}
-                    className="module-input"
-                    style={{ paddingLeft: '1rem' }}
-                    required
-                  >
-                    <option value="">Select a property...</option>
-                    {properties.map(p => (
-                      <option key={p.name} value={p.name}>{p.displayName} ({p.name})</option>
-                    ))}
-                  </select>
-                  {errorMsg && <div style={{ color: '#EF4444', marginTop: '0.5rem', fontSize: '0.875rem' }}>{errorMsg}</div>}
-                </div>
+                {project && project.ga4_property_id ? (
+                  <div style={{ marginBottom: '1.25rem', padding: '0.85rem 1rem', borderRadius: '8px', background: 'rgba(0, 240, 255, 0.05)', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#00F0FF', fontWeight: 700, letterSpacing: '0.04em' }}>PROJECT SCOPED GA4 PROPERTY</div>
+                    <div style={{ color: 'white', fontWeight: 600, fontSize: '0.92rem', marginTop: '0.2rem' }}>
+                      {project.ga4_property_name || project.ga4_property_id} ({project.ga4_property_id})
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>GA4 Property</label>
+                    <select
+                      value={selectedProperty}
+                      onChange={e => setSelectedProperty(e.target.value)}
+                      className="module-input"
+                      style={{ paddingLeft: '1rem' }}
+                      required
+                    >
+                      <option value="">Select a property...</option>
+                      {properties.map(p => (
+                        <option key={p.name} value={p.name}>{p.displayName} ({p.name})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Setup Mode Selector */}
                 <div style={{ marginBottom: '1.25rem' }}>
@@ -1281,7 +1577,7 @@ export const Observer = () => {
                   <Mail size={18} style={{ color: '#00F0FF' }}/> Action
                 </h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 235px), 1fr))', gap: '1rem' }}>
                   <div>
                     <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Action Type</label>
                     <select 
@@ -1827,8 +2123,103 @@ export const Observer = () => {
             </div>
           </div>
 
+          {/* Recent GA4 Audits Section (mirrors Dashboard.tsx Recent Audits) */}
+          <div className="recent-audits-card">
+            <div className="recent-audits-header">
+              <FileText className="w-5 h-5 text-blue-400 mr-2" />
+              <h3 className="section-title" style={{ margin: 0 }}>Recent GA4 Audits</h3>
+            </div>
+
+            {recentGa4Audits.length === 0 ? (
+              <p className="no-audits-msg">
+                No GA4 property audits run yet. Select a property above and click &ldquo;Run GA4 Audit&rdquo; to inspect cross-domain links, product connections, and data quality!
+              </p>
+            ) : (
+              <>
+                <div className="audits-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {recentGa4Audits
+                    .slice((ga4AuditPage - 1) * GA4_AUDITS_PER_PAGE, ga4AuditPage * GA4_AUDITS_PER_PAGE)
+                    .map((audit: any) => (
+                      <div key={audit.id} className="audit-list-item">
+                        <div className="audit-info">
+                          <span className="audit-gtm-id">{audit.propertyName || audit.propertyId}</span>
+                          <span className="audit-date">{new Date(audit.createdAt).toLocaleString()}</span>
+                        </div>
+
+                        <div className="audit-score-info">
+                          <div className={`health-badge badge-${audit.healthScore >= 90 ? 'excellent' : audit.healthScore >= 70 ? 'good' : 'poor'}`}>
+                            Score: {audit.healthScore}%
+                          </div>
+                          <span className="issue-count">
+                            {(audit.criticalCount || 0) + (audit.warningCount || 0)} Issues
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn-view-audit"
+                          onClick={() => handleViewHistoricalGa4Audit(audit)}
+                        >
+                          View Report <ChevronRight className="w-4 h-4 ml-1 inline" />
+                        </button>
+                      </div>
+                    ))}
+                </div>
+
+                {Math.ceil(recentGa4Audits.length / GA4_AUDITS_PER_PAGE) > 1 && (
+                  <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '1.5rem', gap: '1rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setGa4AuditPage(p => Math.max(1, p - 1))}
+                      disabled={ga4AuditPage === 1}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(255,255,255,0.05)',
+                        borderRadius: '9999px',
+                        color: ga4AuditPage === 1 ? '#6B7280' : '#fff',
+                        cursor: ga4AuditPage === 1 ? 'not-allowed' : 'pointer',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      Previous
+                    </button>
+                    <span style={{ fontSize: '0.875rem', color: '#9CA3AF' }}>
+                      Page {ga4AuditPage} of {Math.ceil(recentGa4Audits.length / GA4_AUDITS_PER_PAGE)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setGa4AuditPage(p => Math.min(Math.ceil(recentGa4Audits.length / GA4_AUDITS_PER_PAGE), p + 1))}
+                      disabled={ga4AuditPage === Math.ceil(recentGa4Audits.length / GA4_AUDITS_PER_PAGE)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(255,255,255,0.05)',
+                        borderRadius: '9999px',
+                        color: ga4AuditPage === Math.ceil(recentGa4Audits.length / GA4_AUDITS_PER_PAGE) ? '#6B7280' : '#fff',
+                        cursor: ga4AuditPage === Math.ceil(recentGa4Audits.length / GA4_AUDITS_PER_PAGE) ? 'not-allowed' : 'pointer',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
         </motion.div>
       </div>
+
+      {/* GA4 Property Audit Modal (matches GTM Workspace Audit Modal design & PDF export) */}
+      <Ga4AuditModal
+        isOpen={isGa4AuditOpen}
+        onClose={() => setIsGa4AuditOpen(false)}
+        auditReport={ga4AuditReport}
+        loading={ga4AuditLoading}
+        errorMsg={ga4AuditError}
+      />
 
       {/* Animated Cool Test Report Popup Modal */}
       <AnimatePresence>

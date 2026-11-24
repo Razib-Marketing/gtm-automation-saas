@@ -155,13 +155,13 @@ export default function Pricing() {
             
             <ul className="tier-features-list">
               <li><Check className="feature-icon-active" size={20} /> <span>All Free Features</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited Module Deployments</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Up to 10 GTM Workspaces</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Up to 10 Isolated Client Projects</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited GTM Module Deployments</span></li>
               <li><Check className="feature-icon-active" size={20} /> <span>Up to 10 GA4 Observer Monitors</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Multi-Email Anomaly Alert Dispatches</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Compound Rules (AND / OR) & Segments</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Complete Dual History Audit Trail</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited GTM Workspace Audits</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>22-Point GA4 Property Audits + PDF Export</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Custom Schedules, WoW/MoM/YoY &amp; Hospitality Templates</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Compound Rules (AND / OR) &amp; Device Filters</span></li>
+              <li><Check className="feature-icon-active" size={20} /> <span>Multi-Email Alerts &amp; Unlimited GTM Audits</span></li>
             </ul>
             
             <button 

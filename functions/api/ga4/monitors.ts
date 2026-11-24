@@ -2,6 +2,7 @@ import {
   ensureUsersSchema,
   ensureMonitorsSchema,
   ensureAlertsSchema,
+  ensureProjectsSchema,
   getClerkUserId,
   isValidTimeHHMM,
   sanitizeTimezone
@@ -20,6 +21,11 @@ export async function onRequest(context: any) {
       await ensureAlertsSchema(env.DB);
       await ensureMonitorsSchema(env.DB);
       await ensureUsersSchema(env.DB);
+      await ensureProjectsSchema(env.DB);
+
+      const url = new URL(request.url);
+      const filterProjectId = url.searchParams.get('projectId') || '';
+      const filterPropertyId = url.searchParams.get('propertyId') || '';
 
       const userScheduleRow: any = await env.DB.prepare(
         'SELECT schedule_time, schedule_timezone FROM users WHERE id = ?'
@@ -30,15 +36,32 @@ export async function onRequest(context: any) {
         : '08:00';
       const userScheduleTimezone = sanitizeTimezone(userScheduleRow?.schedule_timezone);
 
-      const { results: rawMonitors } = await env.DB.prepare(
-        'SELECT * FROM ga4_monitors WHERE user_id = ? ORDER BY created_at DESC'
-      ).bind(userId).all();
+      let rawMonitors: any[] = [];
+      if (filterProjectId) {
+        const res = await env.DB.prepare(
+          `SELECT * FROM ga4_monitors
+           WHERE user_id = ?
+             AND (project_id = ? OR (project_id IS NULL AND ? != '' AND property_id = ?))
+           ORDER BY created_at DESC`
+        ).bind(userId, filterProjectId, filterPropertyId, filterPropertyId).all();
+        rawMonitors = res.results || [];
+      } else {
+        const res = await env.DB.prepare(
+          'SELECT * FROM ga4_monitors WHERE user_id = ? ORDER BY created_at DESC'
+        ).bind(userId).all();
+        rawMonitors = res.results || [];
+      }
 
       const { results: rawAlerts } = await env.DB.prepare(
         'SELECT * FROM ga4_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 100'
       ).bind(userId).all();
 
-      const alerts = (rawAlerts || []).map((a: any) => ({
+      const allowedMonitorIds = new Set(rawMonitors.map((m: any) => m.id));
+      const filteredRawAlerts = filterProjectId
+        ? (rawAlerts || []).filter((a: any) => a.project_id === filterProjectId || allowedMonitorIds.has(a.monitor_id))
+        : (rawAlerts || []);
+
+      const alerts = filteredRawAlerts.map((a: any) => ({
         ...a,
         alert_type: a.alert_type || (a.metric?.toLowerCase().startsWith('manual') ? 'manual' : 'automated'),
         status: a.status || (a.condition_type === 'stable' ? 'stable' : 'anomaly')
@@ -95,6 +118,7 @@ export async function onRequest(context: any) {
     try {
       await ensureMonitorsSchema(env.DB);
       await ensureUsersSchema(env.DB);
+      await ensureProjectsSchema(env.DB);
 
       let userRow: any = null;
       try {
@@ -115,13 +139,14 @@ export async function onRequest(context: any) {
 
       if (tier === 'free') {
         return new Response(JSON.stringify({
-          error: 'An active paid subscription (Pro or Custom) is required to activate GA4 anomaly monitors. Please choose a plan on our pricing page.',
+          error: 'An active paid subscription (Pro or Custom) is required to activate GA4 anomaly monitors. Please choose a plan in Billing.',
           requiresUpgrade: true
         }), { status: 403, headers: { 'Content-Type': 'application/json' } });
       }
 
       const body = await request.json();
       const { id, propertyId, propertyName, comparisonPeriod, matchType } = body;
+      const projectId = typeof body.projectId === 'string' && body.projectId.trim() ? body.projectId.trim() : null;
 
       let alertEmail = body.alertEmail;
       if (Array.isArray(body.alertEmails) && body.alertEmails.length > 0) {
@@ -192,9 +217,10 @@ export async function onRequest(context: any) {
         // Update existing
         await env.DB.prepare(
           `UPDATE ga4_monitors
-          SET property_id = ?, property_name = ?, metric = ?, threshold_percentage = ?, comparison_period = ?, alert_email = ?, condition_type = ?, conditions = ?, match_type = ?, schedule_time = ?, schedule_timezone = ?, schedule_frequency = ?, website_type = ?, updated_at = CURRENT_TIMESTAMP
+          SET project_id = COALESCE(?, project_id), property_id = ?, property_name = ?, metric = ?, threshold_percentage = ?, comparison_period = ?, alert_email = ?, condition_type = ?, conditions = ?, match_type = ?, schedule_time = ?, schedule_timezone = ?, schedule_frequency = ?, website_type = ?, updated_at = CURRENT_TIMESTAMP
           WHERE id = ? AND user_id = ?`
         ).bind(
+          projectId,
           propertyId,
           propertyName || propertyId,
           primaryMetric,
@@ -216,11 +242,12 @@ export async function onRequest(context: any) {
         monitorId = 'mon_' + Date.now() + Math.random().toString(36).substring(2, 9);
         await env.DB.prepare(
           `INSERT INTO ga4_monitors
-          (id, user_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type, conditions, match_type, schedule_time, schedule_timezone, schedule_frequency, website_type)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          (id, user_id, project_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type, conditions, match_type, schedule_time, schedule_timezone, schedule_frequency, website_type)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         ).bind(
           monitorId,
           userId,
+          projectId,
           propertyId,
           propertyName || propertyId,
           primaryMetric,

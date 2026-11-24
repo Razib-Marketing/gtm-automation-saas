@@ -5,12 +5,14 @@ import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle, Clock, Check } 
 import { motion } from 'framer-motion';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { getTimezoneOptions, getBrowserTimezone } from '../data/observerTemplates';
+import { useWorkspace } from '../context/WorkspaceContext';
 import './Settings.css';
 
 export const Settings = () => {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
+  const { isSandboxMode, userTier: ctxTier } = useWorkspace();
 
   const [activeTab, setActiveTab] = useState<'subscription' | 'schedule' | 'profile'>('subscription');
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
@@ -26,6 +28,12 @@ export const Settings = () => {
   const [scheduleError, setScheduleError] = useState('');
 
   useEffect(() => {
+    if (isSandboxMode) {
+      setUserTier(ctxTier || 'pro');
+      setDeploymentCount(2);
+      setLoadingData(false);
+      return;
+    }
     const fetchUserData = async () => {
       if (!user) return;
       try {
@@ -51,7 +59,7 @@ export const Settings = () => {
     if (isSignedIn) {
       fetchUserData();
     }
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, isSandboxMode, ctxTier]);
 
   const handleSaveSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +120,7 @@ export const Settings = () => {
     }
   };
 
-  if (!isLoaded) {
+  if (!isLoaded && !isSandboxMode) {
     return (
       <div className="dashboard-wrapper">
         <BackgroundMesh />
@@ -123,7 +131,7 @@ export const Settings = () => {
     );
   }
 
-  if (!isSignedIn) {
+  if (!isSignedIn && !isSandboxMode) {
     return <RedirectToSignIn />;
   }
 
@@ -165,7 +173,7 @@ export const Settings = () => {
           </aside>
 
           {/* Main Content Area */}
-          <main className="settings-main">
+          <div className="settings-main">
             {activeTab === 'subscription' && (
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
@@ -296,7 +304,7 @@ export const Settings = () => {
                 ) : (
                   <form onSubmit={handleSaveSchedule} className="panel-body">
                     <div className="subscription-card">
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
                         <div>
                           <label style={{ display: 'block', marginBottom: '0.5rem', color: '#D1D5DB', fontSize: '0.85rem', fontWeight: 600 }}>
                             Preferred Evaluation Time
@@ -442,7 +450,7 @@ export const Settings = () => {
                 />
               </motion.div>
             )}
-          </main>
+          </div>
         </div>
       </div>
     </div>

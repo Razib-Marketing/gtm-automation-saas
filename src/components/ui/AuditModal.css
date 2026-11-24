@@ -386,3 +386,195 @@
   color: #9CA3AF;
   font-size: 1rem;
 }
+
+/* GA4 Audit Modal Extensions (Mirrors GTM Audit #121212 Surface) */
+.ga4-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.ga4-meta-tag {
+  font-size: 0.72rem;
+  color: #D1D5DB;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+}
+
+.ga4-cat-pill {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #00F0FF;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.22);
+  padding: 1px 7px;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.ga4-integrations-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+  gap: 0.65rem;
+  margin-bottom: 2rem;
+}
+
+.ga4-int-item {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ga4-int-item.linked {
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.ga4-int-item.missing {
+  border-color: rgba(245, 158, 11, 0.28);
+  background: rgba(245, 158, 11, 0.04);
+}
+
+.ga4-int-item.unavailable {
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.ga4-int-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ga4-int-header strong {
+  color: #FFFFFF;
+  font-size: 0.8rem;
+}
+
+.ga4-int-status {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 9999px;
+}
+
+.ga4-int-item.linked .ga4-int-status {
+  color: #34D399;
+  background: rgba(16, 185, 129, 0.14);
+}
+
+.ga4-int-item.missing .ga4-int-status {
+  color: #FBBF24;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.ga4-int-item.unavailable .ga4-int-status {
+  color: #9CA3AF;
+  background: rgba(148, 163, 184, 0.14);
+}
+
+.ga4-int-summary {
+  font-size: 0.73rem;
+  color: #9CA3AF;
+  line-height: 1.35;
+}
+
+.ga4-evidence-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.ga4-evidence-chip {
+  font-size: 0.72rem;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #E5E7EB;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.passed-issues .issue-item {
+  border-left-color: #10B981;
+  background-color: rgba(16, 185, 129, 0.04);
+}
+
+.ga4-forensics-compact {
+  margin-top: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ga4-mini-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.ga4-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.78rem;
+}
+
+.ga4-mini-table th {
+  padding: 0.6rem 0.85rem;
+  color: #9CA3AF;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+
+.ga4-mini-table td {
+  padding: 0.55rem 0.85rem;
+  color: #E5E7EB;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 640px) {
+  .audit-modal-overlay {
+    padding: 0.5rem;
+  }
+  .audit-modal-content {
+    max-height: 92dvh;
+  }
+  .audit-header-row {
+    padding: 1rem 1.15rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .btn-download-pdf {
+    margin-right: 0;
+    width: 100%;
+    justify-content: center;
+  }
+  .audit-report-wrapper {
+    padding: 1rem;
+  }
+  .audit-pdf-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .audit-modal-title {
+    font-size: 1.2rem;
+  }
+}
+

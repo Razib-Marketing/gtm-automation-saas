@@ -9,7 +9,13 @@
   align-items: stretch;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 720px) {
+  .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1040px) {
   .pricing-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -19,7 +25,7 @@
   background: rgba(18, 18, 24, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 1.5rem;
-  padding: 2.5rem;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
   display: flex;
   flex-direction: column;
   backdrop-filter: blur(24px);
@@ -72,7 +78,7 @@
 }
 
 .price-value {
-  font-size: 3rem;
+  font-size: clamp(2.25rem, 1.8rem + 1.5vw, 3rem);
   font-weight: 800;
   color: white;
   line-height: 1;

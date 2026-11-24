@@ -8,10 +8,10 @@ const getDashboardUrl = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return '/dashboard';
+      return '/organization';
     }
   }
-  return 'https://app.gtmobserver.com/dashboard';
+  return 'https://app.gtmobserver.com/organization';
 };
 
 export const SignUpPage = () => {

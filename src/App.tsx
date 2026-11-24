@@ -1,15 +1,15 @@
 // @ts-nocheck
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useParams, Link } from 'react-router-dom';
 import { ClerkProvider, useAuth } from '@clerk/clerk-react';
 import { dark } from '@clerk/themes';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar } from './components/layout/Sidebar';
 import { FooterSection } from './components/sections/FooterSection';
+import { WorkspaceProvider, SubscriptionGate, useWorkspace } from './context/WorkspaceContext';
 import { Home } from './pages/Home';
 import { Dashboard } from './pages/Dashboard';
 import { Observer } from './pages/Observer';
-import { Projects } from './pages/Projects';
 import { Analytics } from './pages/Analytics';
 import { Support } from './pages/Support';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
@@ -20,10 +20,15 @@ import { Community } from './pages/Community';
 import { Settings } from './pages/Settings';
 import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
+import { OrganizationDashboard } from './pages/OrganizationDashboard';
+import { Billing } from './pages/Billing';
+import { ProjectOnboarding } from './pages/ProjectOnboarding';
+import { ProjectOverview } from './pages/ProjectOverview';
+import { ProjectSettings } from './pages/ProjectSettings';
 import Pricing from './pages/Pricing';
 import { AnimatePresence } from 'framer-motion';
 import { CookieConsent } from './components/ui/CookieConsent';
-import { Loader2 } from 'lucide-react';
+import { Loader2, FolderX } from 'lucide-react';
 import './App.css';
 
 class ErrorBoundary extends React.Component {
@@ -74,7 +79,7 @@ const RootRoute = () => {
       );
     }
     if (isSignedIn) {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/organization" replace />;
     } else {
       window.location.replace('https://gtmobserver.com');
       return null;
@@ -82,6 +87,43 @@ const RootRoute = () => {
   }
 
   return <Home />;
+};
+
+const ProjectScopedView: React.FC<{
+  section: 'overview' | 'gtm' | 'observer' | 'analytics' | 'settings';
+}> = ({ section }) => {
+  const { projectId } = useParams();
+  const { getProjectById, loading } = useWorkspace();
+  const project = getProjectById(projectId);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 className="animate-spin" size={32} color="#00F0FF" />
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+        <FolderX size={44} color="#F87171" />
+        <h2 style={{ color: 'white', margin: 0 }}>Project Workspace Not Found</h2>
+        <p style={{ color: '#9CA3AF', maxWidth: '420px', margin: 0 }}>
+          The requested project either does not exist or belongs to another organization.
+        </p>
+        <Link to="/organization" className="btn-deploy-bulk" style={{ textDecoration: 'none', marginTop: '0.5rem' }}>
+          &larr; Return to Organization Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  if (section === 'overview') return <ProjectOverview project={project} />;
+  if (section === 'gtm') return <Dashboard project={project} />;
+  if (section === 'observer') return <Observer project={project} />;
+  if (section === 'analytics') return <Analytics project={project} />;
+  return <ProjectSettings project={project} />;
 };
 
 const AppRoutes = () => {
@@ -105,7 +147,7 @@ const AppRoutes = () => {
       const hostname = window.location.hostname;
       const isApp = hostname === 'app.gtmobserver.com' || hostname === 'dashboard.gtmobserver.com';
       const cleanPath = currentPath === '' ? '/' : currentPath;
-      const canonicalHref = isApp 
+      const canonicalHref = isApp
         ? `https://app.gtmobserver.com${cleanPath}`
         : `https://gtmobserver.com${cleanPath === '/' ? '/' : cleanPath}`;
 
@@ -129,14 +171,102 @@ const AppRoutes = () => {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<RootRoute />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/observer" element={<Observer />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/support" element={<Support />} />
+
+        {/* Organization Level Routes */}
+        <Route
+          path="/organization"
+          element={
+            <SubscriptionGate>
+              <OrganizationDashboard />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <SubscriptionGate allowFree>
+              <Billing />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <SubscriptionGate>
+              <ProjectOnboarding />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <SubscriptionGate allowFree>
+              <Settings />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/support"
+          element={
+            <SubscriptionGate allowFree>
+              <Support />
+            </SubscriptionGate>
+          }
+        />
+
+        {/* Project Level Routes (Strictly Scoped Workspaces) */}
+        <Route path="/projects/:projectId" element={<Navigate to="dashboard" replace />} />
+        <Route
+          path="/projects/:projectId/dashboard"
+          element={
+            <SubscriptionGate>
+              <ProjectScopedView section="overview" />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/projects/:projectId/gtm"
+          element={
+            <SubscriptionGate>
+              <ProjectScopedView section="gtm" />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/projects/:projectId/observer"
+          element={
+            <SubscriptionGate>
+              <ProjectScopedView section="observer" />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/projects/:projectId/analytics"
+          element={
+            <SubscriptionGate>
+              <ProjectScopedView section="analytics" />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/projects/:projectId/settings"
+          element={
+            <SubscriptionGate>
+              <ProjectScopedView section="settings" />
+            </SubscriptionGate>
+          }
+        />
+
+        {/* Legacy App Route Redirects */}
+        <Route path="/dashboard" element={<Navigate to="/organization" replace />} />
+        <Route path="/projects" element={<Navigate to="/organization" replace />} />
+        <Route path="/observer" element={<Navigate to="/organization" replace />} />
+        <Route path="/analytics" element={<Navigate to="/organization" replace />} />
+        <Route path="/ga4-audit" element={<Navigate to="/organization" replace />} />
+
+        {/* Auth & Public Marketing Pages */}
         <Route path="/sign-in/*" element={<SignInPage />} />
         <Route path="/sign-up/*" element={<SignUpPage />} />
-        <Route path="/settings" element={<Settings />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
@@ -153,11 +283,20 @@ const AppLayout = () => {
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   const isMarketingDomain = hostname === 'gtmobserver.com' || hostname === 'www.gtmobserver.com';
 
-  const innerPaths = ['/dashboard', '/settings', '/projects', '/analytics', '/support', '/observer'];
+  const innerPaths = [
+    '/organization',
+    '/billing',
+    '/onboarding',
+    '/projects',
+    '/dashboard',
+    '/settings',
+    '/analytics',
+    '/support',
+    '/observer'
+  ];
   const isInnerApp = innerPaths.some(path => location.pathname.startsWith(path));
   const isAuthPage = location.pathname.startsWith('/sign-in') || location.pathname.startsWith('/sign-up');
 
-  // If a user navigates directly to an app route on the marketing domain, redirect to app.gtmobserver.com
   React.useEffect(() => {
     if (isMarketingDomain && isInnerApp) {
       window.location.replace(`https://app.gtmobserver.com${location.pathname}${location.search}${location.hash}`);
@@ -168,14 +307,16 @@ const AppLayout = () => {
     <div className="app-wrapper">
       <a href="#main-content" className="skip-link">Skip to main content</a>
       {!isInnerApp && !isAuthPage && <Navbar />}
-      
+
       {isInnerApp ? (
-        <div className="inner-app-layout">
-          <Sidebar />
-          <main id="main-content" tabIndex={-1} className="inner-main-content">
-            <AppRoutes />
-          </main>
-        </div>
+        <WorkspaceProvider>
+          <div className="inner-app-layout">
+            <Sidebar />
+            <main id="main-content" tabIndex={-1} className="inner-main-content">
+              <AppRoutes />
+            </main>
+          </div>
+        </WorkspaceProvider>
       ) : (
         <main id="main-content" tabIndex={-1} className="main-content">
           <AppRoutes />
@@ -192,16 +333,16 @@ const getDashboardUrl = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return '/dashboard';
+      return '/organization';
     }
   }
-  return 'https://app.gtmobserver.com/dashboard';
+  return 'https://app.gtmobserver.com/organization';
 };
 
 function App() {
   return (
-    <ClerkProvider 
-      publishableKey={PUBLISHABLE_KEY} 
+    <ClerkProvider
+      publishableKey={PUBLISHABLE_KEY}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       afterSignInUrl={getDashboardUrl()}

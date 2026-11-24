@@ -16,7 +16,14 @@
   margin-bottom: 4rem;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
+  .footer-top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
   .footer-top {
     grid-template-columns: 2fr 1fr 1fr 2fr;
     gap: 2rem;
@@ -24,7 +31,7 @@
 }
 
 .footer-brand {
-  max-width: 20rem;
+  max-width: 100%;
 }
 
 .footer-logo {
@@ -111,7 +118,9 @@
 }
 
 .newsletter-input-group input {
-  flex-grow: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
   background: transparent;
   border: none;
   color: white;
@@ -128,11 +137,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   background: linear-gradient(135deg, #4F46E5, #00F0FF);
   color: white;
   border: none;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   cursor: pointer;
   transition: opacity 0.3s;

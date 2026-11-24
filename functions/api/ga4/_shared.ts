@@ -63,6 +63,70 @@ export async function ensureAlertsSchema(db: any) {
   try {
     await db.prepare("ALTER TABLE ga4_alerts ADD COLUMN recipients TEXT").run();
   } catch (_) {}
+  try {
+    await db.prepare('ALTER TABLE ga4_alerts ADD COLUMN project_id TEXT').run();
+  } catch (_) {}
+}
+
+export async function ensureProjectsSchema(db: any) {
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        website_url TEXT,
+        website_type TEXT DEFAULT 'general',
+        gtm_account_id TEXT,
+        gtm_account_name TEXT,
+        gtm_container_id TEXT,
+        gtm_container_name TEXT,
+        gtm_container_public_id TEXT,
+        gtm_workspace_id TEXT,
+        gtm_workspace_name TEXT,
+        ga4_property_id TEXT,
+        ga4_property_name TEXT,
+        measurement_id TEXT,
+        status TEXT DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+  } catch (_) {}
+
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS ga4_audit_logs (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        project_id TEXT,
+        property_id TEXT NOT NULL,
+        property_name TEXT,
+        health_score INTEGER NOT NULL,
+        critical_count INTEGER DEFAULT 0,
+        warning_count INTEGER DEFAULT 0,
+        passed_count INTEGER DEFAULT 0,
+        raw_data TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+  } catch (_) {}
+
+  const migrations = [
+    'ALTER TABLE ga4_monitors ADD COLUMN project_id TEXT',
+    'ALTER TABLE ga4_alerts ADD COLUMN project_id TEXT',
+    'ALTER TABLE audit_logs ADD COLUMN project_id TEXT',
+    'ALTER TABLE ga4_audit_logs ADD COLUMN project_id TEXT',
+    "ALTER TABLE projects ADD COLUMN website_type TEXT DEFAULT 'general'",
+    'ALTER TABLE projects ADD COLUMN gtm_container_name TEXT',
+    'ALTER TABLE projects ADD COLUMN measurement_id TEXT'
+  ];
+
+  for (const sql of migrations) {
+    try {
+      await db.prepare(sql).run();
+    } catch (_) {}
+  }
 }
 
 export function getClerkUserId(request: Request): string | null {

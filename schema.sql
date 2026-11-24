@@ -37,10 +37,33 @@ CREATE TABLE IF NOT EXISTS deployed_recipes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Projects Table (Organization -> Project isolation)
+CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    website_url TEXT,
+    website_type TEXT DEFAULT 'general',
+    gtm_account_id TEXT,
+    gtm_account_name TEXT,
+    gtm_container_id TEXT,
+    gtm_container_name TEXT,
+    gtm_container_public_id TEXT,
+    gtm_workspace_id TEXT,
+    gtm_workspace_name TEXT,
+    ga4_property_id TEXT,
+    ga4_property_name TEXT,
+    measurement_id TEXT,
+    status TEXT DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Audit Logs Table
 CREATE TABLE IF NOT EXISTS audit_logs (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT,
     gtm_id TEXT NOT NULL,
     health_score INTEGER NOT NULL,
     issue_count INTEGER NOT NULL,
@@ -52,6 +75,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 CREATE TABLE IF NOT EXISTS ga4_monitors (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT,
     property_id TEXT NOT NULL,
     property_name TEXT,
     metric TEXT NOT NULL,
@@ -77,9 +101,28 @@ CREATE TABLE IF NOT EXISTS ga4_alerts (
     id TEXT PRIMARY KEY,
     monitor_id TEXT NOT NULL REFERENCES ga4_monitors(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL,
+    project_id TEXT,
     property_name TEXT,
     metric TEXT NOT NULL,
     condition_type TEXT,
     percent_change REAL,
+    alert_type TEXT DEFAULT 'automated',
+    status TEXT DEFAULT 'anomaly',
+    recipients TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- GA4 Account & Property Audit Logs Table
+CREATE TABLE IF NOT EXISTS ga4_audit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    project_id TEXT,
+    property_id TEXT NOT NULL,
+    property_name TEXT,
+    health_score INTEGER NOT NULL,
+    critical_count INTEGER DEFAULT 0,
+    warning_count INTEGER DEFAULT 0,
+    passed_count INTEGER DEFAULT 0,
+    raw_data TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

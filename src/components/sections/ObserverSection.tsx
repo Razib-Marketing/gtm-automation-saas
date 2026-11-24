@@ -48,14 +48,14 @@ export const ObserverSection: React.FC = () => {
             <div className="observer-cap-icon" style={{ background: 'rgba(0, 240, 255, 0.1)', color: '#00F0FF', borderColor: 'rgba(0, 240, 255, 0.25)' }}>
               <Zap size={24} />
             </div>
-            <h3>24/7 Automated Edge Checks</h3>
+            <h3>Custom-Scheduled Edge Checks</h3>
             <p>
-              Runs scheduled background checks comparing baseline periods (Yesterday vs Last Week, Last 7 vs Prev 7, or Last 30 vs Prev 30) directly against Google Analytics Data API v1beta.
+              Set your exact preferred run time and timezone per account or monitor. Evaluates Daily, rolling/calendar Week-over-Week, Month-over-Month, and Year-over-Year comparisons via 15-minute Cloudflare cron sweeps.
             </p>
             <ul className="observer-cap-list">
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Zero latency Cloudflare Cron triggers</li>
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Instant detection of broken tags & drops</li>
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Direct property authentication via Google OAuth</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> Custom HH:MM time &amp; IANA timezone per monitor</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> 11 periods: DoD, WoW, MoM, 28d cycles &amp; YoY</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> Timezone-aware evaluation with zero duplicate alerts</li>
             </ul>
           </motion.div>
 
@@ -69,14 +69,14 @@ export const ObserverSection: React.FC = () => {
             <div className="observer-cap-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.25)' }}>
               <Filter size={24} />
             </div>
-            <h3>Compound Rules & Channel Filtering</h3>
+            <h3>20 Templates, Industry &amp; Device Filters</h3>
             <p>
-              Combine multiple metrics with <code>ALL</code> (AND) or <code>ANY</code> (OR) condition logic. Isolate specific channels like Organic Search, Paid Ads, or Social.
+              Combine 14 GA4 metrics with <code>ALL</code> (AND) or <code>ANY</code> (OR) logic across 6 trigger operators, website types (including Hospitality), channels, and mobile/desktop device categories.
             </p>
             <ul className="observer-cap-list">
-              <li><CheckCircle2 size={16} color="#00F0FF" /> 1-Click Pre-made templates (Traffic Drop, Form Failure)</li>
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Metric support: ActiveUsers, Sessions, KeyEvents</li>
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Granular threshold % for Drops, Spikes & Changes</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> 20 categorized templates incl. 6 Hospitality &amp; Hotels</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> Drops %, Spikes %, Outage (=0) &amp; Absolute Thresholds</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> Channel, Source/Medium &amp; Device filtering</li>
             </ul>
           </motion.div>
 
@@ -90,14 +90,14 @@ export const ObserverSection: React.FC = () => {
             <div className="observer-cap-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B', borderColor: 'rgba(245, 158, 11, 0.25)' }}>
               <Bell size={24} />
             </div>
-            <h3>Multi-Email Alerts & Dual History</h3>
+            <h3>22-Point GA4 Audit &amp; Multi-Email Alerts</h3>
             <p>
-              Notify your entire team simultaneously with mobile-responsive email reports. Keep a complete audit trail separated by Automated Alerts vs Manual Reports.
+              Audit any project&apos;s GA4 property across cross-domain setups, self-referrals, PII leaks, and 9 Google product links (GSC, Ads, BigQuery, Signals) with one-click A4 PDF export.
             </p>
             <ul className="observer-cap-list">
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Add multiple client & developer recipients</li>
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Instant on-demand "Send Report" button</li>
-              <li><CheckCircle2 size={16} color="#00F0FF" /> Dedicated Automated vs Manual report history tabs</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> Built-in 22-Point GA4 Property Audit + PDF report</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> Instant on-demand &ldquo;Test &amp; Send Report&rdquo; delivery</li>
+              <li><CheckCircle2 size={16} color="#00F0FF" /> Separated Automated Issue Alerts &amp; Manual History</li>
             </ul>
           </motion.div>
         </div>
@@ -246,12 +246,12 @@ export const ObserverSection: React.FC = () => {
           <div className="observer-cta-actions">
             {isSignedIn ? (
               <a 
-                href="https://app.gtmobserver.com/observer" 
+                href="https://app.gtmobserver.com/organization" 
                 className="btn-primary" 
                 style={{ padding: '0.85rem 2rem', fontSize: '1rem', display: 'inline-flex', alignItems: 'center', textDecoration: 'none' }}
                 onClick={() => pushDataLayer('cta_click', { cta_text: 'Open GA4 Observer', cta_location: 'observer_section' })}
               >
-                Open GA4 Observer <ArrowRight size={18} style={{ marginLeft: '6px' }} />
+                Open Organization &amp; Observer <ArrowRight size={18} style={{ marginLeft: '6px' }} />
               </a>
             ) : (
               <Link 

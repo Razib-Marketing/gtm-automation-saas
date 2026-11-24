@@ -60,8 +60,8 @@ export async function onRequestPost(context: any) {
         quantity: 1 
       }],
       mode: 'subscription',
-      success_url: `${new URL(request.url).origin}/dashboard?checkout=success`,
-      cancel_url: `${new URL(request.url).origin}/pricing?checkout=cancelled`,
+      success_url: `${new URL(request.url).origin}/onboarding?checkout=success`,
+      cancel_url: `${new URL(request.url).origin}/billing?checkout=cancelled`,
       metadata: { clerkUserId, tier }
     };
 

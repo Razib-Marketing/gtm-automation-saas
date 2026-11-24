@@ -10,6 +10,7 @@ import * as route_6 from '../functions/api/ga4/monitors.ts';
 import * as route_7 from '../functions/api/ga4/properties.ts';
 import * as route_8 from '../functions/api/ga4/report.ts';
 import * as route_test from '../functions/api/ga4/test.ts';
+import * as route_ga4_audit from '../functions/api/ga4/audit.ts';
 import * as route_9 from '../functions/api/gtm/accounts.ts';
 import * as route_10 from '../functions/api/gtm/audit-logs.ts';
 import * as route_11 from '../functions/api/gtm/audit.ts';
@@ -32,6 +33,7 @@ import * as route_27 from '../functions/api/user/me.ts';
 import * as route_28 from '../functions/api/user/track-deployment.ts';
 import * as route_polar_checkout from '../functions/api/polar/checkout.ts';
 import * as route_polar_webhook from '../functions/api/polar/webhook.ts';
+import * as route_projects from '../functions/api/projects.ts';
 
 const routes = {
   '/api/auth/google/callback': route_0,
@@ -43,6 +45,7 @@ const routes = {
   '/api/ga4/properties': route_7,
   '/api/ga4/report': route_8,
   '/api/ga4/test': route_test,
+  '/api/ga4/audit': route_ga4_audit,
   '/api/gtm/accounts': route_9,
   '/api/gtm/audit-logs': route_10,
   '/api/gtm/audit': route_11,
@@ -63,6 +66,7 @@ const routes = {
   '/api/stripe/webhook': route_26,
   '/api/polar/checkout': route_polar_checkout,
   '/api/polar/webhook': route_polar_webhook,
+  '/api/projects': route_projects,
   '/api/user/me': route_27,
   '/api/user/track-deployment': route_28,
 };
@@ -152,7 +156,7 @@ app.get('*', async (c) => {
   }
 
   // 4. If visiting an app route on the marketing domain, redirect to app.gtmobserver.com
-  const appRoutes = ['/dashboard', '/observer', '/projects', '/analytics', '/settings', '/support'];
+  const appRoutes = ['/organization', '/billing', '/onboarding', '/dashboard', '/observer', '/projects', '/analytics', '/settings', '/support'];
   const isAppRoute = appRoutes.some(r => url.pathname === r || url.pathname.startsWith(r + '/'));
 
   if (host === 'gtmobserver.com') {

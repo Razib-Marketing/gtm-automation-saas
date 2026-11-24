@@ -2,17 +2,29 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
+  overflow-x: clip;
 }
 
 .main-content {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .inner-app-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
+  overflow-x: clip;
+}
+
+@media (min-width: 1024px) {
+  .inner-app-layout {
+    flex-direction: row;
+  }
 }
 
 .inner-main-content {

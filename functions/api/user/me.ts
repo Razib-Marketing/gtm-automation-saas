@@ -1,6 +1,7 @@
 import {
   ensureUsersSchema,
   ensureMonitorsSchema,
+  ensureProjectsSchema,
   getClerkUserId,
   isValidTimeHHMM,
   isValidTimezone,
@@ -26,6 +27,7 @@ export async function onRequestGet(context: any) {
 
   try {
     await ensureUsersSchema(env.DB);
+    await ensureProjectsSchema(env.DB);
 
     let dbResult = await env.DB.prepare(
       'SELECT email, subscription_tier, account_deployment_count, schedule_time, schedule_timezone FROM users WHERE id = ?'
@@ -47,7 +49,10 @@ export async function onRequestGet(context: any) {
                env.DB.prepare('UPDATE users SET id = ? WHERE id = ?').bind(clerkUserId, existingUser.id),
                env.DB.prepare('UPDATE gtm_connections SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id),
                env.DB.prepare('UPDATE audit_logs SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id),
-               env.DB.prepare('UPDATE ga4_monitors SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id)
+               env.DB.prepare('UPDATE ga4_monitors SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id),
+               env.DB.prepare('UPDATE projects SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id),
+               env.DB.prepare('UPDATE ga4_alerts SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id),
+               env.DB.prepare('UPDATE ga4_audit_logs SET user_id = ? WHERE user_id = ?').bind(clerkUserId, existingUser.id)
              ]);
              await env.DB.prepare('PRAGMA foreign_keys = ON;').run();
            } catch (e) {
@@ -88,7 +93,16 @@ export async function onRequestGet(context: any) {
       auditCount = auditRow ? (auditRow.cnt || 0) : 0;
     } catch (_) {}
 
+    let projectCount = 0;
+    try {
+      const projRow: any = await env.DB.prepare('SELECT COUNT(*) as cnt FROM projects WHERE user_id = ?').bind(clerkUserId).first();
+      projectCount = projRow ? (projRow.cnt || 0) : 0;
+    } catch (_) {}
+
+    const activeTier = (dbResult.subscription_tier || 'free').toLowerCase();
     dbResult.audit_count = auditCount;
+    dbResult.project_count = projectCount;
+    dbResult.has_active_subscription = activeTier === 'pro' || activeTier === 'custom';
     dbResult.schedule_time = isValidTimeHHMM(dbResult.schedule_time) ? dbResult.schedule_time : '08:00';
     dbResult.schedule_timezone = sanitizeTimezone(dbResult.schedule_timezone);
 

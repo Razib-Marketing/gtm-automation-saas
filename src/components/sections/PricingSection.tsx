@@ -28,13 +28,13 @@ const tiers = [
     description: 'For freelancers and small agencies managing multiple client containers.',
     features: [
       'Unlimited Module Deployments',
-      'Up to 10 GTM Workspaces',
+      'Up to 10 Isolated Project Workspaces',
       'Up to 10 GA4 Observer Monitors',
-      'Multi-Email Anomaly Alert Dispatches',
-      'Compound Rules (AND / OR Logic)',
-      'Channel & Campaign Segmentation',
+      'Custom Schedules, Timezones & WoW/MoM/YoY',
+      '22-Point GA4 Property Audits + PDF Export',
+      '20 Templates (incl. Hospitality) & Device Filters',
       'Complete Dual History Audit Trail',
-      'All Premium Modules & Audits'
+      'Multi-Email Anomaly Alert Dispatches'
     ],
     buttonText: 'Upgrade to Pro',
     isPopular: true,
