@@ -12,7 +12,7 @@ import { HowItWorksSection } from '../components/sections/HowItWorksSection';
 import { ObserverSection } from '../components/sections/ObserverSection';
 import { CompetitorComparisonSection } from '../components/sections/CompetitorComparisonSection';
 import { ReviewsSection } from '../components/sections/ReviewsSection';
-import { PricingSection } from '../components/sections/PricingSection';
+// import { PricingSection } from '../components/sections/PricingSection';
 import { FAQSection } from '../components/sections/FAQSection';
 import { ContactSection } from '../components/sections/ContactSection';
 import { pushDataLayer } from '../utils/analytics';
@@ -162,8 +162,8 @@ export const Home = () => {
         {/* REVIEWS SECTION (Hidden temporarily) */}
         {/* <ReviewsSection /> */}
 
-        {/* PRICING SECTION */}
-        <PricingSection />
+        {/* PRICING SECTION (Hidden temporarily) */}
+        {/* <PricingSection /> */}
 
         {/* FREQUENTLY ASKED QUESTIONS SECTION */}
         <FAQSection />

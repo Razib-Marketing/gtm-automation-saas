@@ -104,10 +104,10 @@ const ROUTE_SEO: Record<string, { title: string; description: string }> = {
     title: 'GTMObserver — Automated GTM Deployment & 24/7 GA4 Anomaly Detection',
     description: 'Deploy validated Google Tag Manager tracking architectures in seconds and monitor GA4 telemetry 24/7 at the Cloudflare edge. Detect tracking crashes, conversion drops, and anomaly alerts before clients notice.'
   },
-  '/pricing': {
-    title: 'Pricing & Plans — GTMObserver Tag Governance & GA4 Telemetry',
-    description: 'Simple, transparent pricing for automated GTM container deployment and 24/7 GA4 anomaly monitoring. Free tier, Pro, and Enterprise options available.'
-  },
+  // '/pricing': {
+  //   title: 'Pricing & Plans — GTMObserver Tag Governance & GA4 Telemetry',
+  //   description: 'Simple, transparent pricing for automated GTM container deployment and 24/7 GA4 anomaly monitoring. Free tier, Pro, and Enterprise options available.'
+  // },
   '/docs': {
     title: 'Documentation & Integration Guides — GTMObserver',
     description: 'Complete guides for connecting Google Tag Manager, GA4 Measurement Protocol, Cloudflare edge listeners, and automated recipe deployments.'

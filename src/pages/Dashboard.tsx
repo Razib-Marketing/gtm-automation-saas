@@ -566,8 +566,8 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
     }
 
     if (userTier === 'free' && recentAudits.length >= 5) {
-      alert("You have reached your limit of 5 free GTM workspace audits. Please choose a plan on our pricing page to continue.");
-      window.location.href = '/pricing';
+      alert("You have reached your limit of 5 free GTM workspace audits. Please choose a plan in Billing to continue.");
+      window.location.href = '/billing';
       return;
     }
 
@@ -680,14 +680,14 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
 
     // Tier validations: Paid plan required to deploy
     if (userTier === 'free') {
-      alert("A paid subscription (Pro or Custom) is required to deploy tracking recipes to Google Tag Manager. Please choose a plan on our pricing page.");
-      window.location.href = '/pricing';
+      alert("A paid subscription (Pro or Custom) is required to deploy tracking recipes to Google Tag Manager. Please choose a plan in Billing.");
+      window.location.href = '/billing';
       return;
     }
 
     if (userTier === 'pro' && deploymentCount >= 10) {
-      alert("Pro tier limit reached: You can only deploy to 10 distinct GTM accounts. Please choose a plan on our pricing page to upgrade.");
-      window.location.href = '/pricing';
+      alert("Pro tier limit reached: You can only deploy to 10 distinct GTM accounts. Please choose a plan in Billing to upgrade.");
+      window.location.href = '/billing';
       return;
     }
 
@@ -996,7 +996,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
                 </p>
               </div>
             </div>
-            <Link to="/pricing" style={{
+            <Link to="/billing" style={{
               background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
               color: '#FFFFFF',
               padding: '0.65rem 1.4rem',
@@ -1334,7 +1334,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
                                         whileTap={!isLocked ? { scale: 0.99 } : {}}
                                         onClick={() => {
                                           if (isLocked) {
-                                             window.location.href = '/pricing';
+                                             window.location.href = '/billing';
                                              return;
                                           }
                                           if (isGroup) {

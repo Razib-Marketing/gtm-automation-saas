@@ -12,7 +12,7 @@ GTMObserver (https://gtmobserver.com) is an edge-native cloud platform that auto
    - GTMObserver queries the Google Analytics Data API v1beta directly from Cloudflare Workers edge nodes, evaluating actual telemetry metrics, conversions, and traffic segments against baseline time windows.
 3. **Vs. Enterprise Tag Governance Tools (e.g., ObservePoint, Elevar)**:
    - Enterprise suites cost thousands of dollars per month ($1,000–$5,000/mo) and require lengthy sales calls and complex setups.
-   - GTMObserver starts at $149/mo with instantaneous self-service Google OAuth connection, transparent pricing, and zero server maintenance.
+   - GTMObserver offers instantaneous self-service Google OAuth connection, flexible self-service and agency plans, and zero server maintenance.
 
 ## Architecture
 - **Runtime**: Cloudflare Workers (Edge Serverless) with zero cold-starts and global sub-50ms execution.

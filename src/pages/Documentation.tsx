@@ -89,9 +89,6 @@ export const Documentation: React.FC = () => {
                 <Link to="/api-reference" style={{ color: '#00F0FF', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}>
                   API Reference &rarr;
                 </Link>
-                <Link to="/pricing" style={{ color: '#CBD5E1', fontSize: '0.82rem', textDecoration: 'none' }}>
-                  View Plans &amp; Pricing &rarr;
-                </Link>
               </div>
             </div>
           </aside>
@@ -345,7 +342,6 @@ export const Documentation: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Plan Tier</th>
-                      <th>Monthly Price</th>
                       <th>Projects &amp; GTM Workspaces</th>
                       <th>GA4 Observer &amp; Audits</th>
                     </tr>
@@ -353,19 +349,16 @@ export const Documentation: React.FC = () => {
                   <tbody>
                     <tr>
                       <td><strong>Free</strong></td>
-                      <td>$0/mo</td>
                       <td>1 GTM Workspace (requires plan upgrade for Organization Projects)</td>
                       <td>5 GTM Workspace Audits; Demo / basic inspection</td>
                     </tr>
                     <tr>
                       <td><strong>Pro</strong></td>
-                      <td>$149/mo</td>
                       <td>Up to 10 isolated projects &amp; unlimited GTM recipe deployments</td>
                       <td>Up to 10 GA4 Observer monitors, unlimited GTM &amp; 22-point GA4 audits + PDF</td>
                     </tr>
                     <tr>
                       <td><strong>Custom</strong></td>
-                      <td>$149+/mo (10% off at 15+)</td>
                       <td>Scales 10–100+ projects &amp; GTM workspaces</td>
                       <td>10–100+ monitors, custom white-label sender domain, priority support SLAs</td>
                     </tr>

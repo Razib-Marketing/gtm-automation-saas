@@ -25,26 +25,8 @@ GTMObserver (https://gtmobserver.com) is an enterprise analytics automation SaaS
   - Dual history logging (Automated issue incidents vs Manual test reports).
   - Client-ready telemetry breakdowns with baseline comparisons and percentage changes.
 
-## Pricing Tiers
-- **Free Tier ($0/month)**:
-  - 1 Active GA4 Monitor.
-  - Daily background anomaly checks.
-  - Single alert recipient.
-  - Unlimited manual test reports.
-- **Pro Tier ($149/month)**:
-  - Up to 10 Active GA4 Monitors.
-  - Hourly background edge checks.
-  - Multi-recipient team & client email dispatch.
-  - Compound rules (AND / OR logic).
-  - Complete Dual History audit logs.
-- **Custom / Agency Tier ($149+/month)**:
-  - 10 to 100+ Custom property monitors.
-  - Volume container discounts (10% off for 15+ containers).
-  - Dedicated priority support and custom SLAs.
-
 ## Key Links & Resources
 - Main Website: https://gtmobserver.com
-- Pricing & Calculator: https://gtmobserver.com/pricing
 - Full Technical Documentation: https://gtmobserver.com/docs
 - API Reference: https://gtmobserver.com/api-reference
 - Community Modules: https://gtmobserver.com/community

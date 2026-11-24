@@ -479,8 +479,8 @@ export const Observer: React.FC<{ project?: Project }> = ({ project }) => {
     setErrorMsg('');
 
     if (userTier === 'free') {
-      alert("A paid subscription (Pro or Custom) is required to create autonomous GA4 anomaly monitors. Please choose a plan on our pricing page.");
-      window.location.href = '/pricing';
+      alert("A paid subscription (Pro or Custom) is required to create autonomous GA4 anomaly monitors. Please choose a plan in Billing.");
+      window.location.href = '/billing';
       return;
     }
 
@@ -840,7 +840,7 @@ export const Observer: React.FC<{ project?: Project }> = ({ project }) => {
                 </p>
               </div>
             </div>
-            <Link to="/pricing" style={{
+            <Link to="/billing" style={{
               background: 'linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%)',
               color: '#FFFFFF',
               padding: '0.65rem 1.4rem',

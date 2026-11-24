@@ -40,7 +40,6 @@ export const Navbar = () => {
   }, [isMobileMenuOpen]);
 
   const orgHref = isLocalhost() ? '/organization' : 'https://app.gtmobserver.com/organization';
-  const isPricing = location.pathname === '/pricing';
   const isDocs = location.pathname === '/docs';
 
   return (
@@ -72,7 +71,7 @@ export const Navbar = () => {
           <Link to="/#how-it-works">How It Works</Link>
           <Link to="/#observer">GA4 Observer</Link>
           <Link to="/#comparison">Why Us</Link>
-          <Link to="/pricing" aria-current={isPricing ? 'page' : undefined}>Pricing</Link>
+          {/* <Link to="/pricing" aria-current={isPricing ? 'page' : undefined}>Pricing</Link> */}
           <Link to="/docs" aria-current={isDocs ? 'page' : undefined}>Docs</Link>
           <Link to="/#faq">FAQ</Link>
           <Link to="/#contact">Contact</Link>
@@ -139,7 +138,7 @@ export const Navbar = () => {
                 <Link to="/#how-it-works" onClick={closeMobileMenu}>How It Works</Link>
                 <Link to="/#observer" onClick={closeMobileMenu}>GA4 Observer</Link>
                 <Link to="/#comparison" onClick={closeMobileMenu}>Why Us</Link>
-                <Link to="/pricing" aria-current={isPricing ? 'page' : undefined} onClick={closeMobileMenu}>Pricing</Link>
+                {/* <Link to="/pricing" aria-current={isPricing ? 'page' : undefined} onClick={closeMobileMenu}>Pricing</Link> */}
                 <Link to="/docs" aria-current={isDocs ? 'page' : undefined} onClick={closeMobileMenu}>Documentation</Link>
                 <Link to="/#faq" onClick={closeMobileMenu}>FAQ</Link>
                 <Link to="/#contact" onClick={closeMobileMenu}>Contact</Link>

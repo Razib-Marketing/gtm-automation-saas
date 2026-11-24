@@ -26,7 +26,7 @@ export const FAQSection: React.FC = () => {
     },
     {
       question: "How does GTMObserver compare to ObservePoint or basic uptime checkers?",
-      answer: "Basic uptime checkers only verify that your website returns HTTP 200, which offers zero protection if your checkout tracking, GTM trigger, or form listener crashes. Enterprise suites like ObservePoint cost thousands of dollars per month ($1,000–$5,000/mo) and require lengthy enterprise contracts. GTMObserver provides automated container recipes and edge-native GA4 telemetry monitoring starting at $149/mo with instantaneous self-service Google OAuth connection."
+      answer: "Basic uptime checkers only verify that your website returns HTTP 200, which offers zero protection if your checkout tracking, GTM trigger, or form listener crashes. Enterprise suites like ObservePoint cost thousands of dollars per month ($1,000–$5,000/mo) and require lengthy enterprise contracts. GTMObserver provides automated container recipes and edge-native GA4 telemetry monitoring with instantaneous self-service Google OAuth connection."
     },
     {
       question: "Is GTMObserver GDPR, CCPA, and privacy compliant?",

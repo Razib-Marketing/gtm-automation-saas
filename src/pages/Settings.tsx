@@ -211,7 +211,7 @@ export const Settings = () => {
                         {isPro && (
                           <button 
                             className="btn-home-link"
-                            onClick={() => navigate('/pricing')}
+                            onClick={() => navigate('/billing')}
                           >
                             <ArrowUpCircle size={14} /> Enhance Plan
                           </button>

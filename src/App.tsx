@@ -25,7 +25,7 @@ import { Billing } from './pages/Billing';
 import { ProjectOnboarding } from './pages/ProjectOnboarding';
 import { ProjectOverview } from './pages/ProjectOverview';
 import { ProjectSettings } from './pages/ProjectSettings';
-import Pricing from './pages/Pricing';
+// import Pricing from './pages/Pricing';
 import { AnimatePresence } from 'framer-motion';
 import { CookieConsent } from './components/ui/CookieConsent';
 import { Loader2, FolderX } from 'lucide-react';
@@ -267,7 +267,7 @@ const AppRoutes = () => {
         {/* Auth & Public Marketing Pages */}
         <Route path="/sign-in/*" element={<SignInPage />} />
         <Route path="/sign-up/*" element={<SignUpPage />} />
-        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/pricing" element={<Navigate to="/" replace />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/docs" element={<Documentation />} />

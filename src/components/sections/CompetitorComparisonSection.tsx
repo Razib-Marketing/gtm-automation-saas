@@ -47,8 +47,8 @@ export const CompetitorComparisonSection: React.FC = () => {
       detail: "Instant Google OAuth authorization with automatic account discovery"
     },
     {
-      feature: "Transparent Pricing",
-      gtmObserver: "Starts at $149/mo",
+      feature: "Flexible Plans",
+      gtmObserver: "Self-Service & Agency Plans",
       manualTagging: "Expensive Billable Hours",
       uptimeMonitors: "$15–$50/mo (No GA4 value)",
       enterpriseSuites: "$1,000–$5,000+/mo",
