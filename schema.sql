@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     stripe_subscription_id TEXT,
     stripe_price_id TEXT,
     account_deployment_count INTEGER DEFAULT 0,
+    schedule_time TEXT DEFAULT '08:00',
+    schedule_timezone TEXT DEFAULT 'UTC',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -59,6 +61,11 @@ CREATE TABLE IF NOT EXISTS ga4_monitors (
     condition_type TEXT,
     conditions TEXT,
     match_type TEXT DEFAULT 'ANY',
+    schedule_time TEXT DEFAULT '08:00',
+    schedule_timezone TEXT DEFAULT 'UTC',
+    schedule_frequency TEXT DEFAULT 'daily',
+    last_run_local_date TEXT,
+    website_type TEXT DEFAULT 'general',
     status TEXT DEFAULT 'active',
     last_checked_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

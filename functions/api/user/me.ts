@@ -1,3 +1,12 @@
+import {
+  ensureUsersSchema,
+  ensureMonitorsSchema,
+  getClerkUserId,
+  isValidTimeHHMM,
+  isValidTimezone,
+  sanitizeTimezone
+} from '../ga4/_shared';
+
 export async function onRequestGet(context: any) {
   const { request, env } = context;
 
@@ -16,8 +25,10 @@ export async function onRequestGet(context: any) {
   const isAdmin = ADMIN_EMAILS.includes(rawEmail);
 
   try {
+    await ensureUsersSchema(env.DB);
+
     let dbResult = await env.DB.prepare(
-      'SELECT subscription_tier, account_deployment_count FROM users WHERE id = ?'
+      'SELECT email, subscription_tier, account_deployment_count, schedule_time, schedule_timezone FROM users WHERE id = ?'
     ).bind(clerkUserId).first();
 
     const email = rawEmail || 'unknown@example.com';
@@ -25,7 +36,7 @@ export async function onRequestGet(context: any) {
     if (!dbResult) {
        // Check if user exists by email
        const existingUser: any = await env.DB.prepare(
-         'SELECT id, email, subscription_tier, account_deployment_count FROM users WHERE LOWER(email) = LOWER(?)'
+         'SELECT id, email, subscription_tier, account_deployment_count, schedule_time, schedule_timezone FROM users WHERE LOWER(email) = LOWER(?)'
        ).bind(email).first();
 
        if (existingUser) {
@@ -47,9 +58,15 @@ export async function onRequestGet(context: any) {
        } else {
          const initialTier = isAdmin ? 'custom' : 'free';
          await env.DB.prepare(
-           "INSERT INTO users (id, email, subscription_tier) VALUES (?, ?, ?)"
+           "INSERT INTO users (id, email, subscription_tier, schedule_time, schedule_timezone) VALUES (?, ?, ?, '08:00', 'UTC')"
          ).bind(clerkUserId, email, initialTier).run();
-         dbResult = { email, subscription_tier: initialTier, account_deployment_count: 0 };
+         dbResult = {
+           email,
+           subscription_tier: initialTier,
+           account_deployment_count: 0,
+           schedule_time: '08:00',
+           schedule_timezone: 'UTC'
+         };
        }
     }
 
@@ -72,9 +89,81 @@ export async function onRequestGet(context: any) {
     } catch (_) {}
 
     dbResult.audit_count = auditCount;
+    dbResult.schedule_time = isValidTimeHHMM(dbResult.schedule_time) ? dbResult.schedule_time : '08:00';
+    dbResult.schedule_timezone = sanitizeTimezone(dbResult.schedule_timezone);
 
     return new Response(JSON.stringify(dbResult), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  }
+}
+
+export async function onRequestPost(context: any) {
+  const { request, env } = context;
+  const userId = getClerkUserId(request);
+
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  try {
+    const body = await request.json().catch(() => ({}));
+    const rawTime = typeof body.scheduleTime === 'string' ? body.scheduleTime.trim() : '';
+    const rawTz = typeof body.scheduleTimezone === 'string' ? body.scheduleTimezone.trim() : 'UTC';
+    const applyToExistingMonitors = Boolean(body.applyToExistingMonitors);
+
+    if (!isValidTimeHHMM(rawTime)) {
+      return new Response(JSON.stringify({ error: 'Invalid scheduleTime. Expected HH:MM in 24-hour format (e.g. 09:30).' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (rawTz && !isValidTimezone(rawTz)) {
+      return new Response(JSON.stringify({ error: `Invalid IANA timezone: ${rawTz}` }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const safeTz = sanitizeTimezone(rawTz);
+
+    await ensureUsersSchema(env.DB);
+    await ensureMonitorsSchema(env.DB);
+
+    const existing = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(userId).first();
+    if (!existing && typeof body.email === 'string' && body.email.trim()) {
+      await env.DB.prepare(
+        "INSERT INTO users (id, email, subscription_tier, schedule_time, schedule_timezone) VALUES (?, ?, 'free', ?, ?)"
+      ).bind(userId, body.email.trim(), rawTime, safeTz).run();
+    } else {
+      await env.DB.prepare(
+        'UPDATE users SET schedule_time = ?, schedule_timezone = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?'
+      ).bind(rawTime, safeTz, userId).run();
+    }
+
+    if (applyToExistingMonitors) {
+      await env.DB.prepare(
+        'UPDATE ga4_monitors SET schedule_time = ?, schedule_timezone = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?'
+      ).bind(rawTime, safeTz, userId).run();
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      schedule_time: rawTime,
+      schedule_timezone: safeTz,
+      updatedMonitors: applyToExistingMonitors
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

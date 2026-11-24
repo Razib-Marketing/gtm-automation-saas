@@ -1,14 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { 
-  ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell, 
-  Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info, Zap 
+import {
+  ShieldAlert, Plus, Activity, Mail, Trash2, Home, LogOut, Pencil, Bell,
+  Send, X, Sparkles, Layers, Check, CheckCircle2, AlertTriangle, Info, Zap, Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { pushDataLayer } from '../utils/analytics';
+import {
+  INCIDENT_TEMPLATES,
+  TEMPLATE_CATEGORIES,
+  COMPARISON_PERIODS,
+  GA4_METRICS,
+  getTimezoneOptions,
+  getBrowserTimezone,
+  formatPeriodLabel,
+  getThresholdUnitSuffix,
+  formatConditionRuleBadge
+} from '../data/observerTemplates';
+import type { IncidentTemplate, ConditionOperator, DeviceCategory } from '../data/observerTemplates';
 import './Dashboard.css';
 
 interface ConditionItem {
@@ -16,26 +28,10 @@ interface ConditionItem {
   metric: string;
   source?: string;
   medium?: string;
+  device?: DeviceCategory;
   customSource?: string;
-  conditionType: 'drops_below' | 'spikes_above' | 'changes_by';
+  conditionType: ConditionOperator;
   thresholdPercentage: number;
-}
-
-interface IncidentTemplate {
-  id: string;
-  name: string;
-  icon: string;
-  category: string;
-  description: string;
-  matchType: 'ALL' | 'ANY';
-  period: string;
-  conditions: Array<{
-    metric: string;
-    source: string;
-    medium: string;
-    conditionType: 'drops_below' | 'spikes_above' | 'changes_by';
-    thresholdPercentage: number;
-  }>;
 }
 
 interface TestReportResult {
@@ -43,17 +39,31 @@ interface TestReportResult {
   status: 'success' | 'anomaly' | 'error';
   propertyName?: string;
   comparisonPeriod?: string;
+  dateRangeSummary?: {
+    label: string;
+    current: { startDate: string; endDate: string };
+    previous: { startDate: string; endDate: string };
+  };
+  schedule?: {
+    time: string;
+    timezone: string;
+    frequency: string;
+  };
   matchType?: 'ALL' | 'ANY';
   conditions?: Array<{
     metric: string;
     source?: string;
     medium?: string;
+    device?: string;
     conditionType: string;
     thresholdPercentage: number;
     pastVal: number;
     currentVal: number;
+    formattedPast?: string;
+    formattedCurrent?: string;
     percentChange: number;
     isTriggered: boolean;
+    operatorLabel?: string;
   }>;
   emailStatus?: string;
   emailError?: string | null;
@@ -64,152 +74,6 @@ interface TestReportResult {
   verifiedDomainName?: string | null;
   errorMessage?: string;
 }
-
-const INCIDENT_TEMPLATES: IncidentTemplate[] = [
-  {
-    id: 'ecommerce_crash',
-    name: 'E-Commerce Revenue & Sales Crash',
-    icon: '🛒',
-    category: 'E-Commerce & Revenue',
-    description: 'Instant alert if transactions, key events, or revenue crash while visitors continue (broken checkout/payment gateway).',
-    matchType: 'ANY',
-    period: 'yesterday_vs_last_week',
-    conditions: [
-      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 },
-      { metric: 'totalRevenue', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 35 },
-      { metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 }
-    ]
-  },
-  {
-    id: 'bot_surge',
-    name: 'Bot Traffic & Scraper Surge',
-    icon: '🤖',
-    category: 'Traffic Integrity',
-    description: 'Surge in automated traffic coupled with plunging engagement rate (headless browser scrapers or fake referral click farms).',
-    matchType: 'ALL',
-    period: 'yesterday_vs_last_week',
-    conditions: [
-      { metric: 'sessions', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 50 },
-      { metric: 'engagementRate', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 }
-    ]
-  },
-  {
-    id: 'outage_zero',
-    name: 'Catastrophic Outage / Zero Tracking',
-    icon: '🚨',
-    category: 'Critical Emergency',
-    description: 'Critical emergency alert if sessions or active users plunge drastically (site down, DNS error, or removed GTM script).',
-    matchType: 'ANY',
-    period: 'daily',
-    conditions: [
-      { metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 40 },
-      { metric: 'activeUsers', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 40 }
-    ]
-  },
-  {
-    id: 'seo_organic_drop',
-    name: 'Organic Search (SEO) Traffic Drop',
-    icon: '📉',
-    category: 'SEO & Search',
-    description: 'Alert if Google Organic Search visitors drop (detects Google algorithm penalties, deindexing, or broken canonicals).',
-    matchType: 'ANY',
-    period: 'last_7_vs_previous_7',
-    conditions: [
-      { metric: 'sessions', source: 'Organic Search', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 },
-      { metric: 'keyEvents', source: 'Organic Search', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 }
-    ]
-  },
-  {
-    id: 'paid_cpc_slump',
-    name: 'Paid Search (CPC) Campaign Slump',
-    icon: '💸',
-    category: 'Paid Acquisition (PPC)',
-    description: 'Drop in Paid Search or Paid Social traffic/conversions while Google Ads/Meta budget is actively spending.',
-    matchType: 'ANY',
-    period: 'last_7_vs_previous_7',
-    conditions: [
-      { metric: 'sessions', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below', thresholdPercentage: 25 },
-      { metric: 'keyEvents', source: 'Paid Search', medium: 'cpc', conditionType: 'drops_below', thresholdPercentage: 25 }
-    ]
-  },
-  {
-    id: 'form_failure',
-    name: 'Lead Gen & Booking Form Glitch',
-    icon: '🎯',
-    category: 'Lead Generation',
-    description: 'Traffic stays steady, but Key Events (lead form submits/bookings) freeze or decline sharply (broken web form or API).',
-    matchType: 'ANY',
-    period: 'yesterday_vs_last_week',
-    conditions: [
-      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 35 }
-    ]
-  },
-  {
-    id: 'contact_form_crash',
-    name: 'Contact & RFP Form Submission Crash',
-    icon: '📩',
-    category: 'Lead Generation',
-    description: 'Instant alert when contact inquiries and RFP lead form submissions drop by over 30% while sessions continue (broken backend or API timeout).',
-    matchType: 'ANY',
-    period: 'yesterday_vs_last_week',
-    conditions: [
-      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 },
-      { metric: 'sessions', source: 'all', medium: '', conditionType: 'changes_by', thresholdPercentage: 15 }
-    ]
-  },
-  {
-    id: 'newsletter_signup_slump',
-    name: 'Newsletter & Audience Signup Slump',
-    icon: '📬',
-    category: 'Audience Acquisition',
-    description: 'Alert if email newsletter subscriber growth or audience captures decline by more than 25% compared to prior 7 days.',
-    matchType: 'ANY',
-    period: 'last_7_vs_previous_7',
-    conditions: [
-      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 25 },
-      { metric: 'activeUsers', source: 'all', medium: '', conditionType: 'changes_by', thresholdPercentage: 20 }
-    ]
-  },
-  {
-    id: 'form_abandonment_spike',
-    name: 'Form Abandonment & Validation Errors',
-    icon: '⚠️',
-    category: 'Lead Generation',
-    description: 'Engaged users remain stable but conversions drop sharply (detects broken validation scripts, form CAPTCHA lockouts, or failed submit buttons).',
-    matchType: 'ALL',
-    period: 'yesterday_vs_last_week',
-    conditions: [
-      { metric: 'engagementRate', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 10 },
-      { metric: 'keyEvents', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 35 }
-    ]
-  },
-  {
-    id: 'ux_bounce_spike',
-    name: 'High Bounce Rate & UX Glitch',
-    icon: '📱',
-    category: 'User Experience',
-    description: 'Abnormal surge in bounce rate and plunge in engagement (500 server errors, slow mobile rendering, broken layout).',
-    matchType: 'ANY',
-    period: 'yesterday_vs_last_week',
-    conditions: [
-      { metric: 'bounceRate', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 35 },
-      { metric: 'engagementRate', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 30 }
-    ]
-  },
-  {
-    id: 'viral_surge',
-    name: 'Viral Traffic Spike / Media Surge',
-    icon: '📈',
-    category: 'Growth Opportunity',
-    description: 'Massive unexpected increase in sessions and new users (influencer feature, viral social mention, PR spotlight).',
-    matchType: 'ANY',
-    period: 'daily',
-    conditions: [
-      { metric: 'sessions', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 75 },
-      { metric: 'newUsers', source: 'all', medium: '', conditionType: 'spikes_above', thresholdPercentage: 75 }
-    ]
-  }
-];
 
 const KNOWN_SOURCES = [
   'all',
@@ -243,17 +107,28 @@ export const Observer = () => {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   const [selectedProperty, setSelectedProperty] = useState('');
   const [conditions, setConditions] = useState<ConditionItem[]>([
-    { id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 20 }
+    { id: '1', metric: 'sessions', source: 'all', medium: '', device: 'all', conditionType: 'drops_below', thresholdPercentage: 20 }
   ]);
   const [matchType, setMatchType] = useState<'ANY' | 'ALL'>('ANY');
   const [actionType, setActionType] = useState('email');
   const [period, setPeriod] = useState('yesterday_vs_last_week');
+  const [scheduleTime, setScheduleTime] = useState('08:00');
+  const [scheduleTimezone, setScheduleTimezone] = useState(() => getBrowserTimezone());
+  const [scheduleFrequency, setScheduleFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [accountScheduleTime, setAccountScheduleTime] = useState('08:00');
+  const [accountScheduleTimezone, setAccountScheduleTimezone] = useState('UTC');
+  const [applyToExistingMonitors, setApplyToExistingMonitors] = useState(false);
+  const [savingAccountSchedule, setSavingAccountSchedule] = useState(false);
+  const [accountScheduleSaved, setAccountScheduleSaved] = useState(false);
+  const [websiteType, setWebsiteType] = useState('general');
+
   const [alertEmails, setAlertEmails] = useState<string[]>([]);
   const [emailInput, setEmailInput] = useState('');
   const [setupMode, setSetupMode] = useState<'template' | 'manual'>('manual');
+  const [activeTemplateCategory, setActiveTemplateCategory] = useState<string>('All');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
@@ -281,6 +156,14 @@ export const Observer = () => {
         .then(data => {
           if (data && data.subscription_tier) {
             setUserTier(data.subscription_tier);
+          }
+          if (data?.schedule_time) {
+            setAccountScheduleTime(data.schedule_time);
+            setScheduleTime(data.schedule_time);
+          }
+          if (data?.schedule_timezone) {
+            setAccountScheduleTimezone(data.schedule_timezone);
+            setScheduleTimezone(data.schedule_timezone);
           }
         })
         .catch(() => {});
@@ -314,6 +197,10 @@ export const Observer = () => {
         const data = await res.json();
         setMonitors(data.monitors || []);
         if (data.alerts) setAlerts(data.alerts);
+        if (data.accountSchedule) {
+          if (data.accountSchedule.time) setAccountScheduleTime(data.accountSchedule.time);
+          if (data.accountSchedule.timezone) setAccountScheduleTimezone(data.accountSchedule.timezone);
+        }
       }
     } finally {
       setLoading(false);
@@ -355,8 +242,47 @@ export const Observer = () => {
     }
   };
 
+  const saveAccountSchedule = async () => {
+    setSavingAccountSchedule(true);
+    setAccountScheduleSaved(false);
+    setErrorMsg('');
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/user/me', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          scheduleTime,
+          scheduleTimezone,
+          applyToExistingMonitors,
+          email: user?.primaryEmailAddress?.emailAddress || ''
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setAccountScheduleTime(data.schedule_time || scheduleTime);
+        setAccountScheduleTimezone(data.schedule_timezone || scheduleTimezone);
+        setAccountScheduleSaved(true);
+        if (applyToExistingMonitors) {
+          await fetchMonitors();
+        }
+        setTimeout(() => setAccountScheduleSaved(false), 3500);
+      } else {
+        setErrorMsg(data.error || 'Failed to save account default schedule');
+      }
+    } catch (e: any) {
+      setErrorMsg(e.message || 'Failed to save account schedule');
+    } finally {
+      setSavingAccountSchedule(false);
+    }
+  };
+
   const applyTemplate = (tmpl: IncidentTemplate) => {
     setSelectedTemplateId(tmpl.id);
+    setWebsiteType(tmpl.websiteType || 'general');
     setMatchType(tmpl.matchType);
     if (tmpl.period) setPeriod(tmpl.period);
     setConditions(tmpl.conditions.map((c, i) => ({
@@ -364,6 +290,7 @@ export const Observer = () => {
       metric: c.metric,
       source: c.source,
       medium: c.medium,
+      device: c.device || 'all',
       conditionType: c.conditionType,
       thresholdPercentage: c.thresholdPercentage
     })));
@@ -377,6 +304,7 @@ export const Observer = () => {
         metric: 'keyEvents',
         source: 'all',
         medium: '',
+        device: 'all',
         conditionType: 'drops_below',
         thresholdPercentage: 20
       }
@@ -389,7 +317,14 @@ export const Observer = () => {
   };
 
   const updateCondition = (id: string, field: keyof ConditionItem, value: any) => {
-    setConditions(conditions.map(c => c.id === id ? { ...c, [field]: value } : c));
+    setConditions(conditions.map(c => {
+      if (c.id !== id) return c;
+      const updated = { ...c, [field]: value };
+      if (field === 'conditionType' && value === 'equals_zero') {
+        updated.thresholdPercentage = 0;
+      }
+      return updated;
+    }));
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -418,7 +353,7 @@ export const Observer = () => {
     try {
       const res = await fetch('/api/ga4/monitors', {
         method: 'POST',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${await getToken()}`,
           'Content-Type': 'application/json'
         },
@@ -427,26 +362,34 @@ export const Observer = () => {
           propertyId: selectedProperty,
           propertyName: properties.find(p => p.name === selectedProperty)?.displayName,
           comparisonPeriod: period,
+          scheduleTime,
+          scheduleTimezone,
+          scheduleFrequency,
+          websiteType,
           alertEmail: finalEmails.join(', '),
           alertEmails: finalEmails,
           matchType,
           conditions: conditions.map(c => {
             const finalSource = c.source === 'custom' ? (c.customSource?.trim() || 'all') : (c.source || 'all');
             const finalMedium = c.medium?.trim() ? c.medium.trim() : 'all';
+            const finalDevice = c.device || 'all';
+            const parsedThresh = c.conditionType === 'equals_zero' ? 0 : parseFloat(String(c.thresholdPercentage || 0));
             return {
               metric: c.metric,
               source: finalSource,
               medium: finalMedium,
+              device: finalDevice,
               conditionType: c.conditionType,
-              thresholdPercentage: parseFloat(String(c.thresholdPercentage))
+              thresholdPercentage: Number.isFinite(parsedThresh) ? parsedThresh : 0
             };
           })
         })
       });
-      
+
       if (res.ok) {
         setEditingId(null);
         setSelectedTemplateId(null);
+        setWebsiteType('general');
         await fetchMonitors();
       } else {
         const data = await res.json();
@@ -465,7 +408,7 @@ export const Observer = () => {
     try {
       const res = await fetch('/api/ga4/test', {
         method: 'POST',
-        headers: { 
+        headers: {
           Authorization: `Bearer ${await getToken()}`,
           'Content-Type': 'application/json'
         },
@@ -481,8 +424,8 @@ export const Observer = () => {
 
         const recipientsList = (data.recipients && data.recipients.length > 0)
           ? data.recipients
-          : (monitorObj?.alert_email 
-              ? monitorObj.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.includes('@')) 
+          : (monitorObj?.alert_email
+              ? monitorObj.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.includes('@'))
               : []);
 
         setTestResult({
@@ -490,6 +433,8 @@ export const Observer = () => {
           status: data.isTriggered ? 'anomaly' : 'success',
           propertyName: data.propertyName || monitorObj?.property_name || 'GA4 Observer Monitor',
           comparisonPeriod: data.comparisonPeriod || monitorObj?.comparison_period || 'yesterday_vs_last_week',
+          dateRangeSummary: data.dateRangeSummary,
+          schedule: data.schedule,
           matchType: data.matchType || monitorObj?.match_type || 'ANY',
           conditions: data.conditions || [],
           emailStatus: data.emailStatus || 'Sent',
@@ -522,7 +467,13 @@ export const Observer = () => {
   const handleEdit = (m: any) => {
     setEditingId(m.id);
     setSelectedProperty(m.property_id);
-    setPeriod(m.comparison_period);
+    setPeriod(m.comparison_period || 'yesterday_vs_last_week');
+    setScheduleTime(m.scheduleTime || m.schedule_time || accountScheduleTime || '08:00');
+    setScheduleTimezone(m.scheduleTimezone || m.schedule_timezone || accountScheduleTimezone || getBrowserTimezone());
+    const freq = (m.scheduleFrequency || m.schedule_frequency || 'daily').toLowerCase();
+    setScheduleFrequency(['daily', 'weekly', 'monthly'].includes(freq) ? (freq as 'daily' | 'weekly' | 'monthly') : 'daily');
+    setWebsiteType(m.websiteType || m.website_type || 'general');
+
     const parsed = m.alert_email
       ? m.alert_email.split(/[,;\s]+/).map((e: string) => e.trim()).filter((e: string) => e.includes('@'))
       : [];
@@ -539,15 +490,26 @@ export const Observer = () => {
         const customSource = isKnownSource ? '' : (rawSource === 'all' ? '' : rawSource);
 
         const medium = (c.medium && c.medium !== 'all') ? c.medium : '';
+        const device: DeviceCategory = (['desktop', 'mobile', 'tablet'].includes((c.device || '').toLowerCase())
+          ? c.device.toLowerCase()
+          : 'all') as DeviceCategory;
+        const cType: ConditionOperator = (c.conditionType || c.condition_type || 'drops_below') as ConditionOperator;
+        const rawVal = Number(c.thresholdPercentage ?? c.threshold_percentage ?? 20);
+        const thresh = (cType === 'falls_under_value' || cType === 'exceeds_value')
+          ? rawVal
+          : cType === 'equals_zero'
+            ? 0
+            : Math.abs(rawVal);
 
         return {
           id: String(idx + 1),
           metric: c.metric,
           source,
           medium,
+          device,
           customSource,
-          conditionType: c.conditionType || c.condition_type || 'drops_below',
-          thresholdPercentage: Math.abs(c.thresholdPercentage ?? c.threshold_percentage ?? 20)
+          conditionType: cType,
+          thresholdPercentage: thresh
         };
       }));
     } else {
@@ -556,7 +518,8 @@ export const Observer = () => {
         metric: m.metric || 'sessions',
         source: 'all',
         medium: '',
-        conditionType: m.condition_type || 'drops_below',
+        device: 'all',
+        conditionType: (m.condition_type || 'drops_below') as ConditionOperator,
         thresholdPercentage: Math.abs(m.threshold_percentage || 20)
       }]);
     }
@@ -566,8 +529,12 @@ export const Observer = () => {
   const cancelEdit = () => {
     setEditingId(null);
     setSelectedProperty('');
-    setConditions([{ id: '1', metric: 'sessions', source: 'all', medium: '', conditionType: 'drops_below', thresholdPercentage: 20 }]);
+    setConditions([{ id: '1', metric: 'sessions', source: 'all', medium: '', device: 'all', conditionType: 'drops_below', thresholdPercentage: 20 }]);
     setMatchType('ANY');
+    setScheduleTime(accountScheduleTime || '08:00');
+    setScheduleTimezone(accountScheduleTimezone || getBrowserTimezone());
+    setScheduleFrequency('daily');
+    setWebsiteType('general');
     setAlertEmails(user?.primaryEmailAddress?.emailAddress ? [user.primaryEmailAddress.emailAddress] : []);
     setEmailInput('');
     setSelectedTemplateId(null);
@@ -681,34 +648,118 @@ export const Observer = () => {
               {/* TRIGGER SECTION */}
               <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <h4 style={{ color: 'white', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Activity size={18} style={{ color: '#00F0FF' }}/> Trigger
+                  <Activity size={18} style={{ color: '#00F0FF' }}/> Trigger & Evaluation Schedule
                 </h4>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+
+                <div className="schedule-controls-grid">
                   <div>
-                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Evaluation Schedule</label>
-                    <select className="module-input" style={{ paddingLeft: '1rem', opacity: 0.7 }} disabled>
-                      <option>Daily at 8:00 AM (UTC)</option>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Evaluation Frequency</label>
+                    <select
+                      value={scheduleFrequency}
+                      onChange={e => setScheduleFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                      className="module-input"
+                      style={{ paddingLeft: '1rem' }}
+                    >
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly (Mondays)</option>
+                      <option value="monthly">Monthly (1st of Month)</option>
                     </select>
                   </div>
+
+                  <div>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Evaluation Time</label>
+                    <input
+                      type="time"
+                      value={scheduleTime}
+                      onChange={e => setScheduleTime(e.target.value)}
+                      className="module-input"
+                      style={{ paddingLeft: '1rem', paddingRight: '0.85rem', colorScheme: 'dark' }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Timezone</label>
+                    <select
+                      value={scheduleTimezone}
+                      onChange={e => setScheduleTimezone(e.target.value)}
+                      className="module-input"
+                      style={{ paddingLeft: '1rem' }}
+                    >
+                      {getTimezoneOptions(scheduleTimezone).map(tz => (
+                        <option key={tz.value} value={tz.value}>{tz.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Comparison Period</label>
-                    <select 
-                      value={period} 
+                    <select
+                      value={period}
                       onChange={e => setPeriod(e.target.value)}
                       className="module-input"
                       style={{ paddingLeft: '1rem' }}
                     >
-                      <option value="yesterday_vs_last_week">Yesterday vs Same Day Last Week (Recommended)</option>
-                      <option value="last_7_vs_previous_7">Last 7 Days vs Previous 7 Days</option>
-                      <option value="last_28_vs_previous_28">Last 28 Days vs Previous 28 Days</option>
-                      <option value="last_30_vs_previous_30">Last 30 Days vs Previous 30 Days</option>
-                      <option value="daily">Previous Day (Yesterday vs 2 Days Ago)</option>
-                      <option value="weekly">Previous Week (Same Day)</option>
-                      <option value="monthly">Previous Month (Last 30 Days)</option>
-                      <option value="yearly">Previous Year</option>
+                      {(['Daily & Short-Term', 'Week over Week (WoW)', 'Month over Month (MoM)', 'Year over Year (YoY)'] as const).map(grp => (
+                        <optgroup key={grp} label={grp}>
+                          {COMPARISON_PERIODS.filter(p => p.group === grp).map(p => (
+                            <option key={p.value} value={p.value}>{p.label}</option>
+                          ))}
+                        </optgroup>
+                      ))}
                     </select>
                   </div>
+                </div>
+
+                {/* Account-wide Default Schedule Save Bar */}
+                <div className="schedule-account-bar">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', fontSize: '0.8rem', color: '#CBD5E1' }}>
+                    <Clock size={15} style={{ color: '#00F0FF', flexShrink: 0 }} />
+                    <span>
+                      Account default: <strong style={{ color: '#FFFFFF' }}>{accountScheduleTime}</strong> ({accountScheduleTimezone})
+                    </span>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginLeft: '0.5rem', cursor: 'pointer', color: '#9CA3AF', fontSize: '0.78rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={applyToExistingMonitors}
+                        onChange={e => setApplyToExistingMonitors(e.target.checked)}
+                        style={{ accentColor: '#00F0FF' }}
+                      />
+                      Apply to all existing monitors
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={saveAccountSchedule}
+                    disabled={savingAccountSchedule}
+                    style={{
+                      padding: '0.45rem 0.95rem',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0, 240, 255, 0.35)',
+                      background: accountScheduleSaved ? 'rgba(16, 185, 129, 0.16)' : 'rgba(0, 240, 255, 0.12)',
+                      color: accountScheduleSaved ? '#34D399' : '#00F0FF',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: savingAccountSchedule ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {accountScheduleSaved ? (
+                      <>
+                        <Check size={14} /> Saved as Account Default
+                      </>
+                    ) : savingAccountSchedule ? (
+                      'Saving...'
+                    ) : (
+                      <>
+                        <Clock size={13} /> Save as my account default time
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -721,10 +772,10 @@ export const Observer = () => {
                 {/* GA4 Property Selection */}
                 <div style={{ marginBottom: '1.25rem' }}>
                   <label className="module-label" style={{ display: 'block', marginBottom: '0.5rem' }}>GA4 Property</label>
-                  <select 
-                    value={selectedProperty} 
+                  <select
+                    value={selectedProperty}
                     onChange={e => setSelectedProperty(e.target.value)}
-                    className="module-input" 
+                    className="module-input"
                     style={{ paddingLeft: '1rem' }}
                     required
                   >
@@ -761,12 +812,12 @@ export const Observer = () => {
                   </div>
                 </div>
 
-                {/* Premade Templates Library Grid */}
+                {/* Premade Templates Library Grid with Category Filter Tabs */}
                 {setupMode === 'template' && (
                   <div style={{ marginBottom: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <label className="module-label" style={{ margin: 0, color: '#D1D5DB' }}>
-                        ⚡ Select a Premade Incident Template (Click to Auto-Configure):
+                        ⚡ Select a Website Perspective Template (Click to Auto-Configure):
                       </label>
                       {selectedTemplateId && (
                         <span style={{ fontSize: '0.75rem', color: '#00F0FF', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -774,8 +825,41 @@ export const Observer = () => {
                         </span>
                       )}
                     </div>
+
+                    {/* Interactive Category Tabs */}
+                    <div className="template-category-tabs">
+                      {TEMPLATE_CATEGORIES.map(cat => {
+                        const count = cat.id === 'All'
+                          ? INCIDENT_TEMPLATES.length
+                          : INCIDENT_TEMPLATES.filter(t => t.category === cat.id).length;
+                        const isCatActive = activeTemplateCategory === cat.id;
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => setActiveTemplateCategory(cat.id)}
+                            className={`template-category-pill ${isCatActive ? 'active' : ''}`}
+                          >
+                            <span>{cat.icon}</span>
+                            <span>{cat.label}</span>
+                            <span style={{
+                              fontSize: '0.68rem',
+                              padding: '1px 6px',
+                              borderRadius: '9999px',
+                              background: isCatActive ? 'rgba(0, 240, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                              color: isCatActive ? '#FFFFFF' : '#9CA3AF'
+                            }}>
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
                     <div className="template-card-grid">
-                      {INCIDENT_TEMPLATES.map(tmpl => {
+                      {INCIDENT_TEMPLATES
+                        .filter(tmpl => activeTemplateCategory === 'All' || tmpl.category === activeTemplateCategory)
+                        .map(tmpl => {
                         const isSelected = selectedTemplateId === tmpl.id;
                         return (
                           <div
@@ -786,17 +870,30 @@ export const Observer = () => {
                             <div>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.4rem' }}>
                                 <span style={{ fontSize: '1.35rem' }}>{tmpl.icon}</span>
-                                <span style={{ 
-                                  fontSize: '0.68rem', 
-                                  fontWeight: 600, 
-                                  padding: '2px 8px', 
-                                  borderRadius: '9999px',
-                                  background: isSelected ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                                  color: isSelected ? '#00F0FF' : '#9CA3AF',
-                                  border: `1px solid ${isSelected ? '#00F0FF' : 'rgba(255, 255, 255, 0.08)'}`
-                                }}>
-                                  {tmpl.category}
-                                </span>
+                                <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                  <span style={{
+                                    fontSize: '0.66rem',
+                                    fontWeight: 600,
+                                    padding: '2px 7px',
+                                    borderRadius: '9999px',
+                                    background: 'rgba(139, 92, 246, 0.14)',
+                                    color: '#C4B5FD',
+                                    border: '1px solid rgba(139, 92, 246, 0.25)'
+                                  }}>
+                                    {formatPeriodLabel(tmpl.period)}
+                                  </span>
+                                  <span style={{
+                                    fontSize: '0.66rem',
+                                    fontWeight: 600,
+                                    padding: '2px 8px',
+                                    borderRadius: '9999px',
+                                    background: isSelected ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                    color: isSelected ? '#00F0FF' : '#9CA3AF',
+                                    border: `1px solid ${isSelected ? '#00F0FF' : 'rgba(255, 255, 255, 0.08)'}`
+                                  }}>
+                                    {tmpl.category}
+                                  </span>
+                                </div>
                               </div>
                               <h5 style={{ margin: '0 0 0.35rem 0', color: 'white', fontSize: '0.88rem', fontWeight: 600 }}>
                                 {tmpl.name}
@@ -810,14 +907,16 @@ export const Observer = () => {
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.65rem' }}>
                                 {tmpl.conditions.map((c, i) => (
                                   <span key={i} style={{ fontSize: '0.68rem', padding: '1px 6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#E5E7EB' }}>
-                                    {c.metric} {c.conditionType === 'spikes_above' ? '>' : '< -'}{c.thresholdPercentage}%
+                                    {c.metric}
+                                    {c.device && c.device !== 'all' ? ` [${c.device}]` : ''}{' '}
+                                    {formatConditionRuleBadge(c)}
                                   </span>
                                 ))}
                                 <span style={{ fontSize: '0.68rem', padding: '1px 5px', background: 'rgba(99, 102, 241, 0.15)', color: '#A5B4FC', borderRadius: '4px', fontWeight: 600 }}>
                                   Match {tmpl.matchType}
                                 </span>
                               </div>
-                              
+
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); applyTemplate(tmpl); }}
@@ -855,9 +954,9 @@ export const Observer = () => {
                         {selectedTemplateId ? '⚙ Customize Applied Template Rules' : '⚙ Active Anomaly Conditions'}
                       </h5>
                       <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#9CA3AF' }}>
-                        {selectedTemplateId 
-                          ? 'All template rules loaded! You can adjust any threshold percentage, change filters, or add rules below.' 
-                          : 'Define your custom metrics, condition thresholds, and acquisition segments.'}
+                        {selectedTemplateId
+                          ? 'All template rules loaded! You can adjust any threshold, change channel or device filters, or add rules below.'
+                          : 'Define your custom metrics, condition thresholds, acquisition channels, and device perspective triggers.'}
                       </p>
                     </div>
                   </div>
@@ -870,26 +969,26 @@ export const Observer = () => {
                       </label>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#F3F4F6', fontSize: '0.875rem' }}>
-                          <input 
-                            type="radio" 
-                            name="matchType" 
-                            value="ANY" 
-                            checked={matchType === 'ANY'} 
+                          <input
+                            type="radio"
+                            name="matchType"
+                            value="ANY"
+                            checked={matchType === 'ANY'}
                             onChange={() => setMatchType('ANY')}
                             style={{ accentColor: '#6366F1' }}
                           />
                           <span><strong>Match ANY condition (OR)</strong> — Alert if <em>any condition</em> triggers</span>
                         </label>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#F3F4F6', fontSize: '0.875rem' }}>
-                          <input 
-                            type="radio" 
-                            name="matchType" 
-                            value="ALL" 
-                            checked={matchType === 'ALL'} 
+                          <input
+                            type="radio"
+                            name="matchType"
+                            value="ALL"
+                            checked={matchType === 'ALL'}
                             onChange={() => setMatchType('ALL')}
                             style={{ accentColor: '#6366F1' }}
                           />
-                          <span><strong>Match ALL conditions (AND)</strong> — Alert <em>only if all conditions</em> happen together (e.g. Bot traffic spike)</span>
+                          <span><strong>Match ALL conditions (AND)</strong> — Alert <em>only if all conditions</em> happen together (e.g. Cross-domain leak or Bot spike)</span>
                         </label>
                       </div>
                     </div>
@@ -921,9 +1020,18 @@ export const Observer = () => {
                       </button>
                     </div>
 
-                    {conditions.map((c, index) => (
-                      <div 
-                        key={c.id} 
+                    {conditions.map((c, index) => {
+                      const unitSuffix = getThresholdUnitSuffix(c.conditionType, c.metric);
+                      const isZeroOp = c.conditionType === 'equals_zero';
+                      const thresholdLabel = isZeroOp
+                        ? 'Target Value'
+                        : unitSuffix === '%'
+                          ? 'Threshold (%)'
+                          : `Threshold (${unitSuffix})`;
+
+                      return (
+                      <div
+                        key={c.id}
                         className="condition-row-grid"
                       >
                         <div>
@@ -934,39 +1042,38 @@ export const Observer = () => {
                             value={c.metric}
                             onChange={e => updateCondition(c.id, 'metric', e.target.value)}
                             className="module-input"
-                            style={{ 
-                              padding: '0.65rem 0.85rem', 
-                              height: '44px', 
-                              fontSize: '0.875rem', 
-                              lineHeight: '1.4', 
-                              boxSizing: 'border-box' 
+                            style={{
+                              padding: '0.65rem 0.75rem',
+                              height: '44px',
+                              fontSize: '0.85rem',
+                              lineHeight: '1.4',
+                              boxSizing: 'border-box'
                             }}
                           >
-                            <option value="sessions">Sessions</option>
-                            <option value="activeUsers">Active Users</option>
-                            <option value="keyEvents">Key Events (Conversions)</option>
-                            <option value="totalRevenue">Total Revenue</option>
-                            <option value="newUsers">New Users</option>
-                            <option value="eventCount">Event Count</option>
-                            <option value="bounceRate">Bounce Rate</option>
-                            <option value="engagementRate">Engagement Rate</option>
+                            {(['Traffic & Engagement', 'Conversions & Revenue', 'Content & Events'] as const).map(grp => (
+                              <optgroup key={grp} label={grp}>
+                                {GA4_METRICS.filter(m => m.group === grp).map(m => (
+                                  <option key={m.value} value={m.value}>{m.label}</option>
+                                ))}
+                              </optgroup>
+                            ))}
                           </select>
                         </div>
 
                         <div>
                           <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>
-                            Source
+                            Source / Channel
                           </label>
                           <select
                             value={c.source || 'all'}
                             onChange={e => updateCondition(c.id, 'source', e.target.value)}
                             className="module-input"
-                            style={{ 
-                              padding: '0.65rem 0.85rem', 
-                              height: '44px', 
-                              fontSize: '0.875rem', 
-                              lineHeight: '1.4', 
-                              boxSizing: 'border-box' 
+                            style={{
+                              padding: '0.65rem 0.75rem',
+                              height: '44px',
+                              fontSize: '0.85rem',
+                              lineHeight: '1.4',
+                              boxSizing: 'border-box'
                             }}
                           >
                             <option value="all">All Traffic (All Sources)</option>
@@ -1001,7 +1108,7 @@ export const Observer = () => {
                               type="text"
                               value={c.customSource || ''}
                               onChange={e => updateCondition(c.id, 'customSource', e.target.value)}
-                              placeholder="e.g. reddit, newsletter"
+                              placeholder="e.g. reddit, tripadvisor"
                               className="module-input"
                               style={{
                                 marginTop: '0.4rem',
@@ -1017,72 +1124,124 @@ export const Observer = () => {
 
                         <div>
                           <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>
-                            Medium (Custom)
+                            Medium (Optional)
                           </label>
                           <input
                             type="text"
                             value={c.medium || ''}
                             onChange={e => updateCondition(c.id, 'medium', e.target.value)}
-                            placeholder="e.g. cpc, organic, email (optional)"
+                            placeholder="cpc, organic..."
                             className="module-input"
-                            style={{ 
-                              padding: '0.65rem 0.85rem', 
-                              height: '44px', 
-                              fontSize: '0.875rem', 
-                              lineHeight: '1.4', 
-                              boxSizing: 'border-box' 
+                            style={{
+                              padding: '0.65rem 0.75rem',
+                              height: '44px',
+                              fontSize: '0.85rem',
+                              lineHeight: '1.4',
+                              boxSizing: 'border-box'
                             }}
                           />
                         </div>
 
                         <div>
-                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>Operator</label>
+                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>
+                            Device
+                          </label>
                           <select
-                            value={c.conditionType}
-                            onChange={e => updateCondition(c.id, 'conditionType', e.target.value as any)}
+                            value={c.device || 'all'}
+                            onChange={e => updateCondition(c.id, 'device', e.target.value as DeviceCategory)}
                             className="module-input"
-                            style={{ 
-                              padding: '0.65rem 0.85rem', 
-                              height: '44px', 
-                              fontSize: '0.875rem', 
-                              lineHeight: '1.4', 
-                              boxSizing: 'border-box' 
+                            style={{
+                              padding: '0.65rem 0.75rem',
+                              height: '44px',
+                              fontSize: '0.85rem',
+                              lineHeight: '1.4',
+                              boxSizing: 'border-box'
                             }}
                           >
-                            <option value="drops_below">Drops below</option>
-                            <option value="spikes_above">Spikes above</option>
-                            <option value="changes_by">Changes by (±)</option>
+                            <option value="all">All Devices</option>
+                            <option value="mobile">Mobile</option>
+                            <option value="desktop">Desktop</option>
+                            <option value="tablet">Tablet</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>Threshold (%)</label>
-                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                            <input
-                              type="number"
-                              value={c.thresholdPercentage}
-                              onChange={e => updateCondition(c.id, 'thresholdPercentage', e.target.value)}
-                              className="module-input"
-                              style={{ 
-                                padding: '0.65rem 2rem 0.65rem 0.85rem', 
-                                height: '44px', 
-                                fontSize: '0.875rem', 
-                                lineHeight: '1.4', 
-                                boxSizing: 'border-box' 
+                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>Trigger Type</label>
+                          <select
+                            value={c.conditionType}
+                            onChange={e => updateCondition(c.id, 'conditionType', e.target.value as ConditionOperator)}
+                            className="module-input"
+                            style={{
+                              padding: '0.65rem 0.75rem',
+                              height: '44px',
+                              fontSize: '0.85rem',
+                              lineHeight: '1.4',
+                              boxSizing: 'border-box'
+                            }}
+                          >
+                            <optgroup label="Relative Change (%)">
+                              <option value="drops_below">Drops below (%)</option>
+                              <option value="spikes_above">Spikes above (%)</option>
+                              <option value="changes_by">Changes by (±%)</option>
+                            </optgroup>
+                            <optgroup label="Website Perspective Triggers">
+                              <option value="equals_zero">Drops to Zero (= 0 Outage)</option>
+                              <option value="falls_under_value">Falls below value (&lt;)</option>
+                              <option value="exceeds_value">Exceeds value (&gt;)</option>
+                            </optgroup>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="module-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem', display: 'block' }}>{thresholdLabel}</label>
+                          {isZeroOp ? (
+                            <div
+                              style={{
+                                height: '44px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'rgba(239, 68, 68, 0.08)',
+                                border: '1px solid rgba(239, 68, 68, 0.25)',
+                                borderRadius: '0.5rem',
+                                color: '#FCA5A5',
+                                fontSize: '0.8rem',
+                                fontWeight: 700,
+                                boxSizing: 'border-box'
                               }}
-                              placeholder="20"
-                              required
-                            />
-                            <span style={{ 
-                              position: 'absolute', 
-                              right: '0.75rem', 
-                              top: '50%', 
-                              transform: 'translateY(-50%)', 
-                              color: '#6B7280', 
-                              fontSize: '0.85rem', 
-                              pointerEvents: 'none' 
-                            }}>%</span>
-                          </div>
+                            >
+                              = 0
+                            </div>
+                          ) : (
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                              <input
+                                type="number"
+                                step="any"
+                                value={c.thresholdPercentage}
+                                onChange={e => updateCondition(c.id, 'thresholdPercentage', e.target.value)}
+                                className="module-input"
+                                style={{
+                                  padding: '0.65rem 2.3rem 0.65rem 0.75rem',
+                                  height: '44px',
+                                  fontSize: '0.85rem',
+                                  lineHeight: '1.4',
+                                  boxSizing: 'border-box'
+                                }}
+                                placeholder="20"
+                                required
+                              />
+                              <span style={{
+                                position: 'absolute',
+                                right: '0.65rem',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: '#6B7280',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                pointerEvents: 'none'
+                              }}>{unitSuffix}</span>
+                            </div>
+                          )}
                         </div>
 
                         <div>
@@ -1110,7 +1269,8 @@ export const Observer = () => {
                           </button>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1289,19 +1449,33 @@ export const Observer = () => {
                             }}>
                               Match {mType}
                             </span>
-                            <span style={{ color: '#6B7280', fontSize: '0.75rem' }}>({m.comparison_period?.replace(/_/g, ' ')})</span>
+                            <span style={{
+                              background: 'rgba(0, 240, 255, 0.1)',
+                              color: '#67E8F9',
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              border: '1px solid rgba(0, 240, 255, 0.25)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem'
+                            }}>
+                              <Clock size={11} />
+                              {(m.scheduleFrequency || m.schedule_frequency || 'daily').replace(/^\w/, (ch: string) => ch.toUpperCase())} • {m.scheduleTime || m.schedule_time || '08:00'} ({m.scheduleTimezone || m.schedule_timezone || 'UTC'})
+                            </span>
+                            <span style={{ color: '#9CA3AF', fontSize: '0.75rem' }}>({formatPeriodLabel(m.comparison_period)})</span>
                           </div>
 
                           {/* Render Compound Condition Badges */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.4rem', marginTop: '0.25rem' }}>
                             {condList.map((c: any, cIdx: number) => {
-                              const op = c.conditionType === 'spikes_above' ? 'Spikes >' : c.conditionType === 'changes_by' ? 'Changes ±' : 'Drops < -';
                               return (
                                 <React.Fragment key={cIdx}>
                                   {cIdx > 0 && (
-                                    <span style={{ 
-                                      color: mType === 'ALL' ? '#C084FC' : '#60A5FA', 
-                                      fontWeight: 700, 
+                                    <span style={{
+                                      color: mType === 'ALL' ? '#C084FC' : '#60A5FA',
+                                      fontWeight: 700,
                                       fontSize: '0.72rem',
                                       padding: '0 2px'
                                     }}>
@@ -1323,26 +1497,27 @@ export const Observer = () => {
                                     {(() => {
                                       const hasSource = c.source && c.source !== 'all' && c.source !== 'All';
                                       const hasMedium = c.medium && c.medium !== 'all' && c.medium !== 'All';
-                                      if (!hasSource && !hasMedium) return null;
-                                      const segText = (hasSource && hasMedium)
-                                        ? `${c.source} / ${c.medium}`
-                                        : hasSource
-                                        ? c.source
-                                        : `Medium: ${c.medium}`;
+                                      const hasDevice = c.device && c.device !== 'all' && c.device !== 'All';
+                                      if (!hasSource && !hasMedium && !hasDevice) return null;
+                                      const parts: string[] = [];
+                                      if (hasSource && hasMedium) parts.push(`${c.source} / ${c.medium}`);
+                                      else if (hasSource) parts.push(c.source);
+                                      else if (hasMedium) parts.push(`Medium: ${c.medium}`);
+                                      if (hasDevice) parts.push(c.device);
                                       return (
-                                        <span style={{ 
-                                          color: '#A5B4FC', 
+                                        <span style={{
+                                          color: '#A5B4FC',
                                           fontSize: '0.7rem',
                                           background: 'rgba(99, 102, 241, 0.18)',
                                           border: '1px solid rgba(99, 102, 241, 0.3)',
                                           padding: '1px 5px',
                                           borderRadius: '4px'
                                         }}>
-                                          {segText}
+                                          {parts.join(' • ')}
                                         </span>
                                       );
                                     })()}
-                                    <span>{op} {Math.abs(c.thresholdPercentage || c.threshold_percentage || 0)}%</span>
+                                    <span>{formatConditionRuleBadge(c)}</span>
                                   </span>
                                 </React.Fragment>
                               );
@@ -1554,7 +1729,13 @@ export const Observer = () => {
                           <div style={{ display: 'flex', gap: '0.75rem', color: '#9CA3AF', fontSize: '0.785rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             <span style={{ color: '#E5E7EB', fontWeight: 500 }}>{a.metric}</span>
                             <span style={{ color: '#F87171', fontWeight: 600 }}>
-                              {a.condition_type === 'spikes_above' ? 'Spiked by' : a.condition_type === 'changes_by' ? 'Changed by' : 'Dropped by'} {Math.abs(a.percent_change).toFixed(1)}%
+                              {a.condition_type === 'equals_zero'
+                                ? 'Dropped to zero'
+                                : a.condition_type === 'falls_under_value'
+                                  ? `Fell below threshold (${Math.abs(a.percent_change).toFixed(1)}% vs baseline)`
+                                  : a.condition_type === 'exceeds_value'
+                                    ? `Exceeded threshold (${Math.abs(a.percent_change).toFixed(1)}% vs baseline)`
+                                    : `${a.condition_type === 'spikes_above' ? 'Spiked by' : a.condition_type === 'changes_by' ? 'Changed by' : 'Dropped by'} ${Math.abs(a.percent_change).toFixed(1)}%`}
                             </span>
                             {a.recipients && (
                               <span style={{ color: '#6B7280', fontSize: '0.75rem' }}>
@@ -1809,6 +1990,34 @@ export const Observer = () => {
 
                     {/* Evaluated Conditions */}
                     <div className="test-report-conditions-section">
+                      {testResult.dateRangeSummary && (
+                        <div style={{
+                          marginBottom: '0.75rem',
+                          padding: '0.6rem 0.85rem',
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: '8px',
+                          fontSize: '0.75rem',
+                          color: '#CBD5E1',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.2rem'
+                        }}>
+                          <div>
+                            <strong style={{ color: '#00F0FF' }}>{testResult.dateRangeSummary.label}</strong>
+                          </div>
+                          <div style={{ color: '#9CA3AF' }}>
+                            Compared: <strong style={{ color: '#E5E7EB' }}>{testResult.dateRangeSummary.current.startDate} → {testResult.dateRangeSummary.current.endDate}</strong> vs{' '}
+                            <strong style={{ color: '#E5E7EB' }}>{testResult.dateRangeSummary.previous.startDate} → {testResult.dateRangeSummary.previous.endDate}</strong>
+                          </div>
+                          {testResult.schedule && (
+                            <div style={{ color: '#9CA3AF' }}>
+                              Schedule: <strong style={{ color: '#E5E7EB' }}>{testResult.schedule.frequency}</strong> at <strong style={{ color: '#E5E7EB' }}>{testResult.schedule.time}</strong> ({testResult.schedule.timezone})
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       <div className="test-report-conditions-header">
                         <span style={{ fontWeight: 600, fontSize: '0.825rem', color: '#E5E7EB' }}>
                           Condition Evaluation ({testResult.conditions?.length || 0})
@@ -1822,29 +2031,34 @@ export const Observer = () => {
                         {testResult.conditions && testResult.conditions.length > 0 ? (
                           testResult.conditions.map((c, i) => {
                             const isNeg = c.percentChange < 0;
-                            const op = c.conditionType === 'spikes_above' ? '>' : c.conditionType === 'changes_by' ? '±' : '< -';
                             const hasSource = c.source && c.source !== 'All' && c.source !== 'all';
                             const hasMedium = c.medium && c.medium !== 'All' && c.medium !== 'all';
+                            const hasDevice = c.device && c.device !== 'All' && c.device !== 'all';
+                            const segParts: string[] = [];
+                            if (hasSource && hasMedium) segParts.push(`${c.source} / ${c.medium}`);
+                            else if (hasSource) segParts.push(c.source as string);
+                            else if (hasMedium) segParts.push(`Medium: ${c.medium}`);
+                            if (hasDevice) segParts.push(c.device as string);
 
                             return (
                               <div key={i} className={`test-report-cond-item ${c.isTriggered ? 'triggered' : 'passed'}`}>
                                 <div className="cond-item-left">
                                   <div className="cond-item-title-row">
                                     <span className="cond-metric-name">{c.metric}</span>
-                                    {(hasSource || hasMedium) && (
+                                    {segParts.length > 0 && (
                                       <span className="cond-segment-tag">
-                                        {hasSource && hasMedium ? `${c.source} / ${c.medium}` : (hasSource ? c.source : c.medium)}
+                                        {segParts.join(' • ')}
                                       </span>
                                     )}
                                     <span className="cond-rule-tag">
-                                      Rule: {op} {Math.abs(c.thresholdPercentage)}%
+                                      Rule: {c.operatorLabel || formatConditionRuleBadge(c)}
                                     </span>
                                   </div>
 
                                   <div className="cond-telemetry-row">
-                                    <span className="cond-val-pill">Prev: <strong>{c.pastVal.toLocaleString()}</strong></span>
+                                    <span className="cond-val-pill">Prev: <strong>{c.formattedPast || c.pastVal.toLocaleString()}</strong></span>
                                     <span style={{ color: '#6B7280' }}>→</span>
-                                    <span className="cond-val-pill">Curr: <strong>{c.currentVal.toLocaleString()}</strong></span>
+                                    <span className="cond-val-pill">Curr: <strong>{c.formattedCurrent || c.currentVal.toLocaleString()}</strong></span>
                                   </div>
                                 </div>
 

@@ -796,10 +796,63 @@
 }
 
 /* Observer Responsive Enhancements */
+.schedule-controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.schedule-account-bar {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px solid rgba(0, 240, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.template-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.template-category-pill {
+  padding: 0.42rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #9CA3AF;
+}
+
+.template-category-pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #FFFFFF;
+}
+
+.template-category-pill.active {
+  background: rgba(0, 240, 255, 0.14);
+  color: #00F0FF;
+  border-color: #00F0FF;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
 .condition-row-grid {
   display: grid;
-  grid-template-columns: minmax(130px, 1.3fr) minmax(130px, 1.2fr) minmax(120px, 1.1fr) minmax(120px, 1.1fr) minmax(90px, 0.8fr) auto;
-  gap: 0.75rem;
+  grid-template-columns: minmax(135px, 1.3fr) minmax(120px, 1.1fr) minmax(105px, 1fr) minmax(100px, 0.9fr) minmax(135px, 1.2fr) minmax(95px, 0.85fr) auto;
+  gap: 0.7rem;
   align-items: flex-start;
   background: rgba(255, 255, 255, 0.015);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -807,14 +860,21 @@
   border-radius: 8px;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1120px) {
+  .condition-row-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+}
+
+@media (max-width: 720px) {
   .condition-row-grid {
     grid-template-columns: 1fr 1fr;
     gap: 0.85rem;
   }
 }
 
-@media (max-width: 580px) {
+@media (max-width: 520px) {
   .condition-row-grid {
     grid-template-columns: 1fr;
     gap: 0.85rem;

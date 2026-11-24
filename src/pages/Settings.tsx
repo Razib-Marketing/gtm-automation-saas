@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { UserProfile, useUser, useAuth, RedirectToSignIn } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle } from 'lucide-react';
+import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle, Clock, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
+import { getTimezoneOptions, getBrowserTimezone } from '../data/observerTemplates';
 import './Settings.css';
 
 export const Settings = () => {
@@ -11,11 +12,18 @@ export const Settings = () => {
   const { user } = useUser();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'subscription' | 'profile'>('subscription');
+  const [activeTab, setActiveTab] = useState<'subscription' | 'schedule' | 'profile'>('subscription');
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
   const [deploymentCount, setDeploymentCount] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const [scheduleTime, setScheduleTime] = useState('08:00');
+  const [scheduleTimezone, setScheduleTimezone] = useState(() => getBrowserTimezone());
+  const [applyToExistingMonitors, setApplyToExistingMonitors] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState('');
+  const [scheduleError, setScheduleError] = useState('');
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -28,6 +36,12 @@ export const Settings = () => {
           setUserTier(data.subscription_tier);
           setDeploymentCount(data.account_deployment_count || 0);
         }
+        if (data?.schedule_time) {
+          setScheduleTime(data.schedule_time);
+        }
+        if (data?.schedule_timezone) {
+          setScheduleTimezone(data.schedule_timezone);
+        }
       } catch (err) {
         console.error('Failed to fetch user settings data', err);
       } finally {
@@ -38,6 +52,43 @@ export const Settings = () => {
       fetchUserData();
     }
   }, [isSignedIn, user]);
+
+  const handleSaveSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSchedule(true);
+    setScheduleSuccess('');
+    setScheduleError('');
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/user/me', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          scheduleTime,
+          scheduleTimezone,
+          applyToExistingMonitors,
+          email: user?.primaryEmailAddress?.emailAddress || ''
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setScheduleSuccess(
+          data.updatedMonitors
+            ? `Saved account schedule (${data.schedule_time} ${data.schedule_timezone}) and updated all active monitors.`
+            : `Saved default account schedule (${data.schedule_time} ${data.schedule_timezone}).`
+        );
+      } else {
+        setScheduleError(data.error || 'Failed to save schedule settings');
+      }
+    } catch (err: any) {
+      setScheduleError(err.message || 'Network error while saving schedule');
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
 
   const handleCheckout = async (tier: 'pro') => {
     setCheckoutLoading(true);
@@ -97,6 +148,12 @@ export const Settings = () => {
                 onClick={() => setActiveTab('subscription')}
               >
                 <CreditCard size={18} /> Subscription & Limits
+              </button>
+              <button 
+                className={`sidebar-link ${activeTab === 'schedule' ? 'active' : ''}`}
+                onClick={() => setActiveTab('schedule')}
+              >
+                <Clock size={18} /> Observer Schedule
               </button>
               <button 
                 className={`sidebar-link ${activeTab === 'profile' ? 'active' : ''}`}
@@ -217,6 +274,136 @@ export const Settings = () => {
                       )}
                     </div>
                   </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeTab === 'schedule' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="settings-panel"
+              >
+                <div className="panel-header">
+                  <h2>GA4 Observer Default Schedule</h2>
+                  <p>Choose your preferred daily evaluation time and timezone for automated GA4 anomaly checks.</p>
+                </div>
+
+                {loadingData ? (
+                  <div className="loading-state">
+                    <div className="spinner"></div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSaveSchedule} className="panel-body">
+                    <div className="subscription-card">
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#D1D5DB', fontSize: '0.85rem', fontWeight: 600 }}>
+                            Preferred Evaluation Time
+                          </label>
+                          <input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={e => setScheduleTime(e.target.value)}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '0.7rem 0.9rem',
+                              borderRadius: '0.6rem',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              background: 'rgba(15, 23, 42, 0.85)',
+                              color: '#FFFFFF',
+                              fontSize: '0.95rem',
+                              colorScheme: 'dark',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', marginBottom: '0.5rem', color: '#D1D5DB', fontSize: '0.85rem', fontWeight: 600 }}>
+                            Account Timezone
+                          </label>
+                          <select
+                            value={scheduleTimezone}
+                            onChange={e => setScheduleTimezone(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '0.7rem 0.9rem',
+                              borderRadius: '0.6rem',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              background: 'rgba(15, 23, 42, 0.85)',
+                              color: '#FFFFFF',
+                              fontSize: '0.95rem',
+                              boxSizing: 'border-box'
+                            }}
+                          >
+                            {getTimezoneOptions(scheduleTimezone).map(tz => (
+                              <option key={tz.value} value={tz.value}>{tz.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', color: '#CBD5E1', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={applyToExistingMonitors}
+                          onChange={e => setApplyToExistingMonitors(e.target.checked)}
+                          style={{ accentColor: '#00F0FF', width: '16px', height: '16px' }}
+                        />
+                        <span>Update all existing active monitors to this schedule</span>
+                      </label>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                        <button
+                          type="submit"
+                          disabled={savingSchedule}
+                          className="btn-upgrade"
+                          style={{ cursor: savingSchedule ? 'wait' : 'pointer' }}
+                        >
+                          <Clock size={16} />
+                          {savingSchedule ? 'Saving Schedule...' : 'Save Schedule'}
+                        </button>
+                      </div>
+
+                      {scheduleSuccess && (
+                        <div style={{
+                          marginTop: '1rem',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '0.6rem',
+                          background: 'rgba(16, 185, 129, 0.1)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          color: '#34D399',
+                          fontSize: '0.875rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}>
+                          <Check size={16} />
+                          <span>{scheduleSuccess}</span>
+                        </div>
+                      )}
+
+                      {scheduleError && (
+                        <div style={{
+                          marginTop: '1rem',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '0.6rem',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          color: '#F87171',
+                          fontSize: '0.875rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}>
+                          <AlertCircle size={16} />
+                          <span>{scheduleError}</span>
+                        </div>
+                      )}
+                    </div>
+                  </form>
                 )}
               </motion.div>
             )}
