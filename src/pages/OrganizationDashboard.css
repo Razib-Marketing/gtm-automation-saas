@@ -1,0 +1,299 @@
+/* Organization Dashboard Styles */
+
+.org-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.25rem;
+}
+
+@media (max-width: 1100px) {
+  .org-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .org-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.org-kpi-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(26, 32, 44, 0.6) 0%, rgba(15, 20, 28, 0.8) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.35rem 1.45rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 140px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+.org-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle at top right, var(--accent-glow, rgba(0, 240, 255, 0.15)), transparent 70%);
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.org-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 30px -8px var(--accent-shadow, rgba(0, 240, 255, 0.18));
+}
+
+.org-kpi-card:hover::before {
+  opacity: 1;
+}
+
+.org-kpi-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.65rem;
+}
+
+.org-kpi-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.org-kpi-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-color, #00F0FF);
+  box-shadow: 0 0 6px var(--accent-color, #00F0FF);
+}
+
+.org-kpi-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--accent-bg, rgba(0, 240, 255, 0.1));
+  border: 1px solid var(--accent-border, rgba(0, 240, 255, 0.25));
+  box-shadow: 0 0 14px var(--accent-glow, rgba(0, 240, 255, 0.15));
+  transition: transform 0.2s ease;
+}
+
+.org-kpi-card:hover .org-kpi-icon-wrapper {
+  transform: scale(1.05);
+}
+
+.org-kpi-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.org-kpi-value {
+  font-size: 2.35rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.org-kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.22rem 0.55rem;
+  border-radius: 9999px;
+  background: var(--accent-bg, rgba(0, 240, 255, 0.1));
+  border: 1px solid var(--accent-border, rgba(0, 240, 255, 0.2));
+  color: var(--accent-color, #00F0FF);
+}
+
+.org-kpi-footer {
+  font-size: 0.75rem;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: auto;
+}
+
+/* Project Cards */
+.org-project-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(24, 30, 42, 0.7) 0%, rgba(14, 18, 26, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.45rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.15rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+.org-project-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 12px 30px -8px rgba(0, 240, 255, 0.12);
+}
+
+.org-project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.org-project-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  margin-bottom: 0.45rem;
+}
+
+.org-project-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
+}
+
+.org-project-url {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #9CA3AF;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.org-project-settings-btn {
+  padding: 0.5rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #9CA3AF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.org-project-settings-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+  transform: rotate(30deg);
+}
+
+.org-project-integrations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.82rem;
+}
+
+.org-integration-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.org-integration-label {
+  color: #9CA3AF;
+  font-size: 0.78rem;
+}
+
+.org-integration-value {
+  font-weight: 600;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 65%;
+}
+
+.org-project-scores {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.85rem;
+}
+
+.org-score-pill {
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.28rem 0.65rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.org-project-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(79, 70, 229, 0.12) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  color: #00F0FF;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.org-project-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25) 0%, rgba(79, 70, 229, 0.25) 100%);
+  border-color: rgba(0, 240, 255, 0.5);
+  color: #FFFFFF;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+  transform: translateY(-1px);
+}

@@ -24,6 +24,7 @@ import { useWorkspace } from '../context/WorkspaceContext';
 import { WEBSITE_TYPES, getWebsiteTypeMeta } from '../types/project';
 import { resetSandboxToNewUser, seedSandboxSampleProjects } from '../utils/localDemoStore';
 import './Dashboard.css';
+import './OrganizationDashboard.css';
 
 export const OrganizationDashboard: React.FC = () => {
   const { projects, userTier, isSandboxMode, refreshWorkspace } = useWorkspace();
@@ -57,6 +58,35 @@ export const OrganizationDashboard: React.FC = () => {
   const totalGa4Linked = projects.filter((p) => Boolean(p.ga4_property_id)).length;
   const totalGtmLinked = projects.filter((p) => Boolean(p.gtm_container_id || p.gtm_container_public_id)).length;
   const totalMonitors = projects.reduce((sum, p) => sum + (p.monitorCount || 0), 0);
+
+  const getScoreColor = (score: number | null | undefined) => {
+    if (typeof score !== 'number') {
+      return {
+        bg: 'rgba(255, 255, 255, 0.05)',
+        color: '#9CA3AF',
+        border: 'rgba(255, 255, 255, 0.1)'
+      };
+    }
+    if (score >= 90) {
+      return {
+        bg: 'rgba(16, 185, 129, 0.12)',
+        color: '#6EE7B7',
+        border: 'rgba(16, 185, 129, 0.25)'
+      };
+    }
+    if (score >= 70) {
+      return {
+        bg: 'rgba(245, 158, 11, 0.12)',
+        color: '#FCD34D',
+        border: 'rgba(245, 158, 11, 0.25)'
+      };
+    }
+    return {
+      bg: 'rgba(239, 68, 68, 0.12)',
+      color: '#FCA5A5',
+      border: 'rgba(239, 68, 68, 0.25)'
+    };
+  };
 
   return (
     <PageTransition locationKey="organization">
@@ -220,38 +250,71 @@ export const OrganizationDashboard: React.FC = () => {
         </motion.div>
 
         {/* Org KPI Strip */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 190px), 1fr))',
-            gap: '1rem',
-            marginBottom: '2rem'
-          }}
-        >
+        <div className="org-kpi-grid">
           {[
-            { label: 'Total Projects', value: projects.length, icon: <FolderKanban size={20} color="#00F0FF" />, accent: '#00F0FF' },
-            { label: 'Connected GA4 Properties', value: totalGa4Linked, icon: <BarChart3 size={20} color="#10B981" />, accent: '#10B981' },
-            { label: 'Linked GTM Containers', value: totalGtmLinked, icon: <Code2 size={20} color="#A855F7" />, accent: '#A855F7' },
-            { label: 'Active GA4 Monitors', value: totalMonitors, icon: <Activity size={20} color="#F59E0B" />, accent: '#F59E0B' }
+            {
+              label: 'Total Projects',
+              value: projects.length,
+              badge: projects.length === 1 ? '1 Active' : `${projects.length} Active`,
+              footer: 'Isolated client & brand silos',
+              icon: <FolderKanban size={19} color="#00F0FF" />,
+              accent: '#00F0FF'
+            },
+            {
+              label: 'GA4 Properties',
+              value: totalGa4Linked,
+              badge: totalGa4Linked > 0 ? 'Telemetry Linked' : 'Not Connected',
+              footer: '30-day analytics & traffic monitoring',
+              icon: <BarChart3 size={19} color="#10B981" />,
+              accent: '#10B981'
+            },
+            {
+              label: 'GTM Containers',
+              value: totalGtmLinked,
+              badge: totalGtmLinked > 0 ? 'Live Sync' : 'Not Linked',
+              footer: 'Automated audit & recipe engine',
+              icon: <Code2 size={19} color="#A855F7" />,
+              accent: '#A855F7'
+            },
+            {
+              label: 'Active Monitors',
+              value: totalMonitors,
+              badge: totalMonitors > 0 ? 'Running 24/7' : 'Ready to Setup',
+              footer: 'Scheduled cron anomaly detection',
+              icon: <Activity size={19} color="#F59E0B" />,
+              accent: '#F59E0B'
+            }
           ].map((stat) => (
             <div
               key={stat.label}
-              className="module-card"
-              style={{ padding: '1.15rem 1.25rem', cursor: 'default', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              className="org-kpi-card"
+              style={
+                {
+                  '--accent-color': stat.accent,
+                  '--accent-bg': `${stat.accent}15`,
+                  '--accent-border': `${stat.accent}33`,
+                  '--accent-glow': `${stat.accent}20`,
+                  '--accent-shadow': `${stat.accent}25`
+                } as React.CSSProperties
+              }
             >
-              <div>
-                <div style={{ fontSize: '0.78rem', color: '#9CA3AF', marginBottom: '0.25rem' }}>{stat.label}</div>
-                <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'white' }}>{stat.value}</div>
+              <div className="org-kpi-top">
+                <span className="org-kpi-label">
+                  <span className="org-kpi-dot" />
+                  {stat.label}
+                </span>
+                <div className="org-kpi-icon-wrapper">
+                  {stat.icon}
+                </div>
               </div>
-              <div
-                style={{
-                  padding: '0.65rem',
-                  borderRadius: '10px',
-                  background: `${stat.accent}15`,
-                  border: `1px solid ${stat.accent}33`
-                }}
-              >
-                {stat.icon}
+
+              <div className="org-kpi-main">
+                <div className="org-kpi-value">{stat.value}</div>
+                <span className="org-kpi-badge">{stat.badge}</span>
+              </div>
+
+              <div className="org-kpi-footer">
+                <span>{stat.footer}</span>
               </div>
             </div>
           ))}
@@ -351,40 +414,26 @@ export const OrganizationDashboard: React.FC = () => {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.04 }}
-                  className="module-card"
-                  style={{
-                    padding: '1.45rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '1.1rem',
-                    cursor: 'default'
-                  }}
+                  className="org-project-card"
                 >
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.65rem' }}>
+                    <div className="org-project-header">
                       <div>
                         <span
+                          className="org-project-badge"
                           style={{
-                            display: 'inline-block',
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.04em',
                             color: typeMeta.color,
                             background: `${typeMeta.color}18`,
-                            border: `1px solid ${typeMeta.color}40`,
-                            padding: '0.15rem 0.55rem',
-                            borderRadius: '9999px',
-                            marginBottom: '0.45rem'
+                            border: `1px solid ${typeMeta.color}40`
                           }}
                         >
                           {typeMeta.badge}
                         </span>
-                        <h3 style={{ margin: 0, fontSize: '1.18rem', fontWeight: 700, color: 'white' }}>
+                        <h3 className="org-project-title">
                           {project.name}
                         </h3>
                         {project.website_url && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#9CA3AF', fontSize: '0.78rem', marginTop: '0.25rem' }}>
+                          <div className="org-project-url">
                             <Globe size={13} />
                             <span>{project.website_url.replace(/^https?:\/\//, '')}</span>
                           </div>
@@ -394,53 +443,43 @@ export const OrganizationDashboard: React.FC = () => {
                       <Link
                         to={`/projects/${project.id}/settings`}
                         title="Project Settings"
-                        style={{
-                          padding: '0.45rem',
-                          borderRadius: '8px',
-                          background: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          color: '#9CA3AF',
-                          display: 'inline-flex'
-                        }}
+                        className="org-project-settings-btn"
                       >
                         <Sliders size={15} />
                       </Link>
                     </div>
 
                     {/* Connected Bindings */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.45rem',
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        background: 'rgba(0,0,0,0.28)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        fontSize: '0.8rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-                        <span style={{ color: '#9CA3AF' }}>GA4 Property:</span>
-                        <span style={{ color: project.ga4_property_id ? '#E5E7EB' : '#6B7280', fontWeight: 600, textAlign: 'right' }}>
+                    <div className="org-project-integrations">
+                      <div className="org-integration-row">
+                        <span className="org-integration-label">GA4 Property:</span>
+                        <span
+                          className="org-integration-value"
+                          style={{ color: project.ga4_property_id ? '#E5E7EB' : '#6B7280' }}
+                          title={project.ga4_property_name || project.ga4_property_id || 'Not Connected'}
+                        >
                           {project.ga4_property_name || project.ga4_property_id || 'Not Connected'}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
-                        <span style={{ color: '#9CA3AF' }}>GTM Container:</span>
-                        <span style={{ color: project.gtm_container_public_id ? '#00F0FF' : '#6B7280', fontWeight: 600, fontFamily: 'monospace' }}>
+                      <div className="org-integration-row">
+                        <span className="org-integration-label">GTM Container:</span>
+                        <span
+                          className="org-integration-value"
+                          style={{
+                            color: project.gtm_container_public_id ? '#00F0FF' : '#6B7280',
+                            fontFamily: 'monospace'
+                          }}
+                        >
                           {project.gtm_container_public_id || 'Not Linked'}
                         </span>
                       </div>
                     </div>
 
                     {/* Health & Activity Pills */}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.85rem' }}>
+                    <div className="org-project-scores">
                       <span
+                        className="org-score-pill"
                         style={{
-                          fontSize: '0.74rem',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '6px',
                           background: 'rgba(56, 189, 248, 0.1)',
                           color: '#7DD3FC',
                           border: '1px solid rgba(56, 189, 248, 0.25)'
@@ -448,46 +487,43 @@ export const OrganizationDashboard: React.FC = () => {
                       >
                         {project.monitorCount || 0} GA4 Monitors
                       </span>
-                      <span
-                        style={{
-                          fontSize: '0.74rem',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '6px',
-                          background: 'rgba(16, 185, 129, 0.1)',
-                          color: '#6EE7B7',
-                          border: '1px solid rgba(16, 185, 129, 0.25)'
-                        }}
-                      >
-                        GTM Score: {project.latestGtmScore !== null && project.latestGtmScore !== undefined ? `${project.latestGtmScore}%` : '—'}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '0.74rem',
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '6px',
-                          background: 'rgba(168, 85, 247, 0.1)',
-                          color: '#D8B4FE',
-                          border: '1px solid rgba(168, 85, 247, 0.25)'
-                        }}
-                      >
-                        GA4 Audit: {project.latestGa4Score !== null && project.latestGa4Score !== undefined ? `${project.latestGa4Score}%` : '—'}
-                      </span>
+                      {(() => {
+                        const gtmCol = getScoreColor(project.latestGtmScore);
+                        const ga4Col = getScoreColor(project.latestGa4Score);
+                        return (
+                          <>
+                            <span
+                              className="org-score-pill"
+                              style={{
+                                background: gtmCol.bg,
+                                color: gtmCol.color,
+                                border: `1px solid ${gtmCol.border}`
+                              }}
+                            >
+                              GTM Health: {typeof project.latestGtmScore === 'number' ? `${project.latestGtmScore}%` : '—'}
+                            </span>
+                            <span
+                              className="org-score-pill"
+                              style={{
+                                background: ga4Col.bg,
+                                color: ga4Col.color,
+                                border: `1px solid ${ga4Col.border}`
+                              }}
+                            >
+                              GA4 Audit: {typeof project.latestGa4Score === 'number' ? `${project.latestGa4Score}%` : '—'}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => navigate(`/projects/${project.id}/dashboard`)}
-                    className="btn-deploy-bulk"
-                    style={{
-                      marginTop: 0,
-                      width: '100%',
-                      justifyContent: 'center',
-                      padding: '0.7rem 1rem',
-                      fontSize: '0.88rem'
-                    }}
+                    className="org-project-btn"
                   >
-                    Open Project Workspace <ArrowRight size={16} style={{ marginLeft: '0.4rem' }} />
+                    Open Project Workspace <ArrowRight size={16} />
                   </button>
                 </motion.div>
               );
