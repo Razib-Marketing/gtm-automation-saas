@@ -3,7 +3,7 @@ import {
   ensureMonitorsSchema,
   ensureAlertsSchema,
   ensureProjectsSchema,
-  getClerkAuthContext,
+  verifyClerkAuth,
   resolveUserEmail,
   claimPendingAccess,
   resolveProjectAccess,
@@ -270,14 +270,7 @@ async function enrichProjectStats(
 export async function onRequest(context: any) {
   const { env, request } = context;
   const url = new URL(request.url);
-  const jwtAuth = getClerkAuthContext(request);
-  const queryUserId = url.searchParams.get('clerkUserId');
-
-  const auth: ClerkAuthContext | null =
-    jwtAuth ||
-    (request.method === 'GET' && queryUserId && queryUserId !== 'undefined' && queryUserId !== 'null'
-      ? { userId: queryUserId, orgId: null, orgRole: null, email: null }
-      : null);
+  const auth: ClerkAuthContext | null = await verifyClerkAuth(request, env);
 
   if (!auth || !auth.userId || auth.userId === 'undefined' || auth.userId === 'null') {
     return json({ error: 'Unauthorized' }, 401);

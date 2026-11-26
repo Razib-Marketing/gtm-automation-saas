@@ -28,13 +28,20 @@ export default function Pricing() {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(user.primaryEmailAddress?.emailAddress || '')}`)
-        .then(res => res.json())
-        .then(data => setCurrentTier(data.subscription_tier || 'free'))
+    if (user && isSignedIn) {
+      getToken()
+        .then(token => {
+          if (!token) return null;
+          return fetch(`/api/user/me?email=${encodeURIComponent(user.primaryEmailAddress?.emailAddress || '')}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).then(res => res.json());
+        })
+        .then(data => {
+          if (data) setCurrentTier(data.subscription_tier || 'free');
+        })
         .catch(() => {});
     }
-  }, [user]);
+  }, [user, isSignedIn, getToken]);
 
   const handleCheckout = async (tier: 'pro' | 'custom') => {
     const checkoutPrice = tier === 'custom' ? customPrice : 149;

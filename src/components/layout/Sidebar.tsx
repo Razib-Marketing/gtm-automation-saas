@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, Link, useLocation } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { UserButton, useUser } from '@clerk/clerk-react';
 import {
   LayoutDashboard,
@@ -17,7 +17,11 @@ import {
   Menu,
   X,
   ShieldCheck,
-  Trash2
+  Trash2,
+  Building2,
+  ChevronDown,
+  Users,
+  Plus
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { ClerkOrgSwitcherWidget } from '../ui/ClerkOrgBoundary';
@@ -27,16 +31,21 @@ import './Sidebar.css';
 export const Sidebar: React.FC = () => {
   const { user } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     userTier,
     hasActiveSubscription,
     hasSharedAccess,
+    organizations,
+    projects,
     trashedProjects,
     isSandboxMode,
-    getProjectById
+    getProjectById,
+    getOrganizationById
   } = useWorkspace();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [orgMenuOpen, setOrgMenuOpen] = useState(true);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false
   );
@@ -49,9 +58,27 @@ export const Sidebar: React.FC = () => {
   const activeProjectId = projectMatch ? decodeURIComponent(projectMatch[1]) : null;
   const activeProject = activeProjectId ? getProjectById(activeProjectId) : undefined;
   const isProjectMode = Boolean(activeProjectId);
+
+  const orgMatch = !isProjectMode ? location.pathname.match(/^\/organizations\/([^/]+)/) : null;
+  const activeScopedOrgId = orgMatch ? decodeURIComponent(orgMatch[1]) : null;
+  const activeScopedOrg = activeScopedOrgId ? getOrganizationById(activeScopedOrgId) : undefined;
+  const isOrgScopedMode = Boolean(activeScopedOrgId);
+
   const typeMeta = activeProject ? getWebsiteTypeMeta(activeProject.website_type) : null;
 
-  // Sync viewport size cleanly via matchMedia
+  const personalCount = projects.filter((p) => !p.organization_id && (p.accessSource || 'owner') === 'owner').length;
+  const sharedCount = projects.filter((p) => p.accessSource && p.accessSource !== 'owner').length;
+  const scopedOrgTrashedCount = activeScopedOrgId
+    ? trashedProjects.filter((p) => p.organization_id === activeScopedOrgId).length
+    : 0;
+  const scopedOrgActiveCount = activeScopedOrgId
+    ? projects.filter((p) => p.organization_id === activeScopedOrgId).length
+    : 0;
+
+  const currentSearch = new URLSearchParams(location.search);
+  const currentOrgScopeParam = currentSearch.get('scope');
+  const currentOrgTabParam = currentSearch.get('tab');
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mql = window.matchMedia('(max-width: 1023px)');
@@ -66,12 +93,10 @@ export const Sidebar: React.FC = () => {
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
-  // Auto-close drawer on navigation change
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname, location.search]);
 
-  // Manage modal dialog modality, Escape key, and focus restoration ONLY when acting as mobile drawer
   useEffect(() => {
     const mainEl = document.getElementById('main-content') as (HTMLElement & { inert?: boolean }) | null;
     if (drawerOpen && isMobileViewport) {
@@ -102,7 +127,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Sticky Top Header shown below 1024px (Phones & Tablets) */}
+      {/* Sticky Top Header shown below 1024px */}
       <header className="mobile-app-topbar">
         <button
           ref={openBtnRef}
@@ -120,19 +145,40 @@ export const Sidebar: React.FC = () => {
           <img src="/gtmobserver-icon.webp" alt="" aria-hidden="true" style={{ width: '24px', height: '24px', flexShrink: 0 }} />
           <div className="mobile-app-context-text">
             <span className="mobile-app-context-title">
-              {isProjectMode ? activeProject?.name || 'Project Workspace' : 'Organization'}
+              {isProjectMode
+                ? activeProject?.name || 'Project Workspace'
+                : isOrgScopedMode
+                ? activeScopedOrg?.name || 'Organization Workspace'
+                : 'Organization'}
             </span>
             <span className="mobile-app-context-sub">
-              {isProjectMode ? 'PROJECT' : `${userTier.toUpperCase()} PLAN`}
+              {isProjectMode
+                ? 'PROJECT'
+                : isOrgScopedMode
+                ? 'CLIENT ORG'
+                : `${userTier.toUpperCase()} PLAN`}
             </span>
           </div>
         </div>
 
         <div className="mobile-app-topbar-right">
           {isProjectMode ? (
-            <Link to="/organization" className="mobile-topbar-quick-btn" title="All Projects">
+            <Link
+              to={activeProject?.organization_id ? `/organizations/${encodeURIComponent(activeProject.organization_id)}` : '/organization'}
+              className="mobile-topbar-quick-btn"
+              title="Back"
+            >
               <ArrowLeft size={16} aria-hidden="true" />
               <span>Org</span>
+            </Link>
+          ) : isOrgScopedMode ? (
+            <Link
+              to={`/onboarding?orgId=${encodeURIComponent(activeScopedOrgId || '')}`}
+              className="mobile-topbar-quick-btn accent"
+              title="New Project in Organization"
+            >
+              <PlusCircle size={16} aria-hidden="true" />
+              <span>Add</span>
             </Link>
           ) : (
             <Link to="/onboarding" className="mobile-topbar-quick-btn accent" title="New Project">
@@ -143,7 +189,6 @@ export const Sidebar: React.FC = () => {
         </div>
       </header>
 
-      {/* Dimmed Backdrop while Mobile/Tablet Drawer is Open */}
       {drawerOpen && isMobileViewport && (
         <div
           className="sidebar-backdrop"
@@ -152,7 +197,6 @@ export const Sidebar: React.FC = () => {
         />
       )}
 
-      {/* Unified Semantic Sidebar (Desktop sticky sidebar >=1024px, Slide-over dialog drawer <1024px) */}
       <aside
         id="app-sidebar-drawer"
         className={`global-sidebar ${drawerOpen ? 'open' : ''}`}
@@ -181,22 +225,23 @@ export const Sidebar: React.FC = () => {
             </button>
           </div>
 
-          {!isProjectMode ? (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <ClerkOrgSwitcherWidget compact isSandboxMode={isSandboxMode} />
-              <div className="sidebar-scope-pill org">
-                <Layers size={12} aria-hidden="true" />
-                <span>ORGANIZATION</span>
-                <span className={`sidebar-tier-tag ${hasActiveSubscription ? 'paid' : 'free'}`}>
-                  {userTier.toUpperCase()}
-                </span>
-              </div>
-            </div>
-          ) : (
+          {isProjectMode ? (
             <div className="sidebar-project-context">
-              <Link to="/organization" onClick={closeDrawer} className="sidebar-back-org">
+              <Link
+                to={
+                  activeProject?.organization_id
+                    ? `/organizations/${encodeURIComponent(activeProject.organization_id)}`
+                    : '/organization'
+                }
+                onClick={closeDrawer}
+                className="sidebar-back-org"
+              >
                 <ArrowLeft size={14} aria-hidden="true" />
-                <span>All Projects (Organization)</span>
+                <span>
+                  {activeProject?.organization_name
+                    ? `Back to ${activeProject.organization_name}`
+                    : 'All Projects (Organization)'}
+                </span>
               </Link>
               <div className="sidebar-active-project-card">
                 <div className="sidebar-active-project-top">
@@ -230,54 +275,75 @@ export const Sidebar: React.FC = () => {
                 )}
               </div>
             </div>
+          ) : isOrgScopedMode ? (
+            <div className="sidebar-project-context">
+              <Link to="/organization" onClick={closeDrawer} className="sidebar-back-org">
+                <ArrowLeft size={14} aria-hidden="true" />
+                <span>All Organizations</span>
+              </Link>
+              <div className="sidebar-active-project-card">
+                <div className="sidebar-active-project-top">
+                  <span className="sidebar-scope-label">CLIENT ORGANIZATION</span>
+                  <span
+                    className="sidebar-type-dot"
+                    style={{
+                      color: '#00F0FF',
+                      borderColor: 'rgba(0, 240, 255, 0.35)',
+                      background: 'rgba(0, 240, 255, 0.12)'
+                    }}
+                  >
+                    {scopedOrgActiveCount} Sites
+                  </span>
+                </div>
+
+                {organizations.length > 0 ? (
+                  <select
+                    aria-label="Switch active organization"
+                    value={activeScopedOrgId || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__all__') navigate('/organization');
+                      else if (val === '__new__') navigate('/organization?createOrg=1');
+                      else if (val) navigate(`/organizations/${encodeURIComponent(val)}`);
+                    }}
+                    className="sidebar-org-select"
+                  >
+                    {organizations.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name} ({o.projectCount ?? projects.filter((p) => p.organization_id === o.id).length})
+                      </option>
+                    ))}
+                    <option value="__all__">View All Organizations</option>
+                    <option value="__new__">+ New Organization</option>
+                  </select>
+                ) : (
+                  <div className="sidebar-active-project-name">
+                    {activeScopedOrg?.name || 'Organization Workspace'}
+                  </div>
+                )}
+
+                <div className="sidebar-active-project-bindings">
+                  <span>{activeScopedOrg?.memberCount ?? activeScopedOrg?.members?.length ?? 1} member(s)</span>
+                  <span>•</span>
+                  <span style={{ textTransform: 'uppercase' }}>{activeScopedOrg?.role || 'owner'}</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <ClerkOrgSwitcherWidget compact isSandboxMode={isSandboxMode} />
+              <div className="sidebar-scope-pill org">
+                <Layers size={12} aria-hidden="true" />
+                <span>ORGANIZATION</span>
+                <span className={`sidebar-tier-tag ${hasActiveSubscription ? 'paid' : 'free'}`}>
+                  {userTier.toUpperCase()}
+                </span>
+              </div>
+            </div>
           )}
         </div>
 
-        {!isProjectMode ? (
-          <nav className="sidebar-nav" aria-label="Organization Navigation">
-            <NavLink to="/organization" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
-              <FolderKanban size={19} aria-hidden="true" />
-              <span>Organization</span>
-              {trashedProjects.length > 0 && (
-                <span
-                  title={`${trashedProjects.length} trashed project(s)`}
-                  style={{
-                    marginLeft: 'auto',
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    padding: '0.12rem 0.42rem',
-                    borderRadius: '9999px',
-                    background: 'rgba(239, 68, 68, 0.14)',
-                    color: '#FCA5A5',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.2rem'
-                  }}
-                >
-                  <Trash2 size={10} /> {trashedProjects.length}
-                </span>
-              )}
-            </NavLink>
-            <NavLink to="/onboarding" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
-              <PlusCircle size={19} aria-hidden="true" />
-              <span>New Project</span>
-            </NavLink>
-            <NavLink to="/access" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
-              <ShieldCheck size={19} aria-hidden="true" />
-              <span>Access &amp; Teams</span>
-            </NavLink>
-            <NavLink to="/billing" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
-              <CreditCard size={19} aria-hidden="true" />
-              <span>Billing &amp; Plan</span>
-              {!hasActiveSubscription && !hasSharedAccess && <span className="sidebar-badge-required">Required</span>}
-            </NavLink>
-            <NavLink to="/settings" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
-              <Settings size={19} aria-hidden="true" />
-              <span>Org Settings</span>
-            </NavLink>
-          </nav>
-        ) : (
+        {isProjectMode ? (
           <nav className="sidebar-nav" aria-label="Project Workspace Navigation">
             <NavLink
               to={`/projects/${activeProjectId}/dashboard`}
@@ -318,6 +384,179 @@ export const Sidebar: React.FC = () => {
             >
               <Sliders size={19} aria-hidden="true" />
               <span>Project Settings</span>
+            </NavLink>
+          </nav>
+        ) : isOrgScopedMode ? (
+          <nav className="sidebar-nav" aria-label="Client Organization Navigation">
+            <NavLink
+              to={`/organizations/${encodeURIComponent(activeScopedOrgId || '')}`}
+              end
+              onClick={closeDrawer}
+              className={() =>
+                `sidebar-nav-link ${
+                  location.pathname === `/organizations/${activeScopedOrgId}` && currentOrgTabParam !== 'trash'
+                    ? 'active'
+                    : ''
+                }`
+              }
+            >
+              <Building2 size={19} aria-hidden="true" />
+              <span>Org Dashboard</span>
+              <span className="sidebar-count-pill">{scopedOrgActiveCount}</span>
+            </NavLink>
+            <NavLink
+              to={`/organizations/${encodeURIComponent(activeScopedOrgId || '')}/access`}
+              onClick={closeDrawer}
+              className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}
+            >
+              <ShieldCheck size={19} aria-hidden="true" />
+              <span>Organizational Access</span>
+            </NavLink>
+            <NavLink
+              to={`/onboarding?orgId=${encodeURIComponent(activeScopedOrgId || '')}`}
+              onClick={closeDrawer}
+              className="sidebar-nav-link"
+            >
+              <PlusCircle size={19} aria-hidden="true" />
+              <span>Add Website to Org</span>
+            </NavLink>
+            <Link
+              to={`/organizations/${encodeURIComponent(activeScopedOrgId || '')}?tab=trash`}
+              onClick={closeDrawer}
+              className={`sidebar-nav-link ${currentOrgTabParam === 'trash' ? 'active' : ''}`}
+            >
+              <Trash2 size={19} aria-hidden="true" />
+              <span>Org Trash</span>
+              {scopedOrgTrashedCount > 0 && (
+                <span className="sidebar-trash-pill">{scopedOrgTrashedCount}</span>
+              )}
+            </Link>
+          </nav>
+        ) : (
+          <nav className="sidebar-nav" aria-label="Organization Navigation">
+            {/* Interactive Organization Dropdown */}
+            <div className="sidebar-org-dropdown">
+              <div className="sidebar-org-dropdown-header">
+                <NavLink
+                  to="/organization"
+                  onClick={closeDrawer}
+                  className={({ isActive }) =>
+                    `sidebar-nav-link sidebar-org-main-link ${isActive && !currentOrgScopeParam ? 'active' : ''}`
+                  }
+                >
+                  <FolderKanban size={19} aria-hidden="true" />
+                  <span>Organization</span>
+                </NavLink>
+                <button
+                  type="button"
+                  className={`sidebar-org-chevron-btn ${orgMenuOpen ? 'open' : ''}`}
+                  onClick={() => setOrgMenuOpen((prev) => !prev)}
+                  aria-expanded={orgMenuOpen}
+                  aria-label="Toggle organization workspaces dropdown"
+                >
+                  <ChevronDown size={16} aria-hidden="true" />
+                </button>
+              </div>
+
+              {orgMenuOpen && (
+                <div className="sidebar-org-submenu">
+                  <Link
+                    to="/organization"
+                    onClick={closeDrawer}
+                    className={`sidebar-org-subitem ${
+                      location.pathname === '/organization' && !currentOrgScopeParam ? 'active' : ''
+                    }`}
+                  >
+                    <Layers size={14} />
+                    <span className="sidebar-subitem-label">All Organizations</span>
+                    <span className="sidebar-subitem-count">{projects.length}</span>
+                  </Link>
+
+                  <Link
+                    to="/organization?scope=personal"
+                    onClick={closeDrawer}
+                    className={`sidebar-org-subitem ${
+                      location.pathname === '/organization' && currentOrgScopeParam === 'personal' ? 'active' : ''
+                    }`}
+                  >
+                    <FolderKanban size={14} />
+                    <span className="sidebar-subitem-label">Personal Workspace</span>
+                    <span className="sidebar-subitem-count">{personalCount}</span>
+                  </Link>
+
+                  {organizations.map((org) => {
+                    const orgCount = projects.filter((p) => p.organization_id === org.id).length;
+                    return (
+                      <Link
+                        key={org.id}
+                        to={`/organizations/${encodeURIComponent(org.id)}`}
+                        onClick={closeDrawer}
+                        className="sidebar-org-subitem org-client-item"
+                        title={`Open ${org.name} dashboard`}
+                      >
+                        <Building2 size={14} />
+                        <span className="sidebar-subitem-label">{org.name}</span>
+                        <span className="sidebar-subitem-count">{orgCount}</span>
+                      </Link>
+                    );
+                  })}
+
+                  {sharedCount > 0 && (
+                    <Link
+                      to="/organization?scope=shared"
+                      onClick={closeDrawer}
+                      className={`sidebar-org-subitem ${
+                        location.pathname === '/organization' && currentOrgScopeParam === 'shared' ? 'active' : ''
+                      }`}
+                    >
+                      <Users size={14} />
+                      <span className="sidebar-subitem-label">Shared With Me</span>
+                      <span className="sidebar-subitem-count">{sharedCount}</span>
+                    </Link>
+                  )}
+
+                  {trashedProjects.length > 0 && (
+                    <Link
+                      to="/organization?scope=trash"
+                      onClick={closeDrawer}
+                      className={`sidebar-org-subitem ${
+                        location.pathname === '/organization' && currentOrgScopeParam === 'trash' ? 'active' : ''
+                      }`}
+                    >
+                      <Trash2 size={14} />
+                      <span className="sidebar-subitem-label">Trash</span>
+                      <span className="sidebar-subitem-count danger">{trashedProjects.length}</span>
+                    </Link>
+                  )}
+
+                  <Link
+                    to="/organization?createOrg=1"
+                    onClick={closeDrawer}
+                    className="sidebar-org-subitem add-org"
+                  >
+                    <Plus size={14} />
+                    <span className="sidebar-subitem-label">New Organization</span>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <NavLink to="/onboarding" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
+              <PlusCircle size={19} aria-hidden="true" />
+              <span>New Project</span>
+            </NavLink>
+            <NavLink to="/access" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
+              <ShieldCheck size={19} aria-hidden="true" />
+              <span>Access &amp; Teams</span>
+            </NavLink>
+            <NavLink to="/billing" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
+              <CreditCard size={19} aria-hidden="true" />
+              <span>Billing &amp; Plan</span>
+              {!hasActiveSubscription && !hasSharedAccess && <span className="sidebar-badge-required">Required</span>}
+            </NavLink>
+            <NavLink to="/settings" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
+              <Settings size={19} aria-hidden="true" />
+              <span>Org Settings</span>
             </NavLink>
           </nav>
         )}

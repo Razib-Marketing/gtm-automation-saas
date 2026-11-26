@@ -2,12 +2,12 @@ import type { Context } from 'hono';
 import type { WorkerBindings } from '../_types';
 import { renderPdfFromHtml, sanitizeFilename } from '../_pdf';
 import { buildGtmAuditPdfHtml } from '../_pdfTemplates';
-import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from '../ga4/_shared';
+import { ensureProjectsSchema, verifyClerkAuth, resolveProjectAccess } from '../ga4/_shared';
 
 export async function handleGtmAuditPdf(
   c: Context<{ Bindings: WorkerBindings }>
 ): Promise<Response> {
-  const auth = getClerkAuthContext(c.req.raw);
+  const auth = await verifyClerkAuth(c.req.raw, c.env);
   if (!auth) {
     return c.json({ error: 'Unauthorized' }, 401);
   }

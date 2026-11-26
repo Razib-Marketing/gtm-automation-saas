@@ -10,6 +10,7 @@ import { AuditModal } from '../components/ui/AuditModal';
 import { pushDataLayer } from '../utils/analytics';
 import { Link } from 'react-router-dom';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { startGoogleOAuth } from '../utils/googleOAuth';
 import type { Project } from '../types/project';
 import {
   SANDBOX_GTM_ACCOUNTS,
@@ -422,10 +423,14 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
       return;
     }
     try {
+      const token = await getToken();
+      if (!token) return;
       const auditUrl = project
-        ? `/api/gtm/audit-logs?userId=${user?.id}&projectId=${encodeURIComponent(project.id)}&gtmId=${encodeURIComponent(project.gtm_container_public_id || '')}`
-        : `/api/gtm/audit-logs?userId=${user?.id}`;
-      const res = await fetch(auditUrl);
+        ? `/api/gtm/audit-logs?projectId=${encodeURIComponent(project.id)}&gtmId=${encodeURIComponent(project.gtm_container_public_id || '')}`
+        : '/api/gtm/audit-logs';
+      const res = await fetch(auditUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       if (data.logs) {
         setRecentAudits(data.logs);
@@ -439,7 +444,11 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
     if (!isLoaded || !user?.id) return;
     const searchParams = new URLSearchParams(location.search);
     const checkAuth = async () => {
-      const res = await fetch(`/api/auth/status?clerkUserId=${user.id}`);
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch('/api/auth/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       const data = await res.json();
       setHasGoogleAuth(data.hasAuth);
       if (data.hasAuth) {
@@ -449,7 +458,9 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
       // Fetch user tier and limits
       try {
         const email = user.primaryEmailAddress?.emailAddress || '';
-        const meRes = await fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(email)}`);
+        const meRes = await fetch(`/api/user/me?email=${encodeURIComponent(email)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const meData = await meRes.json();
         if (meData && meData.subscription_tier) {
           setUserTier(meData.subscription_tier);
@@ -535,9 +546,13 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
     setIsNewGtmConfig(false);
   };
 
-  const handleGoogleOAuth = () => {
+  const handleGoogleOAuth = async () => {
     const returnTo = project ? `/projects/${project.id}/gtm` : '/organization';
-    window.location.href = `/api/auth/google/login?clerkUserId=${user?.id}&returnTo=${encodeURIComponent(returnTo)}`;
+    try {
+      await startGoogleOAuth(getToken, returnTo);
+    } catch (err: any) {
+      alert(err?.message || 'Unable to connect Google account');
+    }
   };
 
   const handleRunAudit = async () => {
@@ -878,7 +893,9 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
           });
           // Refresh user limits
           const email = user?.primaryEmailAddress?.emailAddress || '';
-          const meRes = await fetch(`/api/user/me?clerkUserId=${user?.id}&email=${encodeURIComponent(email)}`);
+          const meRes = await fetch(`/api/user/me?email=${encodeURIComponent(email)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
           const meData = await meRes.json();
           if (meData && meData.subscription_tier) {
             setUserTier(meData.subscription_tier);

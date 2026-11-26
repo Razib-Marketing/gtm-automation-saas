@@ -1,42 +1,45 @@
 import Stripe from 'stripe';
+import { verifyClerkAuth } from '../_security';
 
 export async function onRequestPost(context: any) {
   const { request, env } = context;
 
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Missing token' }), { status: 401 });
+    const auth = await verifyClerkAuth(request, env);
+    if (!auth || !auth.userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
-    const token = authHeader.split(' ')[1];
-    let clerkUserId = null;
-    try {
-      const payloadBase64 = token.split('.')[1];
-      const payloadString = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
-      clerkUserId = JSON.parse(payloadString).sub;
-    } catch (e) {
-      return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401 });
+    const clerkUserId = auth.userId;
+
+    if (!env.STRIPE_SECRET_KEY) {
+      return new Response(JSON.stringify({ error: 'Stripe checkout is disabled' }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    const { tier, containers } = await request.json();
+    const body: any = await request.json().catch(() => ({}));
+    const tier = body.tier === 'custom' ? 'custom' : 'pro';
+    const containers = body.containers;
 
-    // Look up user in DB
-    const dbResult = await env.DB.prepare('SELECT email, stripe_customer_id FROM users WHERE id = ?').bind(clerkUserId).first();
+    const dbResult: any = await env.DB.prepare('SELECT email, stripe_customer_id FROM users WHERE id = ?')
+      .bind(clerkUserId)
+      .first();
     let customerId = dbResult?.stripe_customer_id;
 
-    const secretKey = env.STRIPE_SECRET_KEY || 'sk_test_DUMMY_KEY';
-    const stripe = new Stripe(secretKey, { apiVersion: '2024-04-10' as any });
+    const stripe = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-04-10' as any });
 
-    if (!customerId && dbResult?.email) {
+    if (!customerId && dbResult?.email && dbResult.email !== 'unknown@example.com') {
       const customer = await stripe.customers.create({ email: dbResult.email, metadata: { clerkUserId } });
       customerId = customer.id;
       await env.DB.prepare('UPDATE users SET stripe_customer_id = ? WHERE id = ?').bind(customerId, clerkUserId).run();
     }
 
-    const quantity = tier === 'custom' ? parseInt(containers) || 10 : 1;
-    
-    // Exact matching math from frontend:
-    const baseCustomPrice = Math.max(149, Math.ceil(quantity * 14.9)); // 10 GTM Accounts = $149
+    const quantity = tier === 'custom' ? Math.max(10, Math.min(100, parseInt(containers, 10) || 10)) : 10;
+    const baseCustomPrice = Math.max(149, Math.ceil(quantity * 14.9));
     const hasDiscount = quantity >= 15;
     const customPrice = hasDiscount ? Math.floor(baseCustomPrice * 0.9) : baseCustomPrice;
 
@@ -47,7 +50,7 @@ export async function onRequestPost(context: any) {
     const sessionData: any = {
       customer: customerId || undefined,
       payment_method_types: ['card'],
-      line_items: [{ 
+      line_items: [{
         price_data: {
           currency: 'usd',
           product_data: {
@@ -57,7 +60,7 @@ export async function onRequestPost(context: any) {
           unit_amount: unitAmount,
           recurring: { interval: 'month' }
         },
-        quantity: 1 
+        quantity: 1
       }],
       mode: 'subscription',
       success_url: `${new URL(request.url).origin}/onboarding?checkout=success`,
@@ -67,8 +70,15 @@ export async function onRequestPost(context: any) {
 
     const session = await stripe.checkout.sessions.create(sessionData);
 
-    return new Response(JSON.stringify({ url: session.url }), { status: 200 });
+    return new Response(JSON.stringify({ url: session.url }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    console.error('Stripe checkout error:', err);
+    return new Response(JSON.stringify({ error: 'Failed to create checkout session' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

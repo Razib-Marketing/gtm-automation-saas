@@ -1,3 +1,7 @@
+import type { ClerkAuthContext } from '../_security';
+export { verifyClerkAuth } from '../_security';
+export type { ClerkAuthContext } from '../_security';
+
 export interface MonitorConditionInput {
   metric: string;
   source?: string;
@@ -27,12 +31,21 @@ export interface EvaluatedCondition {
 }
 
 export async function ensureUsersSchema(db: any) {
-  try {
-    await db.prepare("ALTER TABLE users ADD COLUMN schedule_time TEXT DEFAULT '08:00'").run();
-  } catch (_) {}
-  try {
-    await db.prepare("ALTER TABLE users ADD COLUMN schedule_timezone TEXT DEFAULT 'UTC'").run();
-  } catch (_) {}
+  const userCols = [
+    "ALTER TABLE users ADD COLUMN schedule_time TEXT DEFAULT '08:00'",
+    "ALTER TABLE users ADD COLUMN schedule_timezone TEXT DEFAULT 'UTC'",
+    "ALTER TABLE users ADD COLUMN workspace_limit INTEGER DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN polar_subscription_id TEXT",
+    "ALTER TABLE users ADD COLUMN polar_customer_id TEXT",
+    "ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT",
+    "ALTER TABLE users ADD COLUMN stripe_customer_id TEXT",
+    "ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+  ];
+  for (const sql of userCols) {
+    try {
+      await db.prepare(sql).run();
+    } catch (_) {}
+  }
 }
 
 export async function ensureMonitorsSchema(db: any) {
@@ -202,47 +215,7 @@ export async function ensureProjectsSchema(db: any) {
   await ensureOrganizationsSchema(db);
 }
 
-export interface ClerkAuthContext {
-  userId: string;
-  orgId: string | null;
-  orgRole: string | null;
-  email: string | null;
-}
-
-export function getClerkAuthContext(request: Request): ClerkAuthContext | null {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const token = authHeader.split(' ')[1];
-  if (!token || token === 'null' || token === 'undefined') return null;
-  const parts = token.split('.');
-  if (parts.length < 2 || !parts[1]) return null;
-  try {
-    let payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    while (payloadBase64.length % 4) {
-      payloadBase64 += '=';
-    }
-    const payload = JSON.parse(atob(payloadBase64));
-    if (!payload.sub) return null;
-
-    // Support both Clerk v1 (org_id, org_role) and v2 (o.id, o.rol) session JWT claims
-    const orgId = payload.org_id || payload.o?.id || null;
-    const orgRole = payload.org_role || payload.o?.rol || null;
-    const email = typeof payload.email === 'string' ? payload.email.toLowerCase().trim() : null;
-
-    return {
-      userId: payload.sub,
-      orgId: orgId ? String(orgId) : null,
-      orgRole: orgRole ? String(orgRole) : null,
-      email
-    };
-  } catch (_) {
-    return null;
-  }
-}
-
-export function getClerkUserId(request: Request): string | null {
-  return getClerkAuthContext(request)?.userId || null;
-}
+// Note: Cryptographic JWT verification lives in verifyClerkAuth(request, env).
 
 export type AccessRole = 'owner' | 'admin' | 'editor' | 'viewer';
 

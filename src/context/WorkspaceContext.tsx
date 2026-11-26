@@ -14,7 +14,9 @@ export type ActiveOrgScope = 'all' | 'personal' | 'shared' | 'trash' | string;
 
 interface WorkspaceContextValue {
   userTier: 'free' | 'pro' | 'custom';
+  workspaceLimit: number;
   hasActiveSubscription: boolean;
+  hasPolarCustomer: boolean;
   hasSharedAccess: boolean;
   googleConnected: boolean;
   organizations: Organization[];
@@ -27,11 +29,14 @@ interface WorkspaceContextValue {
   isSandboxMode: boolean;
   refreshWorkspace: () => Promise<void>;
   getProjectById: (id?: string) => Project | undefined;
+  getOrganizationById: (id?: string) => Organization | undefined;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue>({
   userTier: 'free',
+  workspaceLimit: 0,
   hasActiveSubscription: false,
+  hasPolarCustomer: false,
   hasSharedAccess: false,
   googleConnected: false,
   organizations: [],
@@ -43,7 +48,8 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
   loading: true,
   isSandboxMode: false,
   refreshWorkspace: async () => {},
-  getProjectById: () => undefined
+  getProjectById: () => undefined,
+  getOrganizationById: () => undefined
 });
 
 export const useWorkspace = () => useContext(WorkspaceContext);
@@ -54,6 +60,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { organization: clerkOrganization } = useOrganization();
 
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
+  const [workspaceLimit, setWorkspaceLimit] = useState<number>(0);
+  const [hasPolarCustomer, setHasPolarCustomer] = useState(false);
   const [hasSharedAccess, setHasSharedAccess] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -89,6 +97,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const activeList = enriched.filter((p) => p.status !== 'trashed');
       const trashedList = enriched.filter((p) => p.status === 'trashed');
       setUserTier(s.tier);
+      setWorkspaceLimit(s.tier === 'custom' ? 100 : s.tier === 'pro' ? 10 : 0);
+      setHasPolarCustomer(false);
       setHasSharedAccess(false);
       setGoogleConnected(s.googleConnected);
       setOrganizations(
@@ -110,6 +120,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setProjects([]);
       setTrashedProjects([]);
       setUserTier('free');
+      setWorkspaceLimit(0);
+      setHasPolarCustomer(false);
       setHasSharedAccess(false);
       setGoogleConnected(false);
       setLoading(false);
@@ -119,38 +131,40 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setLoading(true);
     try {
       const token = await getToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const authHeaders = { Authorization: `Bearer ${token}` };
       const email = user.primaryEmailAddress?.emailAddress || '';
       const orgNameQuery = clerkOrganization?.name
         ? `?clerkOrgName=${encodeURIComponent(clerkOrganization.name)}`
         : '';
 
       const [meRes, authRes, orgRes, projRes] = await Promise.all([
-        fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(email)}`),
-        fetch(`/api/auth/status?clerkUserId=${user.id}`),
-        token
-          ? fetch(`/api/organizations${orgNameQuery}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            })
-          : Promise.resolve(null),
-        fetch(`/api/projects?clerkUserId=${user.id}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        })
+        fetch(`/api/user/me?email=${encodeURIComponent(email)}`, { headers: authHeaders }),
+        fetch('/api/auth/status', { headers: authHeaders }),
+        fetch(`/api/organizations${orgNameQuery}`, { headers: authHeaders }),
+        fetch('/api/projects', { headers: authHeaders })
       ]);
 
       const meData = await meRes.json().catch(() => ({}));
       const authData = await authRes.json().catch(() => ({}));
-      const orgData = orgRes ? await orgRes.json().catch(() => ({})) : {};
+      const orgData = await orgRes.json().catch(() => ({}));
       const projData = await projRes.json().catch(() => ({}));
 
       if (meRes.ok && meData?.subscription_tier) {
         setUserTier(meData.subscription_tier);
+        setWorkspaceLimit(Number(meData.workspace_limit || 0));
+        setHasPolarCustomer(Boolean(meData.has_polar_customer));
       }
       setHasSharedAccess(Boolean(meData?.has_shared_access));
 
       if (authRes.ok) {
         setGoogleConnected(Boolean(authData?.hasAuth));
       }
-      if (orgRes?.ok && Array.isArray(orgData?.organizations)) {
+      if (orgRes.ok && Array.isArray(orgData?.organizations)) {
         setOrganizations(orgData.organizations);
       }
       if (projRes.ok && Array.isArray(projData?.projects)) {
@@ -176,6 +190,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const activeList = enriched.filter((p) => p.status !== 'trashed');
       const trashedList = enriched.filter((p) => p.status === 'trashed');
       setUserTier(s.tier);
+      setWorkspaceLimit(s.tier === 'custom' ? 100 : s.tier === 'pro' ? 10 : 0);
       setGoogleConnected(s.googleConnected);
       setOrganizations(
         (s.organizations || []).map((o) => ({
@@ -202,11 +217,21 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     [projects]
   );
 
+  const getOrganizationById = useCallback(
+    (id?: string) => {
+      if (!id) return undefined;
+      return organizations.find((o) => o.id === id);
+    },
+    [organizations]
+  );
+
   return (
     <WorkspaceContext.Provider
       value={{
         userTier,
+        workspaceLimit,
         hasActiveSubscription,
+        hasPolarCustomer,
         hasSharedAccess,
         googleConnected,
         organizations,
@@ -218,7 +243,8 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         loading,
         isSandboxMode,
         refreshWorkspace: loadWorkspace,
-        getProjectById
+        getProjectById,
+        getOrganizationById
       }}
     >
       {children}

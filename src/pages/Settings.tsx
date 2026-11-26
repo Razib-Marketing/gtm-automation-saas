@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UserProfile, useUser, useAuth, RedirectToSignIn } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle, Clock, Check, Building2 } from 'lucide-react';
+import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle, Clock, Check, Building2, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { ClerkOrgProfileWidget } from '../components/ui/ClerkOrgBoundary';
@@ -13,13 +13,15 @@ export const Settings = () => {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
-  const { isSandboxMode, userTier: ctxTier } = useWorkspace();
+  const { isSandboxMode, userTier: ctxTier, workspaceLimit: ctxLimit } = useWorkspace();
 
   const [activeTab, setActiveTab] = useState<'subscription' | 'schedule' | 'organization' | 'profile'>('subscription');
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
+  const [workspaceLimit, setWorkspaceLimit] = useState(0);
   const [deploymentCount, setDeploymentCount] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
   const [scheduleTime, setScheduleTime] = useState('08:00');
   const [scheduleTimezone, setScheduleTimezone] = useState(() => getBrowserTimezone());
@@ -31,6 +33,7 @@ export const Settings = () => {
   useEffect(() => {
     if (isSandboxMode) {
       setUserTier(ctxTier || 'pro');
+      setWorkspaceLimit(ctxLimit || 10);
       setDeploymentCount(2);
       setLoadingData(false);
       return;
@@ -38,11 +41,16 @@ export const Settings = () => {
     const fetchUserData = async () => {
       if (!user) return;
       try {
+        const token = await getToken();
+        if (!token) return;
         const email = user.primaryEmailAddress?.emailAddress || '';
-        const res = await fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(email)}`);
+        const res = await fetch(`/api/user/me?email=${encodeURIComponent(email)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = await res.json();
         if (data && data.subscription_tier) {
           setUserTier(data.subscription_tier);
+          setWorkspaceLimit(Number(data.workspace_limit || 0));
           setDeploymentCount(data.account_deployment_count || 0);
         }
         if (data?.schedule_time) {
@@ -60,7 +68,7 @@ export const Settings = () => {
     if (isSignedIn) {
       fetchUserData();
     }
-  }, [isSignedIn, user, isSandboxMode, ctxTier]);
+  }, [isSignedIn, user, isSandboxMode, ctxTier, ctxLimit, getToken]);
 
   const handleSaveSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,6 +129,27 @@ export const Settings = () => {
     }
   };
 
+  const handleOpenPolarPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/polar/portal', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data?.error || 'Could not open Polar Customer Portal.');
+      }
+    } catch (_) {
+      alert('Unable to reach Polar Customer Portal.');
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
   if (!isLoaded && !isSandboxMode) {
     return (
       <div className="dashboard-wrapper">
@@ -136,7 +165,7 @@ export const Settings = () => {
     return <RedirectToSignIn />;
   }
 
-  const proLimit = 10;
+  const proLimit = workspaceLimit > 0 ? workspaceLimit : 10;
   const isFree = userTier === 'free';
   const isPro = userTier === 'pro';
   const isCustom = userTier === 'custom';
@@ -215,13 +244,25 @@ export const Settings = () => {
                             {checkoutLoading ? 'Loading...' : 'Upgrade to Pro'}
                           </button>
                         )}
-                        {isPro && (
-                          <button 
-                            className="btn-home-link"
-                            onClick={() => navigate('/billing')}
-                          >
-                            <ArrowUpCircle size={14} /> Enhance Plan
-                          </button>
+                        {(isPro || isCustom) && (
+                          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                            {!isSandboxMode && (
+                              <button
+                                type="button"
+                                className="btn-home-link"
+                                onClick={handleOpenPolarPortal}
+                                disabled={portalLoading}
+                              >
+                                <ExternalLink size={14} /> {portalLoading ? 'Opening...' : 'Manage Polar Billing'}
+                              </button>
+                            )}
+                            <button
+                              className="btn-home-link"
+                              onClick={() => navigate('/billing')}
+                            >
+                              <ArrowUpCircle size={14} /> {isCustom ? 'Billing & Plans' : 'Enhance Plan'}
+                            </button>
+                          </div>
                         )}
                       </div>
 

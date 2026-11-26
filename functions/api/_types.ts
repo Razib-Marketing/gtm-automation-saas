@@ -6,11 +6,16 @@ export interface WorkerBindings {
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   CRON_SECRET?: string;
+  CLERK_ISSUER?: string;
+  CLERK_JWKS_URL?: string;
   POLAR_ACCESS_TOKEN?: string;
   POLAR_ORGANIZATION_ID?: string;
   POLAR_PRODUCT_PRO_ID?: string;
   POLAR_PRODUCT_CUSTOM_ID?: string;
   POLAR_WEBHOOK_SECRET?: string;
+  POLAR_SERVER?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
   EMAIL?: {
     send: (message: Record<string, unknown>) => Promise<void>;
   };

@@ -1,23 +1,9 @@
-function getClerkUserId(request: Request) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
-  const token = authHeader.split(' ')[1];
-  try {
-    let payloadBase64 = token.split('.')[1];
-    payloadBase64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
-    while (payloadBase64.length % 4) {
-      payloadBase64 += '=';
-    }
-    const payload = JSON.parse(atob(payloadBase64));
-    return payload.sub;
-  } catch (e) {
-    return null;
-  }
-}
+import { verifyClerkAuth } from '../_security';
 
 export async function onRequest(context: any) {
   const { env, request } = context;
-  const userId = getClerkUserId(request);
+  const auth = await verifyClerkAuth(request, env);
+  const userId = auth?.userId || null;
 
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { 

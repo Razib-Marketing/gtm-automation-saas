@@ -3,7 +3,7 @@ import {
   ensureMonitorsSchema,
   ensureAlertsSchema,
   ensureProjectsSchema,
-  getClerkAuthContext,
+  verifyClerkAuth,
   resolveProjectAccess,
   isValidTimeHHMM,
   sanitizeTimezone,
@@ -16,6 +16,7 @@ import {
   formatCleanPropertyName,
   MonitorConditionInput
 } from './_shared';
+import { escapeHtml, isValidGa4PropertyId } from '../_security';
 import { renderPdfFromHtml, responseToBase64, sanitizeFilename } from '../_pdf';
 import { buildGa4AlertReportPdfHtml } from '../_pdfTemplates';
 
@@ -23,7 +24,7 @@ export async function onRequest(context: any) {
   const { env, request } = context;
 
   // Verify Auth
-  const auth = getClerkAuthContext(request);
+  const auth = await verifyClerkAuth(request, env);
   if (!auth) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
@@ -157,9 +158,16 @@ export async function onRequest(context: any) {
       groups[key].metrics.add(mapMetricName(cond.metric));
     }
 
-    const propertyId = monitor.property_id.startsWith('properties/')
-      ? monitor.property_id
-      : `properties/${monitor.property_id}`;
+    if (!isValidGa4PropertyId(monitor.property_id)) {
+      return new Response(JSON.stringify({ error: 'Invalid GA4 property format on monitor' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    const rawProp = monitor.property_id.trim();
+    const propertyId = rawProp.startsWith('properties/')
+      ? rawProp
+      : `properties/${rawProp}`;
 
     // Query Current & Previous Windows for each dimension filter group
     const currentValLookup: Record<string, Record<string, number>> = {};
@@ -249,12 +257,17 @@ export async function onRequest(context: any) {
           <span style="display: inline-block; width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background: #0B0F19; color: #00F0FF; font-size: 24px; font-weight: 900; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">✔</span>
          </div>`;
 
+    const safeCleanName = escapeHtml(cleanName);
+    const safeComparedDates = escapeHtml(comparedDatesLabel);
+    const safeScheduleLabel = escapeHtml(scheduleLabel);
+    const safeDateLabel = escapeHtml(dateInfo.label);
+
     const statusNote = isTriggered
       ? `<p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
-          Your Observer monitor for <strong>${cleanName}</strong> triggered an alert based on your rule criteria (Match <strong>${matchType}</strong>).
+          Your Observer monitor for <strong>${safeCleanName}</strong> triggered an alert based on your rule criteria (Match <strong>${matchType}</strong>).
         </p>`
       : `<p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0;">
-          This is a manual health check for <strong>${cleanName}</strong>. All evaluated conditions are within expected parameters.
+          This is a manual health check for <strong>${safeCleanName}</strong>. All evaluated conditions are within expected parameters.
         </p>`;
 
     const conditionCardsHtml = evaluatedConditions.map(c => {
@@ -288,10 +301,10 @@ export async function onRequest(context: any) {
                 <tr>
                   <td style="vertical-align: middle; text-align: left;">
                     <div style="font-size: 15px; font-weight: 700; color: #0F172A; text-transform: capitalize;">
-                      ${c.metric}
+                      ${escapeHtml(c.metric)}
                     </div>
                     <div style="font-size: 11px; color: #64748B; margin-top: 2px;">
-                      Segment: <strong style="color: #475569;">${segmentText}</strong>
+                      Segment: <strong style="color: #475569;">${escapeHtml(segmentText)}</strong>
                     </div>
                   </td>
                   <td style="vertical-align: middle; text-align: right; white-space: nowrap;">
@@ -304,12 +317,12 @@ export async function onRequest(context: any) {
                 <tr>
                   <td style="padding: 9px 12px; text-align: left; vertical-align: middle;">
                     <div style="font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em;">
-                      Baseline: <strong style="color: #334155;">${c.formattedPast}</strong>
+                      Baseline: <strong style="color: #334155;">${escapeHtml(c.formattedPast)}</strong>
                       <span style="color: #94A3B8; margin: 0 4px;">→</span>
-                      Current: <strong style="color: #0F172A;">${c.formattedCurrent}</strong>
+                      Current: <strong style="color: #0F172A;">${escapeHtml(c.formattedCurrent)}</strong>
                     </div>
                     <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">
-                      Rule: <span style="color: #64748B;">${c.operatorLabel}</span>
+                      Rule: <span style="color: #64748B;">${escapeHtml(c.operatorLabel)}</span>
                     </div>
                   </td>
                   <td style="padding: 9px 12px; text-align: right; vertical-align: middle; white-space: nowrap;">
@@ -337,7 +350,7 @@ export async function onRequest(context: any) {
       </head>
       <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
         <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 0px; line-height: 0px; max-width: 0px; opacity: 0;">
-          ${isTriggered ? `GA4 Anomaly Alert for ${cleanName}` : `Health Check: ${cleanName} is Stable`}
+          ${isTriggered ? `GA4 Anomaly Alert for ${safeCleanName}` : `Health Check: ${safeCleanName} is Stable`}
         </div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F1F5F9; margin: 0; padding: 20px 10px; width: 100%;">
           <tr>
@@ -347,7 +360,7 @@ export async function onRequest(context: any) {
                   <td style="background-color: ${headerBg}; color: ${headerTextColor}; padding: 26px 20px; text-align: center; border-bottom: 2px solid ${headerBorder};">
                     ${headerIconBadge}
                     <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: ${headerTextColor}; letter-spacing: -0.025em;">${headerTitle}</h2>
-                    <p style="margin: 6px 0 0 0; font-size: 13px; color: ${headerSubColor}; font-weight: 600;">Property: ${cleanName}</p>
+                    <p style="margin: 6px 0 0 0; font-size: 13px; color: ${headerSubColor}; font-weight: 600;">Property: ${safeCleanName}</p>
                   </td>
                 </tr>
 
@@ -359,9 +372,9 @@ export async function onRequest(context: any) {
                       <tr>
                         <td style="padding: 10px 14px; font-size: 12px; color: #4B5563; text-align: left;">
                           <div><strong>Rule Logic:</strong> Match ${matchType === 'ALL' ? 'ALL conditions (AND)' : 'ANY condition (OR)'}</div>
-                          <div style="margin-top: 4px;"><strong>Comparison Period:</strong> ${dateInfo.label}</div>
-                          <div style="margin-top: 4px;"><strong>Dates Compared:</strong> ${comparedDatesLabel}</div>
-                          <div style="margin-top: 4px;"><strong>Schedule:</strong> ${scheduleLabel}</div>
+                          <div style="margin-top: 4px;"><strong>Comparison Period:</strong> ${safeDateLabel}</div>
+                          <div style="margin-top: 4px;"><strong>Dates Compared:</strong> ${safeComparedDates}</div>
+                          <div style="margin-top: 4px;"><strong>Schedule:</strong> ${safeScheduleLabel}</div>
                         </td>
                       </tr>
                     </table>

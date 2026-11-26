@@ -1,23 +1,38 @@
+import { verifyClerkAuth } from '../_security';
+
 export async function onRequest(context: any) {
   const { request, env } = context;
-  const url = new URL(request.url);
-  const clerkUserId = url.searchParams.get('clerkUserId');
 
-  if (!clerkUserId || clerkUserId === 'undefined' || clerkUserId === 'null') {
-    return new Response(JSON.stringify({ error: 'Missing or invalid clerkUserId' }), { status: 400 });
+  const auth = await verifyClerkAuth(request, env);
+  if (!auth || !auth.userId) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
-    // Check if a connection exists for this user in gtm_connections
-    const result = await env.DB.prepare(
-      'SELECT id FROM gtm_connections WHERE user_id = ? LIMIT 1'
-    ).bind(clerkUserId).first();
+    const result: any = await env.DB.prepare(
+      'SELECT id, encrypted_refresh_token FROM gtm_connections WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+    )
+      .bind(auth.userId)
+      .first();
 
-    return new Response(JSON.stringify({ hasAuth: !!result }), {
+    const hasAuth = Boolean(
+      result &&
+        result.encrypted_refresh_token &&
+        result.encrypted_refresh_token !== 'no_refresh_token_provided'
+    );
+
+    return new Response(JSON.stringify({ hasAuth }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('GET /api/auth/status error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to check Google connection status' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

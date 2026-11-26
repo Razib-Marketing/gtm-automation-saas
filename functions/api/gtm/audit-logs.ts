@@ -1,31 +1,56 @@
-import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from '../ga4/_shared';
+import { canEditProject, ensureProjectsSchema, verifyClerkAuth, resolveProjectAccess } from '../ga4/_shared';
 
 export async function onRequest(context: any) {
   const { request, env } = context;
 
+  const auth = await verifyClerkAuth(request, env);
+  if (!auth || !auth.userId) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   if (request.method === 'POST') {
-    return handleSaveLog(request, env);
+    return handleSaveLog(request, env, auth);
   } else if (request.method === 'GET') {
-    return handleGetLogs(request, env);
+    return handleGetLogs(request, env, auth);
   }
 
   return new Response('Method not allowed', { status: 405 });
 }
 
-async function handleSaveLog(request: Request, env: any) {
+async function handleSaveLog(request: Request, env: any, auth: any) {
   try {
     await ensureProjectsSchema(env.DB);
-    const { userId, projectId, gtmId, healthScore, issueCount, rawData } = (await request.json()) as any;
+    const { projectId, gtmId, healthScore, issueCount, rawData } = (await request.json().catch(() => ({}))) as any;
 
-    if (!userId || !gtmId || healthScore === undefined || issueCount === undefined || !rawData) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    if (!gtmId || healthScore === undefined || issueCount === undefined || !rawData) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let ownerUserId = auth.userId;
+    if (projectId) {
+      const access = await resolveProjectAccess(env.DB, auth, String(projectId));
+      if (!access || !canEditProject(access.role)) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      ownerUserId = access.project.user_id || auth.userId;
     }
 
     const id = crypto.randomUUID();
 
     await env.DB.prepare(
       `INSERT INTO audit_logs (id, user_id, project_id, gtm_id, health_score, issue_count, raw_data) VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, userId, projectId || null, gtmId, healthScore, issueCount, JSON.stringify(rawData)).run();
+    )
+      .bind(id, ownerUserId, projectId || null, gtmId, healthScore, issueCount, JSON.stringify(rawData))
+      .run();
 
     return new Response(JSON.stringify({ success: true, id }), {
       status: 201,
@@ -33,38 +58,40 @@ async function handleSaveLog(request: Request, env: any) {
     });
   } catch (err: any) {
     console.error('Error saving audit log:', err.message);
-    return new Response(JSON.stringify({ error: 'Failed to save audit log' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to save audit log' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
-async function handleGetLogs(request: Request, env: any) {
+async function handleGetLogs(request: Request, env: any, auth: any) {
   try {
     await ensureProjectsSchema(env.DB);
     const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
     const projectId = url.searchParams.get('projectId') || '';
     const gtmId = url.searchParams.get('gtmId') || '';
-
-    if (!userId || userId === 'undefined' || userId === 'null') {
-      return new Response(JSON.stringify({ error: 'Missing or invalid userId parameter' }), { status: 400 });
-    }
+    const userId = auth.userId;
 
     let results: any[] = [];
     if (projectId) {
-      const authCtx = getClerkAuthContext(request);
-      const access = await resolveProjectAccess(
-        env.DB,
-        authCtx || userId,
-        projectId
-      );
-      const ownerId = access?.project?.user_id || userId;
+      const access = await resolveProjectAccess(env.DB, auth, projectId);
+      if (!access) {
+        return new Response(JSON.stringify({ error: 'Project not found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      const ownerId = access.project.user_id;
       const res = await env.DB.prepare(
         `SELECT id, project_id, gtm_id, health_score, issue_count, raw_data, created_at
          FROM audit_logs
          WHERE project_id = ?
             OR (project_id IS NULL AND user_id = ? AND ? != '' AND gtm_id = ?)
          ORDER BY created_at DESC LIMIT 50`
-      ).bind(projectId, ownerId, gtmId, gtmId).all();
+      )
+        .bind(projectId, ownerId, gtmId, gtmId)
+        .all();
       results = res.results || [];
     } else if (gtmId) {
       const res = await env.DB.prepare(
@@ -72,7 +99,9 @@ async function handleGetLogs(request: Request, env: any) {
          FROM audit_logs
          WHERE user_id = ? AND gtm_id = ?
          ORDER BY created_at DESC LIMIT 50`
-      ).bind(userId, gtmId).all();
+      )
+        .bind(userId, gtmId)
+        .all();
       results = res.results || [];
     } else {
       const res = await env.DB.prepare(
@@ -80,7 +109,9 @@ async function handleGetLogs(request: Request, env: any) {
          FROM audit_logs
          WHERE user_id = ?
          ORDER BY created_at DESC LIMIT 50`
-      ).bind(userId).all();
+      )
+        .bind(userId)
+        .all();
       results = res.results || [];
     }
 
@@ -109,6 +140,9 @@ async function handleGetLogs(request: Request, env: any) {
     });
   } catch (err: any) {
     console.error('Error fetching audit logs:', err.message);
-    return new Response(JSON.stringify({ error: 'Failed to fetch audit logs' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to fetch audit logs' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

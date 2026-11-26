@@ -2,12 +2,12 @@ import type { Context } from 'hono';
 import type { WorkerBindings } from '../_types';
 import { renderPdfFromHtml, sanitizeFilename } from '../_pdf';
 import { buildGa4AuditPdfHtml } from '../_pdfTemplates';
-import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from './_shared';
+import { ensureProjectsSchema, verifyClerkAuth, resolveProjectAccess } from './_shared';
 
 export async function handleGa4AuditPdf(
   c: Context<{ Bindings: WorkerBindings }>
 ): Promise<Response> {
-  const auth = getClerkAuthContext(c.req.raw);
+  const auth = await verifyClerkAuth(c.req.raw, c.env);
   if (!auth) {
     return c.json({ error: 'Unauthorized' }, 401);
   }

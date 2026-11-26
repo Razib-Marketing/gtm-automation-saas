@@ -1,5 +1,6 @@
 import { getGoogleAccessToken, extractClerkUserId } from '../gtm/_utils';
-import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from './_shared';
+import { ensureProjectsSchema, verifyClerkAuth, resolveProjectAccess } from './_shared';
+import { isValidGa4PropertyId } from '../_security';
 import {
   analyzeGa4AuditSnapshot,
   buildDemoGa4Snapshot,
@@ -88,7 +89,7 @@ export async function onRequest(context: any) {
   // 2. Audit History Mode
   if (isHistory) {
     try {
-      const clerkUserId = extractClerkUserId(request);
+      const clerkUserId = await extractClerkUserId(request, env);
       if (!env.DB) {
         return new Response(JSON.stringify({ logs: [] }), {
           status: 200,
@@ -102,9 +103,15 @@ export async function onRequest(context: any) {
 
       let results: any[] = [];
       if (filterProjectId) {
-        const authCtx = getClerkAuthContext(request);
+        const authCtx = await verifyClerkAuth(request, env);
         const access = authCtx ? await resolveProjectAccess(env.DB, authCtx, filterProjectId) : null;
-        const ownerId = access?.project?.user_id || clerkUserId;
+        if (!access) {
+          return new Response(JSON.stringify({ logs: [] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        const ownerId = access.project.user_id;
         const res = await env.DB.prepare(
           `SELECT id, project_id, property_id, property_name, health_score, critical_count, warning_count, passed_count, raw_data, created_at
            FROM ga4_audit_logs
@@ -157,23 +164,24 @@ export async function onRequest(context: any) {
   }
 
   // 3. Live Property Audit Mode
-  if (!rawPropertyId) {
-    return new Response(JSON.stringify({ error: 'Missing propertyId parameter (expected properties/XXXX or ?demo=true)' }), {
+  if (!rawPropertyId || !isValidGa4PropertyId(rawPropertyId)) {
+    return new Response(JSON.stringify({ error: 'Missing or invalid propertyId parameter (expected properties/XXXX or ?demo=true)' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  const propertyId = rawPropertyId.startsWith('properties/')
-    ? rawPropertyId
-    : `properties/${rawPropertyId}`;
+  const cleanPropId = rawPropertyId.trim();
+  const propertyId = cleanPropId.startsWith('properties/')
+    ? cleanPropId
+    : `properties/${cleanPropId}`;
 
   try {
-    const clerkUserId = extractClerkUserId(request);
+    const clerkUserId = await extractClerkUserId(request, env);
     let fallbackOwnerId: string | null = null;
     if (filterProjectId && env.DB) {
       await ensureGa4AuditLogsSchema(env.DB);
-      const authCtx = getClerkAuthContext(request);
+      const authCtx = await verifyClerkAuth(request, env);
       const access = authCtx ? await resolveProjectAccess(env.DB, authCtx, filterProjectId) : null;
       if (access) {
         fallbackOwnerId = access.project.user_id;

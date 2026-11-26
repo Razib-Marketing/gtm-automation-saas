@@ -35,6 +35,9 @@ import * as route_26 from '../functions/api/stripe/webhook.ts';
 import * as route_27 from '../functions/api/user/me.ts';
 import * as route_28 from '../functions/api/user/track-deployment.ts';
 import * as route_polar_checkout from '../functions/api/polar/checkout.ts';
+import * as route_polar_products from '../functions/api/polar/products.ts';
+import * as route_polar_portal from '../functions/api/polar/portal.ts';
+import * as route_polar_sync from '../functions/api/polar/sync.ts';
 import * as route_polar_webhook from '../functions/api/polar/webhook.ts';
 import * as route_projects from '../functions/api/projects.ts';
 import * as route_organizations from '../functions/api/organizations.ts';
@@ -70,6 +73,9 @@ const routes = {
   '/api/stripe/checkout': route_25,
   '/api/stripe/webhook': route_26,
   '/api/polar/checkout': route_polar_checkout,
+  '/api/polar/products': route_polar_products,
+  '/api/polar/portal': route_polar_portal,
+  '/api/polar/sync': route_polar_sync,
   '/api/polar/webhook': route_polar_webhook,
   '/api/projects': route_projects,
   '/api/organizations': route_organizations,
@@ -80,6 +86,72 @@ const routes = {
 
 
 const app = new Hono<{ Bindings: WorkerBindings }>();
+
+function isAllowedCorsOrigin(origin: string | null, requestUrl: URL): boolean {
+  if (!origin) return false;
+  if (origin === 'https://gtmobserver.com' || origin === 'https://app.gtmobserver.com') {
+    return true;
+  }
+  const reqHost = requestUrl.hostname.toLowerCase();
+  if (reqHost === 'localhost' || reqHost === '127.0.0.1') {
+    try {
+      const oUrl = new URL(origin);
+      return oUrl.hostname === 'localhost' || oUrl.hostname === '127.0.0.1';
+    } catch (_) {
+      return false;
+    }
+  }
+  return false;
+}
+
+// Global Security Headers, Strict API CORS Allowlist, and API No-Store Middleware
+app.use('*', async (c, next) => {
+  const reqUrl = new URL(c.req.url);
+  const isApi = reqUrl.pathname.startsWith('/api/');
+  const origin = c.req.header('Origin') || null;
+  const corsAllowed = isApi && isAllowedCorsOrigin(origin, reqUrl);
+
+  if (isApi && c.req.method === 'OPTIONS') {
+    const preflightHeaders = new Headers();
+    if (corsAllowed && origin) {
+      preflightHeaders.set('Access-Control-Allow-Origin', origin);
+      preflightHeaders.set('Access-Control-Allow-Credentials', 'true');
+      preflightHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      preflightHeaders.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+      preflightHeaders.set('Access-Control-Max-Age', '86400');
+      preflightHeaders.set('Vary', 'Origin');
+    }
+    return new Response(null, { status: corsAllowed ? 204 : 403, headers: preflightHeaders });
+  }
+
+  await next();
+
+  const headers = new Headers(c.res.headers);
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+
+  if (isApi) {
+    headers.set('Cache-Control', 'no-store, private');
+    headers.set('Pragma', 'no-cache');
+    headers.set('Vary', 'Origin');
+    if (corsAllowed && origin) {
+      headers.set('Access-Control-Allow-Origin', origin);
+      headers.set('Access-Control-Allow-Credentials', 'true');
+      headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    }
+  }
+
+  c.res = new Response(c.res.body, {
+    status: c.res.status,
+    statusText: c.res.statusText,
+    headers
+  });
+});
 
 for (const [route, module] of Object.entries(routes)) {
   const handler = async (c: any) => {
@@ -167,7 +239,7 @@ app.get('*', async (c) => {
   }
 
   // 4. If visiting an app route on the marketing domain, redirect to app.gtmobserver.com
-  const appRoutes = ['/organization', '/access', '/billing', '/onboarding', '/dashboard', '/observer', '/projects', '/analytics', '/settings', '/support'];
+  const appRoutes = ['/organization', '/organizations', '/access', '/billing', '/onboarding', '/dashboard', '/observer', '/projects', '/analytics', '/settings', '/support'];
   const isAppRoute = appRoutes.some(r => url.pathname === r || url.pathname.startsWith(r + '/'));
 
   if (host === 'gtmobserver.com') {

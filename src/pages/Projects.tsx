@@ -4,6 +4,7 @@ import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { FolderKanban, ShieldAlert, ExternalLink } from 'lucide-react';
 import { PageTransition } from '../components/ui/PageTransition';
 import { useUser, useAuth } from '@clerk/clerk-react';
+import { startGoogleOAuth } from '../utils/googleOAuth';
 import '../pages/Dashboard.css';
 
 export const Projects: React.FC = () => {
@@ -18,12 +19,15 @@ export const Projects: React.FC = () => {
     
     const checkAuth = async () => {
       try {
-        const res = await fetch(`/api/auth/status?clerkUserId=${user?.id}`);
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch('/api/auth/status', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         const data = await res.json();
         setHasGoogleAuth(data.hasAuth);
         
         if (data.hasAuth) {
-          const token = await getToken();
           const accRes = await fetch('/api/gtm/accounts', {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -39,8 +43,12 @@ export const Projects: React.FC = () => {
     checkAuth();
   }, [user, isLoaded, getToken]);
 
-  const handleGoogleOAuth = () => {
-    window.location.href = `/api/auth/google/login?clerkUserId=${user?.id}`;
+  const handleGoogleOAuth = async () => {
+    try {
+      await startGoogleOAuth(getToken, '/organization');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to start Google OAuth');
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -11,7 +11,8 @@ import {
   ArrowRight,
   AlertCircle,
   CheckCircle2,
-  FlaskConical
+  FlaskConical,
+  ExternalLink
 } from 'lucide-react';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -20,23 +21,124 @@ import { setSandboxTier } from '../utils/localDemoStore';
 import './Dashboard.css';
 import './Pricing.css';
 
+interface PolarProductUI {
+  id: string;
+  tier: 'pro' | 'custom';
+  name: string;
+  description: string;
+  isRecurring: boolean;
+  recurringInterval: string | null;
+  amountType: 'fixed' | 'custom' | 'free';
+  priceAmount: number | null;
+  priceCurrency: string;
+  minimumAmount: number | null;
+  maximumAmount: number | null;
+  presetAmount: number | null;
+  benefits: string[];
+}
+
+function formatPolarPrice(cents: number | null, currency = 'usd'): string {
+  if (typeof cents !== 'number' || !Number.isFinite(cents)) return '$149';
+  const amount = cents / 100;
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: (currency || 'usd').toUpperCase(),
+      maximumFractionDigits: cents % 100 === 0 ? 0 : 2
+    }).format(amount);
+  } catch (_) {
+    return `$${Math.round(amount)}`;
+  }
+}
+
 export const Billing: React.FC = () => {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userTier, hasActiveSubscription, isSandboxMode, refreshWorkspace, projects } = useWorkspace();
+  const { userTier, workspaceLimit, hasActiveSubscription, isSandboxMode, refreshWorkspace, projects } = useWorkspace();
 
-  const [containers, setContainers] = useState(10);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [containers, setContainers] = useState(25);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [proProduct, setProProduct] = useState<PolarProductUI | null>(null);
+  const [customProduct, setCustomProduct] = useState<PolarProductUI | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   const params = new URLSearchParams(location.search);
   const requiresSubReason = params.get('reason') === 'subscription_required';
   const checkoutCancelled = params.get('checkout') === 'cancelled';
 
+  useEffect(() => {
+    if (isSandboxMode || !isSignedIn) return;
+    let cancelled = false;
+    const loadPolarCatalog = async () => {
+      setLoadingCatalog(true);
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch('/api/polar/products', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok) {
+          if (data.proProduct) setProProduct(data.proProduct);
+          if (data.customProduct) setCustomProduct(data.customProduct);
+        }
+      } catch (_) {
+      } finally {
+        if (!cancelled) setLoadingCatalog(false);
+      }
+    };
+    loadPolarCatalog();
+    return () => {
+      cancelled = true;
+    };
+  }, [isSandboxMode, isSignedIn, getToken]);
+
   const baseCustomPrice = Math.max(149, Math.ceil(containers * 14.9));
   const hasDiscount = containers >= 15;
-  const customPrice = hasDiscount ? Math.floor(baseCustomPrice * 0.9) : baseCustomPrice;
+  const computedCustomPrice = hasDiscount ? Math.floor(baseCustomPrice * 0.9) : baseCustomPrice;
+
+  const isCustomVariablePrice = !customProduct || customProduct.amountType === 'custom';
+  const proDisplayPrice = proProduct && proProduct.priceAmount !== null
+    ? formatPolarPrice(proProduct.priceAmount, proProduct.priceCurrency)
+    : '$149';
+  const proIntervalLabel =
+    proProduct?.isRecurring === false
+      ? 'one-time'
+      : `/${proProduct?.recurringInterval === 'year' ? 'yr' : 'mo'}`;
+
+  const customDisplayPrice = isCustomVariablePrice
+    ? `$${computedCustomPrice}`
+    : formatPolarPrice(customProduct?.priceAmount ?? null, customProduct?.priceCurrency);
+  const customIntervalLabel =
+    customProduct?.isRecurring === false
+      ? 'one-time'
+      : `/${customProduct?.recurringInterval === 'year' ? 'yr' : 'mo'}`;
+
+  const proFeatures =
+    proProduct?.benefits && proProduct.benefits.length > 0
+      ? proProduct.benefits
+      : [
+          'Up to 10 Isolated Client Projects',
+          'Unlimited GTM Recipe Deployments',
+          'Unlimited GTM Workspace Audits + PDF',
+          'Up to 10 GA4 Observer Monitors',
+          '22-Point GA4 Property Audits + PDF',
+          'Custom Schedules, WoW/MoM/YoY & Multi-Email Alerts'
+        ];
+
+  const customFeatures =
+    customProduct?.benefits && customProduct.benefits.length > 0
+      ? customProduct.benefits
+      : [
+          `${containers} Projects, GTM Containers & GA4 Monitors`,
+          'Unlimited GTM & 22-Point GA4 Audits',
+          'White-Label Sender Domains',
+          'Unlimited Multi-Recipient Alert Lists',
+          'Priority Onboarding & SLAs'
+        ];
 
   const handlePurchase = async (tier: 'pro' | 'custom') => {
     setErrorMsg('');
@@ -48,27 +150,58 @@ export const Billing: React.FC = () => {
       return;
     }
 
-    setCheckoutLoading(true);
+    setCheckoutLoading(tier);
     try {
       const token = await getToken();
+      const targetProduct = tier === 'custom' ? customProduct : proProduct;
       const res = await fetch('/api/polar/checkout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ tier, containers: tier === 'custom' ? containers : 10 })
+        body: JSON.stringify({
+          tier,
+          containers: tier === 'custom' ? containers : 10,
+          productId: targetProduct?.id || undefined
+        })
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setErrorMsg(data.error || 'Failed to initiate subscription checkout');
+        setErrorMsg(data.error || 'Failed to initiate Polar subscription checkout');
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'Network error while initiating checkout');
     } finally {
-      setCheckoutLoading(false);
+      setCheckoutLoading(null);
+    }
+  };
+
+  const handleOpenPortal = async () => {
+    setErrorMsg('');
+    if (isSandboxMode) {
+      setErrorMsg('Customer Portal is available in live production with Polar.sh billing.');
+      return;
+    }
+    setPortalLoading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch('/api/polar/portal', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.url) {
+        window.location.href = data.url;
+      } else {
+        setErrorMsg(data?.error || 'Could not open Polar Customer Portal yet.');
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Unable to connect to Polar Customer Portal');
+    } finally {
+      setPortalLoading(false);
     }
   };
 
@@ -107,7 +240,7 @@ export const Billing: React.FC = () => {
             }}
           >
             {hasActiveSubscription ? <CheckCircle2 size={15} /> : <CreditCard size={15} />}
-            2. Select Package &amp; Billing
+            2. Select Package &amp; Polar Billing
           </span>
           <span style={{ color: '#4B5563' }}>→</span>
           <span style={{ color: '#9CA3AF' }}>3. Project Onboarding</span>
@@ -122,8 +255,8 @@ export const Billing: React.FC = () => {
           </h1>
           <p className="dashboard-subtitle">
             {hasActiveSubscription
-              ? `Your organization is currently on the ${userTier.toUpperCase()} package. Manage capacity or launch project onboarding.`
-              : 'Select a subscription package to unlock your Organization Dashboard, guided Project Onboarding, GTM automation, and 24/7 GA4 Observer.'}
+              ? `Your organization is currently on the ${userTier.toUpperCase()} package (${workspaceLimit > 0 ? `up to ${workspaceLimit} workspaces` : 'active'}). Manage billing or launch project onboarding.`
+              : 'Select a Polar.sh subscription package to unlock your Organization Dashboard, guided Project Onboarding, GTM automation, and 24/7 GA4 Observer.'}
           </p>
         </div>
 
@@ -207,18 +340,41 @@ export const Billing: React.FC = () => {
           >
             <div>
               <div style={{ color: '#00F0FF', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em' }}>
-                ACTIVE SUBSCRIPTION
+                ACTIVE SUBSCRIPTION • POLAR.SH SYNCED
               </div>
               <h3 style={{ margin: '0.25rem 0', color: 'white', fontSize: '1.2rem' }}>
-                GTMObserver {userTier === 'custom' ? 'Custom Scale' : 'Pro'} Plan
+                {userTier === 'custom'
+                  ? customProduct?.name || 'GTMObserver Custom Scale Plan'
+                  : proProduct?.name || 'GTMObserver Pro Plan'}
               </h3>
               <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.88rem' }}>
                 {projects.length === 0
                   ? 'You have no projects configured yet. Start onboarding to set up your first project.'
-                  : `You currently have ${projects.length} active project${projects.length === 1 ? '' : 's'} in your organization.`}
+                  : `You currently have ${projects.length} active project${projects.length === 1 ? '' : 's'} in your organization${workspaceLimit > 0 ? ` (capacity: ${workspaceLimit})` : ''}.`}
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={handleOpenPortal}
+                disabled={portalLoading}
+                style={{
+                  padding: '0.75rem 1.15rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(0, 240, 255, 0.35)',
+                  background: 'rgba(0, 240, 255, 0.08)',
+                  color: '#00F0FF',
+                  fontWeight: 600,
+                  fontSize: '0.88rem',
+                  cursor: portalLoading ? 'wait' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem'
+                }}
+              >
+                {portalLoading ? <Loader2 size={15} className="animate-spin" /> : <ExternalLink size={15} />}
+                Manage Billing &amp; Invoices
+              </button>
               <Link to="/onboarding" className="btn-deploy-bulk" style={{ marginTop: 0, textDecoration: 'none', padding: '0.75rem 1.25rem' }}>
                 + Configure New Project <ArrowRight size={16} style={{ marginLeft: '0.4rem' }} />
               </Link>
@@ -264,6 +420,13 @@ export const Billing: React.FC = () => {
           </div>
         )}
 
+        {loadingCatalog && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#9CA3AF', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            <Loader2 size={15} className="animate-spin" color="#00F0FF" />
+            <span>Syncing live plan pricing from Polar.sh...</span>
+          </div>
+        )}
+
         <div
           className="pricing-grid-container"
           style={{ maxWidth: '100%', padding: 0, gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 290px), 1fr))' }}
@@ -276,29 +439,31 @@ export const Billing: React.FC = () => {
             <div className="tier-title-container">
               <div className="tier-title-header">
                 <Sparkles size={20} className="feature-icon-active" />
-                <h3>Pro Organization</h3>
+                <h3>{proProduct?.name || 'Pro Organization'}</h3>
               </div>
               <div className="tier-price-display">
-                $149<span>/mo</span>
+                {proDisplayPrice}
+                <span>{proIntervalLabel}</span>
               </div>
-              <p className="tier-desc">For agencies &amp; hospitality/e-commerce teams</p>
+              <p className="tier-desc">
+                {proProduct?.description || 'For agencies & hospitality/e-commerce teams'}
+              </p>
             </div>
 
             <ul className="tier-features-list">
-              <li><Check className="feature-icon-active" size={20} /> <span>Up to 10 Isolated Client Projects</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited GTM Recipe Deployments</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited GTM Workspace Audits + PDF</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Up to 10 GA4 Observer Monitors</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>22-Point GA4 Property Audits + PDF</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Custom Schedules, WoW/MoM/YoY &amp; Multi-Email Alerts</span></li>
+              {proFeatures.map((feat, i) => (
+                <li key={i}>
+                  <Check className="feature-icon-active" size={20} /> <span>{feat}</span>
+                </li>
+              ))}
             </ul>
 
             <button
               onClick={() => handlePurchase('pro')}
-              disabled={checkoutLoading || (!isSandboxMode && userTier === 'pro')}
+              disabled={checkoutLoading !== null || (!isSandboxMode && userTier === 'pro')}
               className="checkout-btn primary"
             >
-              {checkoutLoading ? (
+              {checkoutLoading === 'pro' ? (
                 <Loader2 className="animate-spin" size={20} />
               ) : isSandboxMode ? (
                 'Activate Pro & Start Onboarding →'
@@ -323,20 +488,20 @@ export const Billing: React.FC = () => {
             <div className="tier-title-container">
               <div className="tier-title-header">
                 <Shield size={20} className="feature-icon-active" />
-                <h3>Custom Enterprise Scale</h3>
+                <h3>{customProduct?.name || 'Custom Enterprise Scale'}</h3>
               </div>
               <div className="tier-price-display">
-                {hasDiscount && (
+                {isCustomVariablePrice && hasDiscount && (
                   <span style={{ textDecoration: 'line-through', fontSize: '1.25rem', color: '#6B7280', marginRight: '0.5rem' }}>
                     ${baseCustomPrice}
                   </span>
                 )}
-                ${customPrice}
-                <span>/mo</span>
+                {customDisplayPrice}
+                <span>{customIntervalLabel}</span>
               </div>
               <p className="tier-desc">
-                Scale across 10–100+ client projects
-                {hasDiscount && (
+                {customProduct?.description || 'Scale across 10–100+ client projects'}
+                {isCustomVariablePrice && hasDiscount && (
                   <span style={{ display: 'block', color: '#10B981', fontWeight: 600, marginTop: '0.25rem', fontSize: '0.875rem' }}>
                     10% Volume Discount Applied!
                   </span>
@@ -360,24 +525,24 @@ export const Billing: React.FC = () => {
             </div>
 
             <ul className="tier-features-list">
-              <li><Check className="feature-icon-active" size={20} /> <span>{containers} Projects, GTM Containers &amp; GA4 Monitors</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited GTM &amp; 22-Point GA4 Audits</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>White-Label Sender Domains</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Unlimited Multi-Recipient Alert Lists</span></li>
-              <li><Check className="feature-icon-active" size={20} /> <span>Priority Onboarding &amp; SLAs</span></li>
+              {customFeatures.map((feat, i) => (
+                <li key={i}>
+                  <Check className="feature-icon-active" size={20} /> <span>{feat}</span>
+                </li>
+              ))}
             </ul>
 
             <button
               onClick={() => handlePurchase('custom')}
-              disabled={checkoutLoading}
+              disabled={checkoutLoading !== null}
               className="checkout-btn outline"
             >
-              {checkoutLoading ? (
+              {checkoutLoading === 'custom' ? (
                 <Loader2 className="animate-spin" size={20} />
               ) : isSandboxMode ? (
                 `Activate Custom (${containers}) & Start Onboarding →`
               ) : userTier === 'custom' ? (
-                'Update Capacity'
+                'Update Capacity in Polar'
               ) : (
                 'Select Custom & Continue to Onboarding →'
               )}

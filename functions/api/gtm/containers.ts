@@ -1,12 +1,16 @@
 import { getGoogleAccessToken } from './_utils';
+import { isValidGtmAccountId } from '../_security';
 
 export async function onRequest(context) {
   const { env, request } = context;
   const url = new URL(request.url);
-  const accountId = url.searchParams.get('accountId');
+  const accountId = (url.searchParams.get('accountId') || '').trim();
 
-  if (!accountId) {
-    return new Response(JSON.stringify({ error: 'accountId is required' }), { status: 400 });
+  if (!isValidGtmAccountId(accountId)) {
+    return new Response(JSON.stringify({ error: 'Valid numeric accountId is required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {

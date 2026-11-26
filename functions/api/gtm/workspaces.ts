@@ -1,4 +1,5 @@
 import { getGoogleAccessToken } from './_utils';
+import { isValidGtmContainerPath } from '../_security';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -6,13 +7,14 @@ export async function onRequest(context) {
   const rawContainerPath = url.searchParams.get('containerPath');
   const accountId = url.searchParams.get('accountId');
   const containerId = url.searchParams.get('containerId');
-  const containerPath =
+  const containerPath = (
     rawContainerPath ||
-    (accountId && containerId ? `accounts/${accountId}/containers/${containerId}` : '');
+    (accountId && containerId ? `accounts/${accountId}/containers/${containerId}` : '')
+  ).trim();
 
-  if (!containerPath) {
+  if (!isValidGtmContainerPath(containerPath)) {
     return new Response(
-      JSON.stringify({ error: 'containerPath (or accountId and containerId) is required' }),
+      JSON.stringify({ error: 'Valid containerPath (accounts/<id>/containers/<id>) is required' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }

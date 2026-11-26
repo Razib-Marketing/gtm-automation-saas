@@ -187,9 +187,15 @@ export const Observer: React.FC<{ project?: Project }> = ({ project }) => {
     }
     if (user?.id) {
       const email = user.primaryEmailAddress?.emailAddress || '';
-      fetch(`/api/user/me?clerkUserId=${user.id}&email=${encodeURIComponent(email)}`)
-        .then(r => r.json())
+      getToken()
+        .then(token => {
+          if (!token) return null;
+          return fetch(`/api/user/me?email=${encodeURIComponent(email)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).then(r => r.json());
+        })
         .then(data => {
+          if (!data) return;
           if (data && data.subscription_tier) {
             setUserTier(data.subscription_tier);
           }

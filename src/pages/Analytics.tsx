@@ -57,8 +57,12 @@ export const Analytics: React.FC<AnalyticsProps> = ({ project }) => {
       try {
         const email = user?.primaryEmailAddress?.emailAddress || '';
         const token = await getToken();
+        if (!token) return;
+        const authHeaders = { Authorization: `Bearer ${token}` };
 
-        const meRes = await fetch(`/api/user/me?clerkUserId=${user?.id}&email=${encodeURIComponent(email)}`);
+        const meRes = await fetch(`/api/user/me?email=${encodeURIComponent(email)}`, {
+          headers: authHeaders
+        });
         const meData = await meRes.json();
         if (meData && meData.subscription_tier) {
           setUserTier(meData.subscription_tier);
@@ -66,9 +70,9 @@ export const Analytics: React.FC<AnalyticsProps> = ({ project }) => {
         }
 
         const gtmQuery = project
-          ? `/api/gtm/audit-logs?userId=${user?.id}&projectId=${encodeURIComponent(project.id)}&gtmId=${encodeURIComponent(project.gtm_container_public_id || '')}`
-          : `/api/gtm/audit-logs?userId=${user?.id}`;
-        const auditRes = await fetch(gtmQuery);
+          ? `/api/gtm/audit-logs?projectId=${encodeURIComponent(project.id)}&gtmId=${encodeURIComponent(project.gtm_container_public_id || '')}`
+          : '/api/gtm/audit-logs';
+        const auditRes = await fetch(gtmQuery, { headers: authHeaders });
         const auditData = await auditRes.json();
         if (auditData.logs) {
           setRecentAudits(auditData.logs);

@@ -1,4 +1,5 @@
 import { getGoogleAccessToken } from './_utils';
+import { isValidGtmWorkspacePath } from '../_security';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -10,8 +11,11 @@ export async function onRequest(context) {
   try {
     const { containerPath, measurementId } = await request.json();
 
-    if (!containerPath || !measurementId) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    if (!isValidGtmWorkspacePath(containerPath) || !measurementId) {
+      return new Response(JSON.stringify({ error: 'Missing or invalid required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const accessToken = await getGoogleAccessToken(env, request);
@@ -41,11 +45,9 @@ export async function onRequest(context) {
       }
     }
 
-    let debugTags = [];
     if (!isConfigured && tagsRes.ok) {
       const tagsData: any = await tagsRes.json();
       const existingTags = tagsData.tag || [];
-      debugTags = existingTags; // Dump the entire tags array to see what types exist!
       
       for (const t of existingTags) {
         // Broaden the check to gaawc (Google Tag) and gaawe (Event tags that might have overridden it)
@@ -64,8 +66,6 @@ export async function onRequest(context) {
 
     const responsePayload: any = { isConfigured };
     if (!isConfigured) {
-      responsePayload.debugTags = debugTags; // Send back to frontend so we can inspect it in network tab
-      // Include API statuses for debugging 401/403/404 issues
       responsePayload.debugApiStatus = {
         varsStatus: varsRes.status,
         tagsStatus: tagsRes.status,

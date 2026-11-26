@@ -22,6 +22,7 @@ import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
 import { OrganizationDashboard } from './pages/OrganizationDashboard';
 import { AccessDashboard } from './pages/AccessDashboard';
+import { OrganizationAccessPage } from './pages/OrganizationAccessPage';
 import { Billing } from './pages/Billing';
 import { ProjectOnboarding } from './pages/ProjectOnboarding';
 import { ProjectOverview } from './pages/ProjectOverview';
@@ -127,6 +128,42 @@ const ProjectScopedView: React.FC<{
   return <ProjectSettings project={project} />;
 };
 
+const OrganizationScopedView: React.FC<{
+  section: 'dashboard' | 'access';
+}> = ({ section }) => {
+  const { orgId } = useParams();
+  const { getOrganizationById, loading } = useWorkspace();
+  const organization = getOrganizationById(orgId);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 className="animate-spin" size={32} color="#00F0FF" />
+      </div>
+    );
+  }
+
+  if (!organization) {
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+        <FolderX size={44} color="#F87171" />
+        <h2 style={{ color: 'white', margin: 0 }}>Organization Not Found</h2>
+        <p style={{ color: '#9CA3AF', maxWidth: '420px', margin: 0 }}>
+          The requested client organization either does not exist or you do not have access to it.
+        </p>
+        <Link to="/organization" className="btn-deploy-bulk" style={{ textDecoration: 'none', marginTop: '0.5rem' }}>
+          &larr; Return to All Organizations
+        </Link>
+      </div>
+    );
+  }
+
+  if (section === 'access') {
+    return <OrganizationAccessPage organization={organization} />;
+  }
+  return <OrganizationDashboard scopedOrg={organization} />;
+};
+
 const AppRoutes = () => {
   const location = useLocation();
 
@@ -179,6 +216,22 @@ const AppRoutes = () => {
           element={
             <SubscriptionGate>
               <OrganizationDashboard />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/organizations/:orgId"
+          element={
+            <SubscriptionGate>
+              <OrganizationScopedView section="dashboard" />
+            </SubscriptionGate>
+          }
+        />
+        <Route
+          path="/organizations/:orgId/access"
+          element={
+            <SubscriptionGate>
+              <OrganizationScopedView section="access" />
             </SubscriptionGate>
           }
         />
@@ -294,6 +347,7 @@ const AppLayout = () => {
 
   const innerPaths = [
     '/organization',
+    '/organizations',
     '/access',
     '/billing',
     '/onboarding',

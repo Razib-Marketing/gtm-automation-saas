@@ -1,7 +1,7 @@
 import {
   ensureUsersSchema,
   ensureProjectsSchema,
-  getClerkAuthContext,
+  verifyClerkAuth,
   resolveUserEmail,
   claimPendingAccess,
   resolveProjectAccess,
@@ -9,6 +9,7 @@ import {
   canManageProject,
   normalizeAccessRole
 } from './ga4/_shared';
+import { escapeHtml } from './_security';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -45,20 +46,25 @@ async function sendAccessInviteEmail(
         ? projectNames.join(', ')
         : `${projectNames.slice(0, 3).join(', ')} (+${projectNames.length - 3} more)`;
 
+    const safeListText = escapeHtml(listText);
+    const safeInviter = escapeHtml(inviterEmail || 'A teammate');
+    const safeRole = escapeHtml(role.toUpperCase());
+    const safeRecipient = escapeHtml(recipientEmail);
+
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#0F172A; color:#F8FAFC; padding:28px; border-radius:12px; max-width:560px; margin:0 auto;">
         <h2 style="margin:0 0 8px; color:#00F0FF;">GTMObserver Project Access Granted</h2>
         <p style="margin:0 0 16px; color:#CBD5E1; line-height:1.5;">
-          <strong>${inviterEmail || 'A teammate'}</strong> granted you <strong>${role.toUpperCase()}</strong> access to:
+          <strong>${safeInviter}</strong> granted you <strong>${safeRole}</strong> access to:
         </p>
         <div style="background:#1E293B; border:1px solid rgba(0,240,255,0.25); padding:14px 16px; border-radius:8px; margin-bottom:20px; color:#FFFFFF; font-weight:600;">
-          ${listText}
+          ${safeListText}
         </div>
         <a href="https://app.gtmobserver.com/organization" style="display:inline-block; background:#00F0FF; color:#020617; font-weight:700; padding:11px 20px; border-radius:8px; text-decoration:none;">
           Open Organization Dashboard &rarr;
         </a>
         <p style="margin:20px 0 0; font-size:12px; color:#64748B;">
-          Sign in with <strong>${recipientEmail}</strong> on app.gtmobserver.com to access your shared projects immediately.
+          Sign in with <strong>${safeRecipient}</strong> on app.gtmobserver.com to access your shared projects immediately.
         </p>
       </div>
     `;
@@ -81,7 +87,7 @@ async function sendAccessInviteEmail(
 
 export async function onRequest(context: any) {
   const { env, request } = context;
-  const auth = getClerkAuthContext(request);
+  const auth = await verifyClerkAuth(request, env);
   if (!auth) {
     return json({ error: 'Unauthorized' }, 401);
   }

@@ -1,4 +1,5 @@
 import { getGoogleAccessToken } from './_utils';
+import { isValidGtmWorkspacePath } from '../_security';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -10,8 +11,11 @@ export async function onRequest(context) {
   try {
     const { type, containerPath, payload } = await request.json();
 
-    if (!type || !containerPath || !payload) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    if (!type || !isValidGtmWorkspacePath(containerPath) || !payload) {
+      return new Response(JSON.stringify({ error: 'Missing or invalid required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const accessToken = await getGoogleAccessToken(env, request);

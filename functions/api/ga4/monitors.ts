@@ -3,16 +3,17 @@ import {
   ensureMonitorsSchema,
   ensureAlertsSchema,
   ensureProjectsSchema,
-  getClerkAuthContext,
+  verifyClerkAuth,
   resolveProjectAccess,
   canEditProject,
   isValidTimeHHMM,
   sanitizeTimezone
 } from './_shared';
+import { isValidGa4PropertyId } from '../_security';
 
 export async function onRequest(context: any) {
   const { env, request } = context;
-  const auth = getClerkAuthContext(request);
+  const auth = await verifyClerkAuth(request, env);
   const userId = auth?.userId || null;
 
   if (!auth || !userId) {
@@ -200,8 +201,8 @@ export async function onRequest(context: any) {
         ];
       }
 
-      if (!propertyId || !alertEmail) {
-        return new Response(JSON.stringify({ error: 'Missing propertyId or valid alertEmail' }), { status: 400 });
+      if (!propertyId || !isValidGa4PropertyId(propertyId) || !alertEmail) {
+        return new Response(JSON.stringify({ error: 'Missing or invalid propertyId or alertEmail' }), { status: 400 });
       }
 
       const sanitizedConditions = conditions.map((c: any) => {

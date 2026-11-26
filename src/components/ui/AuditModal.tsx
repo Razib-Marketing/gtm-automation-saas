@@ -121,9 +121,14 @@ export const AuditModal = ({
       hasSavedRef.current = true;
       const saveLog = async () => {
         try {
+          const token = await getToken();
+          if (!token) return;
           const res = await fetch('/api/gtm/audit-logs', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
             body: JSON.stringify({
               userId,
               projectId: projectId || null,

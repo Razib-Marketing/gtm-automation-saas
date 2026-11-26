@@ -1,4 +1,5 @@
 import { getGoogleAccessToken, extractClerkUserId } from './_utils';
+import { isValidGtmWorkspacePath } from '../_security';
 import { safaraTemplate, synxisTemplate, ihotelierTemplate, windsurferTemplate, mewsTemplate, woocommerceTemplate, getBasicTemplate } from './templates/index';
 
 // Only used for payload generation
@@ -345,8 +346,11 @@ export async function onRequest(context) {
   try {
     const { containerPath, moduleIds, measurementId, isNewGTM, customFormEvents, moduleConfigs, fbPixelId, googleAdsId } = await request.json();
 
-    if (!containerPath || !measurementId || !Array.isArray(moduleIds)) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    if (!isValidGtmWorkspacePath(containerPath) || !measurementId || !Array.isArray(moduleIds)) {
+      return new Response(JSON.stringify({ error: 'Missing or invalid required fields' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     const configMap = new Map();
@@ -356,7 +360,7 @@ export async function onRequest(context) {
       }
     }
 
-    const clerkUserId = extractClerkUserId(request);
+    const clerkUserId = await extractClerkUserId(request, env);
     let userRow: any = null;
     try {
       userRow = await env.DB.prepare('SELECT email, subscription_tier FROM users WHERE id = ?').bind(clerkUserId).first();

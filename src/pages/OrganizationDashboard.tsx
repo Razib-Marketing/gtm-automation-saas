@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@clerk/clerk-react';
 import {
   FolderKanban,
   PlusCircle,
+  ArrowLeft,
   ArrowRight,
   Search,
   Activity,
@@ -35,7 +36,7 @@ import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
 import { useWorkspace } from '../context/WorkspaceContext';
 import { WEBSITE_TYPES, getWebsiteTypeMeta } from '../types/project';
-import type { Project, WebsitePerspective, AccessRole, ProjectAccessGrant } from '../types/project';
+import type { Project, Organization, WebsitePerspective, AccessRole, ProjectAccessGrant } from '../types/project';
 import {
   resetSandboxToNewUser,
   seedSandboxSampleProjects,
@@ -53,7 +54,7 @@ import {
 import './Dashboard.css';
 import './OrganizationDashboard.css';
 
-export const OrganizationDashboard: React.FC = () => {
+export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ scopedOrg }) => {
   const {
     organizations,
     projects,
@@ -114,9 +115,29 @@ export const OrganizationDashboard: React.FC = () => {
   const [bulkOrgTarget, setBulkOrgTarget] = useState('');
   const [bulkProcessing, setBulkProcessing] = useState(false);
 
-  const isTrashView = activeOrgId === 'trash';
-
   const params = new URLSearchParams(location.search);
+  const urlScopeParam = params.get('scope');
+  const urlTabParam = params.get('tab');
+  const urlCreateOrg = params.get('createOrg') === '1';
+
+  useEffect(() => {
+    if (scopedOrg) {
+      setActiveOrgId(scopedOrg.id);
+      return;
+    }
+    if (urlScopeParam && ['all', 'personal', 'shared', 'trash'].includes(urlScopeParam)) {
+      setActiveOrgId(urlScopeParam);
+    }
+  }, [scopedOrg, urlScopeParam, setActiveOrgId]);
+
+  useEffect(() => {
+    if (urlCreateOrg) {
+      setShowCreateOrgModal(true);
+    }
+  }, [urlCreateOrg]);
+
+  const isTrashView = scopedOrg ? urlTabParam === 'trash' : activeOrgId === 'trash';
+
   const createdProjectId = params.get('created');
   const createdProject = createdProjectId
     ? projects.find((p) => p.id === createdProjectId)
@@ -131,8 +152,18 @@ export const OrganizationDashboard: React.FC = () => {
     [projects]
   );
 
+  const visibleTrashedProjects = useMemo(() => {
+    if (scopedOrg) {
+      return trashedProjects.filter((p) => p.organization_id === scopedOrg.id);
+    }
+    return trashedProjects;
+  }, [trashedProjects, scopedOrg]);
+
   const scopedProjects = useMemo(() => {
-    if (isTrashView) return trashedProjects;
+    if (isTrashView) return visibleTrashedProjects;
+    if (scopedOrg) {
+      return projects.filter((p) => p.organization_id === scopedOrg.id);
+    }
     if (activeOrgId === 'all') return projects;
     if (activeOrgId === 'personal') {
       return projects.filter((p) => !p.organization_id && (p.accessSource || 'owner') === 'owner');
@@ -141,7 +172,7 @@ export const OrganizationDashboard: React.FC = () => {
       return projects.filter((p) => p.accessSource && p.accessSource !== 'owner');
     }
     return projects.filter((p) => p.organization_id === activeOrgId);
-  }, [projects, trashedProjects, activeOrgId, isTrashView]);
+  }, [projects, visibleTrashedProjects, activeOrgId, isTrashView, scopedOrg]);
 
   const filteredProjects = useMemo(() => {
     return scopedProjects.filter((p) => {
@@ -178,7 +209,11 @@ export const OrganizationDashboard: React.FC = () => {
     });
   }, [scopedProjects, filterType, healthFilter, searchQuery, isTrashView]);
 
-  const activeScopeStatsSource = isTrashView ? projects : scopedProjects;
+  const orgAllActive = useMemo(
+    () => (scopedOrg ? projects.filter((p) => p.organization_id === scopedOrg.id) : projects),
+    [scopedOrg, projects]
+  );
+  const activeScopeStatsSource = isTrashView ? orgAllActive : scopedProjects;
   const totalGa4Linked = activeScopeStatsSource.filter((p) => Boolean(p.ga4_property_id)).length;
   const totalGtmLinked = activeScopeStatsSource.filter((p) => Boolean(p.gtm_container_id || p.gtm_container_public_id)).length;
   const totalMonitors = activeScopeStatsSource.reduce((sum, p) => sum + (p.monitorCount || 0), 0);
@@ -382,7 +417,10 @@ export const OrganizationDashboard: React.FC = () => {
         return;
       }
       const token = await getToken();
-      const res = await fetch('/api/projects?emptyTrash=true', {
+      const emptyUrl = scopedOrg
+        ? `/api/projects?emptyTrash=true&organizationId=${encodeURIComponent(scopedOrg.id)}`
+        : '/api/projects?emptyTrash=true';
+      const res = await fetch(emptyUrl, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -542,7 +580,12 @@ export const OrganizationDashboard: React.FC = () => {
       setNewOrgName('');
       setNewOrgDesc('');
       setShowCreateOrgModal(false);
-      if (data.organization?.id) setActiveOrgId(data.organization.id);
+      if (data.organization?.id) {
+        setActiveOrgId(data.organization.id);
+        await refreshWorkspace();
+        navigate(`/organizations/${encodeURIComponent(data.organization.id)}`);
+        return;
+      }
       await refreshWorkspace();
     } catch (err: any) {
       alert(err.message || 'Unable to create organization');
@@ -742,6 +785,24 @@ export const OrganizationDashboard: React.FC = () => {
           }}
         >
           <div>
+            {scopedOrg && (
+              <div style={{ marginBottom: '0.6rem' }}>
+                <Link
+                  to="/organization"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    color: '#00F0FF',
+                    textDecoration: 'none',
+                    fontSize: '0.82rem',
+                    fontWeight: 600
+                  }}
+                >
+                  <ArrowLeft size={14} /> All Organizations
+                </Link>
+              </div>
+            )}
             <div
               style={{
                 display: 'inline-flex',
@@ -758,111 +819,156 @@ export const OrganizationDashboard: React.FC = () => {
                 marginBottom: '0.6rem'
               }}
             >
-              <Layers size={13} />
-              ORGANIZATION LEVEL • {userTier.toUpperCase()} PLAN
+              {scopedOrg ? <Building2 size={13} /> : <Layers size={13} />}
+              {scopedOrg
+                ? `CLIENT ORGANIZATION • ${(scopedOrg.role || 'OWNER').toUpperCase()} • ${userTier.toUpperCase()} PLAN`
+                : `ORGANIZATION LEVEL • ${userTier.toUpperCase()} PLAN`}
             </div>
-            <h1 className="dashboard-title">Organization Dashboard</h1>
+            <h1 className="dashboard-title">{scopedOrg ? scopedOrg.name : 'Organization Dashboard'}</h1>
             <p className="dashboard-subtitle">
-              Manage 50+ client websites organized by company, share universal access with anyone, or manage closed projects in Trash.
+              {scopedOrg
+                ? scopedOrg.description ||
+                  `Dedicated workspace for ${scopedOrg.name} — manage all websites, telemetry, audits, and organizational access in one isolated hub.`
+                : 'Manage 50+ client websites organized by company, share universal access with anyone, or manage closed projects in Trash.'}
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
             <Link
-              to="/access"
+              to={scopedOrg ? `/organizations/${encodeURIComponent(scopedOrg.id)}/access` : '/access'}
               className="org-btn-secondary"
               style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
             >
               <ShieldCheck size={16} color="#00F0FF" />
-              Access &amp; Teams
+              {scopedOrg ? 'Organizational Access' : 'Access & Teams'}
             </Link>
             <Link
-              to="/onboarding"
+              to={scopedOrg ? `/onboarding?orgId=${encodeURIComponent(scopedOrg.id)}` : '/onboarding'}
               className="btn-deploy-bulk"
               style={{ marginTop: 0, textDecoration: 'none', padding: '0.72rem 1.25rem' }}
             >
               <PlusCircle size={17} style={{ marginRight: '0.45rem' }} />
-              New Project Setup
+              {scopedOrg ? `New Project in ${scopedOrg.name}` : 'New Project Setup'}
             </Link>
           </div>
         </motion.div>
 
         {/* Organization Switcher & Trash Bar */}
-        <div className="org-switcher-bar">
-          <div className="org-scope-pills">
-            <button
-              type="button"
-              className={`org-scope-pill ${activeOrgId === 'all' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveOrgId('all');
-                setSelectedIds([]);
-              }}
-            >
-              <Layers size={13} /> All Projects <span className="org-count-badge">{projects.length}</span>
-            </button>
-
-            <button
-              type="button"
-              className={`org-scope-pill ${activeOrgId === 'personal' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveOrgId('personal');
-                setSelectedIds([]);
-              }}
-            >
-              Personal <span className="org-count-badge">{personalCount}</span>
-            </button>
-
-            {organizations.map((org) => (
+        {scopedOrg ? (
+          <div className="org-switcher-bar">
+            <div className="org-scope-pills">
               <button
-                key={org.id}
                 type="button"
-                className={`org-scope-pill ${activeOrgId === org.id ? 'active' : ''}`}
+                className={`org-scope-pill ${!isTrashView ? 'active' : ''}`}
                 onClick={() => {
-                  setActiveOrgId(org.id);
+                  navigate(`/organizations/${encodeURIComponent(scopedOrg.id)}`);
                   setSelectedIds([]);
                 }}
               >
-                <Building2 size={13} /> {org.name}{' '}
-                <span className="org-count-badge">
-                  {projects.filter((p) => p.organization_id === org.id).length}
-                </span>
+                <Building2 size={13} /> Websites <span className="org-count-badge">{orgAllActive.length}</span>
               </button>
-            ))}
 
-            {sharedCount > 0 && (
               <button
                 type="button"
-                className={`org-scope-pill ${activeOrgId === 'shared' ? 'active' : ''}`}
+                className={`org-scope-pill trash-pill ${isTrashView ? 'active' : ''}`}
                 onClick={() => {
-                  setActiveOrgId('shared');
+                  navigate(`/organizations/${encodeURIComponent(scopedOrg.id)}?tab=trash`);
                   setSelectedIds([]);
                 }}
               >
-                <Users size={13} /> Shared With Me <span className="org-count-badge">{sharedCount}</span>
+                <Trash2 size={13} /> Org Trash <span className="org-count-badge">{visibleTrashedProjects.length}</span>
               </button>
-            )}
+            </div>
+
+            <Link
+              to={`/organizations/${encodeURIComponent(scopedOrg.id)}/access`}
+              className="org-scope-pill"
+              style={{ textDecoration: 'none', borderColor: 'rgba(0, 240, 255, 0.35)', color: '#00F0FF', background: 'rgba(0, 240, 255, 0.08)' }}
+            >
+              <Users size={13} /> {scopedOrg.memberCount ?? scopedOrg.members?.length ?? 1} Member(s) • Manage Access
+            </Link>
+          </div>
+        ) : (
+          <div className="org-switcher-bar">
+            <div className="org-scope-pills">
+              <button
+                type="button"
+                className={`org-scope-pill ${activeOrgId === 'all' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveOrgId('all');
+                  navigate('/organization');
+                  setSelectedIds([]);
+                }}
+              >
+                <Layers size={13} /> All Projects <span className="org-count-badge">{projects.length}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`org-scope-pill ${activeOrgId === 'personal' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveOrgId('personal');
+                  navigate('/organization?scope=personal');
+                  setSelectedIds([]);
+                }}
+              >
+                Personal <span className="org-count-badge">{personalCount}</span>
+              </button>
+
+              {organizations.map((org) => (
+                <button
+                  key={org.id}
+                  type="button"
+                  className={`org-scope-pill ${activeOrgId === org.id ? 'active' : ''}`}
+                  onClick={() => {
+                    navigate(`/organizations/${encodeURIComponent(org.id)}`);
+                    setSelectedIds([]);
+                  }}
+                >
+                  <Building2 size={13} /> {org.name}{' '}
+                  <span className="org-count-badge">
+                    {projects.filter((p) => p.organization_id === org.id).length}
+                  </span>
+                </button>
+              ))}
+
+              {sharedCount > 0 && (
+                <button
+                  type="button"
+                  className={`org-scope-pill ${activeOrgId === 'shared' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveOrgId('shared');
+                    navigate('/organization?scope=shared');
+                    setSelectedIds([]);
+                  }}
+                >
+                  <Users size={13} /> Shared With Me <span className="org-count-badge">{sharedCount}</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                className={`org-scope-pill trash-pill ${activeOrgId === 'trash' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveOrgId('trash');
+                  navigate('/organization?scope=trash');
+                  setSelectedIds([]);
+                }}
+              >
+                <Trash2 size={13} /> Trash <span className="org-count-badge">{trashedProjects.length}</span>
+              </button>
+            </div>
 
             <button
               type="button"
-              className={`org-scope-pill trash-pill ${activeOrgId === 'trash' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveOrgId('trash');
-                setSelectedIds([]);
-              }}
+              onClick={() => setShowCreateOrgModal(true)}
+              className="org-scope-pill"
+              style={{ borderColor: 'rgba(0, 240, 255, 0.35)', color: '#00F0FF', background: 'rgba(0, 240, 255, 0.08)' }}
             >
-              <Trash2 size={13} /> Trash <span className="org-count-badge">{trashedProjects.length}</span>
+              <Plus size={13} /> New Organization
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setShowCreateOrgModal(true)}
-            className="org-scope-pill"
-            style={{ borderColor: 'rgba(0, 240, 255, 0.35)', color: '#00F0FF', background: 'rgba(0, 240, 255, 0.08)' }}
-          >
-            <Plus size={13} /> New Organization
-          </button>
-        </div>
+        )}
 
         {/* Org KPI Strip */}
         <div className="org-kpi-grid">
@@ -955,14 +1061,14 @@ export const OrganizationDashboard: React.FC = () => {
                 <strong>Trash &amp; Closed Monitors:</strong> Every project moved to Trash immediately stops all automated GA4 Observer alerts. Restore anytime or delete permanently.
               </span>
             </div>
-            {trashedProjects.length > 0 && (
+            {visibleTrashedProjects.length > 0 && (
               <button
                 type="button"
                 onClick={() => setEmptyTrashConfirm(true)}
                 className="org-btn-danger"
                 style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}
               >
-                <Trash2 size={14} /> Empty Trash ({trashedProjects.length})
+                <Trash2 size={14} /> Empty Trash ({visibleTrashedProjects.length})
               </button>
             )}
           </div>
@@ -996,7 +1102,7 @@ export const OrganizationDashboard: React.FC = () => {
                   value={healthFilter}
                   onChange={(e) => setHealthFilter(e.target.value as any)}
                   className="module-input"
-                  style={{ fontSize: '0.82rem', padding: '0.55rem 0.85rem' }}
+                  style={{ width: 'auto', minWidth: '170px', flexShrink: 0, fontSize: '0.82rem', padding: '0.55rem 0.85rem' }}
                   aria-label="Filter by health"
                 >
                   <option value="all">Health: All</option>
@@ -1129,7 +1235,7 @@ export const OrganizationDashboard: React.FC = () => {
 
         {/* MAIN CONTENT AREA */}
         {isTrashView ? (
-          trashedProjects.length === 0 ? (
+          visibleTrashedProjects.length === 0 ? (
             <div className="module-card" style={{ padding: '2.5rem', textAlign: 'center', color: '#9CA3AF', cursor: 'default' }}>
               <Trash2 size={32} color="#6B7280" style={{ margin: '0 auto 0.75rem' }} />
               <div style={{ fontSize: '1rem', fontWeight: 600, color: '#E5E7EB', marginBottom: '0.25rem' }}>Trash is Empty</div>
@@ -1148,7 +1254,7 @@ export const OrganizationDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {trashedProjects.map((project) => (
+                  {visibleTrashedProjects.map((project) => (
                     <tr key={project.id}>
                       <td>
                         <div style={{ fontWeight: 700, color: '#FFFFFF' }}>{project.name}</div>
@@ -1200,14 +1306,22 @@ export const OrganizationDashboard: React.FC = () => {
               </table>
             </div>
           )
-        ) : projects.length === 0 ? (
+        ) : (scopedOrg ? orgAllActive.length === 0 : projects.length === 0) ? (
           <div className="oauth-card" style={{ maxWidth: '580px', margin: '2rem auto', textAlign: 'center', padding: '2.5rem' }}>
             <Sparkles size={40} color="#00F0FF" style={{ margin: '0 auto 1rem' }} />
-            <h2 style={{ color: 'white', marginBottom: '0.5rem' }}>Create Your First Project</h2>
+            <h2 style={{ color: 'white', marginBottom: '0.5rem' }}>
+              {scopedOrg ? `Add First Website to ${scopedOrg.name}` : 'Create Your First Project'}
+            </h2>
             <p style={{ color: '#9CA3AF', fontSize: '0.92rem', marginBottom: '1.5rem' }}>
-              Your organization is active! Launch guided onboarding to connect Google Analytics 4, link Google Tag Manager, and set initial anomaly triggers.
+              {scopedOrg
+                ? `Launch guided onboarding to link a website's GA4 property and GTM container directly into ${scopedOrg.name}.`
+                : 'Your organization is active! Launch guided onboarding to connect Google Analytics 4, link Google Tag Manager, and set initial anomaly triggers.'}
             </p>
-            <Link to="/onboarding" className="btn-deploy-bulk" style={{ textDecoration: 'none', marginTop: 0 }}>
+            <Link
+              to={scopedOrg ? `/onboarding?orgId=${encodeURIComponent(scopedOrg.id)}` : '/onboarding'}
+              className="btn-deploy-bulk"
+              style={{ textDecoration: 'none', marginTop: 0 }}
+            >
               Launch Project Onboarding &rarr;
             </Link>
           </div>
@@ -1848,7 +1962,7 @@ export const OrganizationDashboard: React.FC = () => {
               <div className="org-modal-body">
                 <p style={{ margin: '0 0 0.75rem', color: '#FFFFFF', fontSize: '0.95rem', fontWeight: 600 }}>
                   {emptyTrashConfirm
-                    ? `Permanently delete all ${trashedProjects.length} trashed project(s)?`
+                    ? `Permanently delete all ${visibleTrashedProjects.length} trashed project(s)?`
                     : `Permanently delete "${projectToPermDelete?.name}"?`}
                 </p>
                 <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.84rem', lineHeight: 1.5 }}>

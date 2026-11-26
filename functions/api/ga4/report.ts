@@ -1,5 +1,6 @@
 import { getGoogleAccessToken } from '../gtm/_utils';
-import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from './_shared';
+import { ensureProjectsSchema, verifyClerkAuth, resolveProjectAccess } from './_shared';
+import { isValidGa4PropertyId } from '../_security';
 
 export async function onRequestGet(context: any) {
   const { env, request } = context;
@@ -7,23 +8,24 @@ export async function onRequestGet(context: any) {
   const propertyIdParam = url.searchParams.get('propertyId');
   const projectIdParam = (url.searchParams.get('projectId') || '').trim();
 
-  if (!propertyIdParam) {
-    return new Response(JSON.stringify({ error: 'Missing propertyId' }), { 
+  if (!propertyIdParam || !isValidGa4PropertyId(propertyIdParam)) {
+    return new Response(JSON.stringify({ error: 'Missing or invalid propertyId' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
   // Ensure format is properties/{id}
-  const propertyId = propertyIdParam.startsWith('properties/')
-    ? propertyIdParam
-    : `properties/${propertyIdParam}`;
+  const cleanPropParam = propertyIdParam.trim();
+  const propertyId = cleanPropParam.startsWith('properties/')
+    ? cleanPropParam
+    : `properties/${cleanPropParam}`;
 
   try {
     let fallbackOwnerId: string | null = null;
     if (projectIdParam && env.DB) {
       await ensureProjectsSchema(env.DB);
-      const authCtx = getClerkAuthContext(request);
+      const authCtx = await verifyClerkAuth(request, env);
       const access = authCtx ? await resolveProjectAccess(env.DB, authCtx, projectIdParam) : null;
       if (access) {
         fallbackOwnerId = access.project.user_id;

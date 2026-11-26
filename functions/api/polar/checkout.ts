@@ -1,156 +1,175 @@
+import { isValidEmail, verifyClerkAuth } from '../_security';
+import {
+  computeCustomPlanAmountCents,
+  getPolarApiBase,
+  normalizePolarProduct
+} from './_shared';
+
 export async function onRequestPost(context: any) {
   const { request, env } = context;
 
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Missing authentication token' }), { 
-        status: 401, 
-        headers: { 'Content-Type': 'application/json' } 
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    let clerkUserId: string | null = null;
-    let tokenEmail: string | null = null;
-    try {
-      const payloadBase64 = token.split('.')[1];
-      const payloadString = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
-      const parsed = JSON.parse(payloadString);
-      clerkUserId = parsed.sub;
-      tokenEmail = parsed.email || parsed.email_address || null;
-    } catch (e) {
-      return new Response(JSON.stringify({ error: 'Invalid authentication token' }), { 
+    const auth = await verifyClerkAuth(request, env);
+    if (!auth || !auth.userId) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+    const clerkUserId = auth.userId;
 
-    if (!clerkUserId) {
-      return new Response(JSON.stringify({ error: 'User identifier not found in token' }), { 
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    const body = await request.json().catch(() => ({}));
+    const body: any = await request.json().catch(() => ({}));
     const tier = (body.tier === 'custom' ? 'custom' : 'pro') as 'pro' | 'custom';
-    const containers = tier === 'custom' ? parseInt(body.containers) || 10 : 10;
+    const rawContainers = parseInt(String(body.containers ?? ''), 10);
+    const containers =
+      tier === 'custom'
+        ? Math.max(10, Math.min(100, Number.isFinite(rawContainers) ? rawContainers : 10))
+        : 10;
+    const requestedProductId = typeof body.productId === 'string' ? body.productId.trim() : '';
 
-    // Fetch user from DB to obtain email if not in token
-    let userEmail = tokenEmail;
+    let userEmail = auth.email;
     try {
-      const dbResult = await env.DB.prepare('SELECT email FROM users WHERE id = ?').bind(clerkUserId).first();
-      if (dbResult?.email) {
+      const dbResult: any = await env.DB.prepare('SELECT email FROM users WHERE id = ?')
+        .bind(clerkUserId)
+        .first();
+      if (dbResult?.email && isValidEmail(dbResult.email)) {
         userEmail = dbResult.email;
       }
     } catch (_) {}
 
     const reqUrl = new URL(request.url);
     const isLocal = reqUrl.hostname === 'localhost' || reqUrl.hostname === '127.0.0.1';
-    const successUrl = isLocal
-      ? `${reqUrl.origin}/onboarding?checkout=success`
-      : 'https://app.gtmobserver.com/onboarding?checkout=success';
-
-    // 1. Check for manual/direct checkout URL override
-    const directUrl = tier === 'custom' 
-      ? (env.POLAR_CHECKOUT_URL_CUSTOM || env.POLAR_CHECKOUT_URL_PRO)
-      : env.POLAR_CHECKOUT_URL_PRO;
-
-    if (directUrl && !env.POLAR_ACCESS_TOKEN) {
-      // Append query parameters if possible
-      const sep = directUrl.includes('?') ? '&' : '?';
-      const redirectUrl = `${directUrl}${sep}customer_email=${encodeURIComponent(userEmail || '')}&metadata[clerkUserId]=${encodeURIComponent(clerkUserId)}&metadata[tier]=${tier}`;
-      return new Response(JSON.stringify({ url: redirectUrl }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    const originBase = isLocal ? reqUrl.origin : 'https://app.gtmobserver.com';
+    const successUrl = `${originBase}/onboarding?checkout=success&checkout_id={CHECKOUT_ID}`;
+    const returnUrl = `${originBase}/billing?checkout=cancelled`;
 
     const polarToken = env.POLAR_ACCESS_TOKEN;
     if (!polarToken) {
-      return new Response(JSON.stringify({ 
-        error: 'Polar payment processing is not configured yet. Please configure POLAR_ACCESS_TOKEN and POLAR_PRODUCT_PRO_ID in your Cloudflare environment variables.',
-        requiresConfig: true
-      }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Polar payment processing is not configured.',
+          requiresConfig: true
+        }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    const polarServer = (env.POLAR_SERVER || 'production').toLowerCase();
-    const polarApiBase = polarServer === 'sandbox' 
-      ? 'https://sandbox-api.polar.sh/v1' 
-      : 'https://api.polar.sh/v1';
+    const polarApiBase = getPolarApiBase(env);
+    const polarHeaders = {
+      Authorization: `Bearer ${polarToken}`,
+      Accept: 'application/json'
+    };
 
-    // 2. Resolve Product ID
-    let productId = tier === 'custom' 
-      ? (env.POLAR_PRODUCT_CUSTOM_ID || env.POLAR_PRODUCT_PRO_ID)
-      : env.POLAR_PRODUCT_PRO_ID;
+    const allowedProductIds = new Set<string>();
+    if (env.POLAR_PRODUCT_PRO_ID) allowedProductIds.add(String(env.POLAR_PRODUCT_PRO_ID).trim());
+    if (env.POLAR_PRODUCT_CUSTOM_ID) allowedProductIds.add(String(env.POLAR_PRODUCT_CUSTOM_ID).trim());
 
-    // Auto-discovery fallback if specific product ID wasn't provided in env
-    if (!productId) {
+    let resolvedProductId =
+      tier === 'custom'
+        ? String(env.POLAR_PRODUCT_CUSTOM_ID || env.POLAR_PRODUCT_PRO_ID || '').trim()
+        : String(env.POLAR_PRODUCT_PRO_ID || '').trim();
+
+    if (requestedProductId && allowedProductIds.has(requestedProductId)) {
+      resolvedProductId = requestedProductId;
+    }
+
+    let fetchedProductRaw: any = null;
+    if (env.POLAR_ORGANIZATION_ID || !resolvedProductId || requestedProductId) {
       try {
-        const prodRes = await fetch(`${polarApiBase}/products/`, {
-          headers: {
-            'Authorization': `Bearer ${polarToken}`,
-            'Accept': 'application/json'
-          }
+        const query = new URLSearchParams({ is_archived: 'false', limit: '50' });
+        if (env.POLAR_ORGANIZATION_ID) {
+          query.set('organization_id', String(env.POLAR_ORGANIZATION_ID).trim());
+        }
+        const prodRes = await fetch(`${polarApiBase}/products/?${query.toString()}`, {
+          headers: polarHeaders
         });
         if (prodRes.ok) {
           const prodData: any = await prodRes.json();
-          const items = Array.isArray(prodData.items) ? prodData.items : (Array.isArray(prodData) ? prodData : []);
-          
-          if (tier === 'custom') {
-            const matchCustom = items.find((p: any) => p.name?.toLowerCase().includes('custom'));
-            if (matchCustom) productId = matchCustom.id;
+          const items: any[] = Array.isArray(prodData.items)
+            ? prodData.items
+            : Array.isArray(prodData)
+            ? prodData
+            : [];
+          for (const item of items) {
+            if (item?.id) allowedProductIds.add(item.id);
           }
-          
-          if (!productId) {
-            const matchPro = items.find((p: any) => p.name?.toLowerCase().includes('pro'));
-            if (matchPro) {
-              productId = matchPro.id;
-            } else if (items.length > 0) {
-              productId = items[0].id; // Fallback to first available product
-            }
+          if (requestedProductId && allowedProductIds.has(requestedProductId)) {
+            resolvedProductId = requestedProductId;
           }
+          if (!resolvedProductId) {
+            const match =
+              tier === 'custom'
+                ? items.find((p: any) => p.name?.toLowerCase().includes('custom'))
+                : items.find((p: any) => p.name?.toLowerCase().includes('pro'));
+            resolvedProductId = match?.id || items[0]?.id || '';
+          }
+          fetchedProductRaw = items.find((p: any) => p.id === resolvedProductId) || null;
         }
       } catch (err) {
-        console.warn('Failed to auto-discover Polar products:', err);
+        console.warn('Polar product lookup notice:', err);
       }
     }
 
-    if (!productId) {
-      return new Response(JSON.stringify({ 
-        error: 'No Polar product found. Please configure POLAR_PRODUCT_PRO_ID in your Cloudflare environment variables or create a product in your Polar dashboard.',
-        requiresConfig: true
-      }), { 
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    if (!resolvedProductId) {
+      return new Response(
+        JSON.stringify({
+          error: 'No Polar product found for this subscription tier.',
+          requiresConfig: true
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    // 3. Create Checkout Session via Polar API
+    if (!fetchedProductRaw) {
+      try {
+        const singleRes = await fetch(
+          `${polarApiBase}/products/${encodeURIComponent(resolvedProductId)}`,
+          { headers: polarHeaders }
+        );
+        if (singleRes.ok) {
+          fetchedProductRaw = await singleRes.json().catch(() => null);
+        }
+      } catch (_) {}
+    }
+
     const checkoutBody: any = {
-      products: [productId],
+      products: [resolvedProductId],
+      external_customer_id: clerkUserId,
       success_url: successUrl,
+      return_url: returnUrl,
       metadata: {
         clerkUserId,
         tier,
-        containers: String(containers)
+        containers: String(containers),
+        productId: resolvedProductId
       }
     };
 
-    if (userEmail) {
+    if (userEmail && isValidEmail(userEmail)) {
       checkoutBody.customer_email = userEmail;
+    }
+
+    // Only pass custom amount when the Polar product's price type is actually 'custom' (Pay What You Want)
+    if (fetchedProductRaw) {
+      const norm = normalizePolarProduct(fetchedProductRaw, env);
+      if (norm.amountType === 'custom' && tier === 'custom') {
+        let cents = computeCustomPlanAmountCents(containers);
+        if (typeof norm.minimumAmount === 'number') {
+          cents = Math.max(cents, norm.minimumAmount);
+        }
+        if (typeof norm.maximumAmount === 'number') {
+          cents = Math.min(cents, norm.maximumAmount);
+        }
+        checkoutBody.amount = cents;
+      }
     }
 
     const checkoutRes = await fetch(`${polarApiBase}/checkouts/`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${polarToken}`,
+        Authorization: `Bearer ${polarToken}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json'
       },
       body: JSON.stringify(checkoutBody)
     });
@@ -163,7 +182,7 @@ export async function onRequestPost(context: any) {
         const parsedErr = JSON.parse(errText);
         errMsg = parsedErr.detail || parsedErr.message || parsedErr.error || errMsg;
       } catch (_) {}
-      return new Response(JSON.stringify({ error: errMsg }), { 
+      return new Response(JSON.stringify({ error: errMsg }), {
         status: checkoutRes.status,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -173,19 +192,19 @@ export async function onRequestPost(context: any) {
     const checkoutUrl = sessionData.url || sessionData.checkout_url;
 
     if (!checkoutUrl) {
-      return new Response(JSON.stringify({ error: 'Polar checkout did not return a valid checkout URL' }), { 
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({ error: 'Polar checkout did not return a valid checkout URL' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
-    return new Response(JSON.stringify({ url: checkoutUrl }), { 
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({ url: checkoutUrl, checkoutId: sessionData.id || null }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
   } catch (err: any) {
     console.error('Checkout error:', err);
-    return new Response(JSON.stringify({ error: err.message || 'Internal server error' }), { 
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

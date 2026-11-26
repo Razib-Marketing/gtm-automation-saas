@@ -1,4 +1,5 @@
 import { getGoogleAccessToken, extractClerkUserId } from './_utils';
+import { isValidGtmWorkspacePath } from '../_security';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -9,37 +10,32 @@ export async function onRequest(context) {
 
   try {
     const url = new URL(request.url);
-    const containerPath = url.searchParams.get('containerPath');
+    const containerPath = (url.searchParams.get('containerPath') || '').trim();
 
-    if (!containerPath) {
-      return new Response(JSON.stringify({ error: 'Missing containerPath' }), { status: 400 });
+    if (!isValidGtmWorkspacePath(containerPath)) {
+      return new Response(JSON.stringify({ error: 'Missing or invalid GTM workspace path' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    // Check user subscription tier and 5-audit limit for free users
-    try {
-      const clerkUserId = extractClerkUserId(request);
-      const userRow: any = await env.DB.prepare(
-        'SELECT subscription_tier FROM users WHERE id = ?'
+    const clerkUserId = await extractClerkUserId(request, env);
+    const userRow: any = await env.DB.prepare(
+      'SELECT subscription_tier FROM users WHERE id = ?'
+    ).bind(clerkUserId).first();
+
+    const tier = userRow?.subscription_tier || 'free';
+    if (tier === 'free') {
+      const auditCountRow: any = await env.DB.prepare(
+        'SELECT COUNT(*) as count FROM audit_logs WHERE user_id = ?'
       ).bind(clerkUserId).first();
 
-      const tier = userRow?.subscription_tier || 'free';
-      if (tier === 'free') {
-        const auditCountRow: any = await env.DB.prepare(
-          'SELECT COUNT(*) as count FROM audit_logs WHERE user_id = ?'
-        ).bind(clerkUserId).first();
-
-        const count = auditCountRow?.count || 0;
-        if (count >= 5) {
-          return new Response(JSON.stringify({ 
-            error: 'Free tier limit reached. You have used all 5 free GTM workspace audits. Please contact support to continue auditing workspaces.' 
-          }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-        }
+      const count = auditCountRow?.count || 0;
+      if (count >= 5) {
+        return new Response(JSON.stringify({
+          error: 'Free tier limit reached. You have used all 5 free GTM workspace audits. Please contact support to continue auditing workspaces.'
+        }), { status: 403, headers: { 'Content-Type': 'application/json' } });
       }
-    } catch (authCheckErr: any) {
-      if (authCheckErr.message && authCheckErr.message.includes('limit reached')) {
-        throw authCheckErr;
-      }
-      // If clerk auth header is missing or optional, proceed to getGoogleAccessToken which handles error
     }
 
     const accessToken = await getGoogleAccessToken(env, request);

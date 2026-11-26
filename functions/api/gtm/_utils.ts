@@ -1,33 +1,21 @@
-export function extractClerkUserId(request: Request): string {
+import { verifyClerkAuth, ClerkAuthContext } from '../_security';
+
+export async function requireClerkAuth(request: Request, env?: any): Promise<ClerkAuthContext> {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new Error('Missing Clerk Authorization header. Please sign in or refresh your session.');
   }
 
-  const token = authHeader.substring(7).trim();
-  if (!token || token === 'null' || token === 'undefined') {
-    throw new Error('Authentication token is missing or not yet loaded. Please refresh your session.');
+  const verified = await verifyClerkAuth(request, env);
+  if (!verified || !verified.userId) {
+    throw new Error('Invalid or expired Clerk authentication token. Please sign in again.');
   }
+  return verified;
+}
 
-  const parts = token.split('.');
-  if (parts.length < 2 || !parts[1]) {
-    throw new Error('Malformed authentication token. Please re-authenticate.');
-  }
-
-  try {
-    let payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    while (payloadBase64.length % 4) {
-      payloadBase64 += '=';
-    }
-    const payloadString = atob(payloadBase64);
-    const payload = JSON.parse(payloadString);
-    if (!payload.sub) {
-      throw new Error('User ID not present in token');
-    }
-    return payload.sub;
-  } catch (e: any) {
-    throw new Error('Invalid Clerk token: ' + (e.message || 'Unable to decode'));
-  }
+export async function extractClerkUserId(request: Request, env?: any): Promise<string> {
+  const auth = await requireClerkAuth(request, env);
+  return auth.userId;
 }
 
 export async function getGoogleAccessToken(
@@ -35,7 +23,7 @@ export async function getGoogleAccessToken(
   request: Request,
   fallbackOwnerUserId?: string | null
 ) {
-  const clerkUserId = extractClerkUserId(request);
+  const clerkUserId = await extractClerkUserId(request, env);
 
   let dbResult = await env.DB.prepare(`
     SELECT encrypted_refresh_token 

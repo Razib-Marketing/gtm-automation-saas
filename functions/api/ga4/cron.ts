@@ -15,6 +15,7 @@ import {
 } from './_shared';
 import { renderPdfFromHtml, responseToBase64, sanitizeFilename } from '../_pdf';
 import { buildGa4AlertReportPdfHtml } from '../_pdfTemplates';
+import { escapeHtml, isValidGa4PropertyId, timingSafeEqualStr } from '../_security';
 
 const MAX_BROWSER_CONCURRENCY = 3;
 
@@ -40,10 +41,22 @@ function createLimiter(maxConcurrency: number) {
 export async function onRequestGet(context: any) {
   const { env, request } = context;
 
-  // Extremely basic security for the cron endpoint
+  // Fail closed: cron endpoint requires configured CRON_SECRET and constant-time match
+  if (!env.CRON_SECRET) {
+    return new Response(JSON.stringify({ error: 'CRON_SECRET is not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   const url = new URL(request.url);
-  const auth = url.searchParams.get('token');
-  if (auth !== env.CRON_SECRET && env.CRON_SECRET) {
+  const authHeader = request.headers.get('Authorization');
+  const bearerToken =
+    authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  const queryToken = url.searchParams.get('token') || '';
+  const providedSecret = bearerToken || queryToken;
+
+  if (!providedSecret || !timingSafeEqualStr(providedSecret, String(env.CRON_SECRET))) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -166,9 +179,14 @@ export async function onRequestGet(context: any) {
           groups[key].metrics.add(mapMetricName(cond.metric));
         }
 
-        const propertyId = monitor.property_id.startsWith('properties/')
-          ? monitor.property_id
-          : `properties/${monitor.property_id}`;
+        if (!isValidGa4PropertyId(monitor.property_id)) {
+          logs.push(`Skipped ${monitor.id}: invalid property_id format`);
+          return;
+        }
+        const rawPropId = monitor.property_id.trim();
+        const propertyId = rawPropId.startsWith('properties/')
+          ? rawPropId
+          : `properties/${rawPropId}`;
 
         // Query Current & Previous Windows for each dimension filter group
         const currentValLookup: Record<string, Record<string, number>> = {};
@@ -242,6 +260,11 @@ export async function onRequestGet(context: any) {
           const comparedDatesLabel = `${dateInfo.currentRange.startDate} to ${dateInfo.currentRange.endDate} vs ${dateInfo.previousRange.startDate} to ${dateInfo.previousRange.endDate}`;
           const scheduleLabel = `${dueCheck.frequency.charAt(0).toUpperCase() + dueCheck.frequency.slice(1)} at ${dueCheck.targetTime} (${dueCheck.timeZone})`;
 
+          const safeCleanName = escapeHtml(cleanName);
+          const safeDateLabel = escapeHtml(dateInfo.label);
+          const safeComparedDates = escapeHtml(comparedDatesLabel);
+          const safeScheduleLabel = escapeHtml(scheduleLabel);
+
           const conditionCardsHtml = evaluatedConditions.map(c => {
             const isNegative = c.percentChange < 0;
             const changeColor = isNegative ? '#DC2626' : '#0284C7';
@@ -273,10 +296,10 @@ export async function onRequestGet(context: any) {
                       <tr>
                         <td style="vertical-align: middle; text-align: left;">
                           <div style="font-size: 15px; font-weight: 700; color: #0F172A; text-transform: capitalize;">
-                            ${c.metric}
+                            ${escapeHtml(c.metric)}
                           </div>
                           <div style="font-size: 11px; color: #64748B; margin-top: 2px;">
-                            Segment: <strong style="color: #475569;">${segmentText}</strong>
+                            Segment: <strong style="color: #475569;">${escapeHtml(segmentText)}</strong>
                           </div>
                         </td>
                         <td style="vertical-align: middle; text-align: right; white-space: nowrap;">
@@ -289,12 +312,12 @@ export async function onRequestGet(context: any) {
                       <tr>
                         <td style="padding: 9px 12px; text-align: left; vertical-align: middle;">
                           <div style="font-size: 11px; color: #64748B; text-transform: uppercase; font-weight: 600; letter-spacing: 0.03em;">
-                            Baseline: <strong style="color: #334155;">${c.formattedPast}</strong>
+                            Baseline: <strong style="color: #334155;">${escapeHtml(c.formattedPast)}</strong>
                             <span style="color: #94A3B8; margin: 0 4px;">→</span>
-                            Current: <strong style="color: #0F172A;">${c.formattedCurrent}</strong>
+                            Current: <strong style="color: #0F172A;">${escapeHtml(c.formattedCurrent)}</strong>
                           </div>
                           <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">
-                            Rule: <span style="color: #64748B;">${c.operatorLabel}</span>
+                            Rule: <span style="color: #64748B;">${escapeHtml(c.operatorLabel)}</span>
                           </div>
                         </td>
                         <td style="padding: 9px 12px; text-align: right; vertical-align: middle; white-space: nowrap;">
@@ -322,7 +345,7 @@ export async function onRequestGet(context: any) {
             </head>
             <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
               <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all; font-size: 0px; line-height: 0px; max-width: 0px; opacity: 0;">
-                GA4 Anomaly Alert for ${cleanName}
+                GA4 Anomaly Alert for ${safeCleanName}
               </div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #F1F5F9; margin: 0; padding: 20px 10px; width: 100%;">
                 <tr>
@@ -334,23 +357,23 @@ export async function onRequestGet(context: any) {
                             <span style="display: inline-block; width: 46px; height: 46px; line-height: 46px; border-radius: 50%; background: #991B1B; color: #FFFFFF; font-size: 22px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">⚠</span>
                           </div>
                           <h2 style="margin: 0; font-size: 21px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.025em;">GA4 Anomaly Detected</h2>
-                          <p style="margin: 6px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 600;">Property: ${cleanName}</p>
+                          <p style="margin: 6px 0 0 0; font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 600;">Property: ${safeCleanName}</p>
                         </td>
                       </tr>
 
                       <tr>
                         <td style="padding: 20px 16px;">
                           <p style="font-size: 15px; color: #1F2937; margin: 0 0 16px 0; line-height: 1.5;">
-                            Your Observer monitor for <strong>${cleanName}</strong> triggered an anomaly alert based on your rule criteria (Match <strong>${matchType}</strong>).
+                            Your Observer monitor for <strong>${safeCleanName}</strong> triggered an anomaly alert based on your rule criteria (Match <strong>${matchType}</strong>).
                           </p>
 
                           <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 16px;">
                             <tr>
                               <td style="padding: 10px 14px; font-size: 12px; color: #4B5563; text-align: left;">
                                 <div><strong>Rule Logic:</strong> Match ${matchType === 'ALL' ? 'ALL conditions (AND)' : 'ANY condition (OR)'}</div>
-                                <div style="margin-top: 4px;"><strong>Comparison Period:</strong> ${dateInfo.label}</div>
-                                <div style="margin-top: 4px;"><strong>Dates Compared:</strong> ${comparedDatesLabel}</div>
-                                <div style="margin-top: 4px;"><strong>Schedule:</strong> ${scheduleLabel}</div>
+                                <div style="margin-top: 4px;"><strong>Comparison Period:</strong> ${safeDateLabel}</div>
+                                <div style="margin-top: 4px;"><strong>Dates Compared:</strong> ${safeComparedDates}</div>
+                                <div style="margin-top: 4px;"><strong>Schedule:</strong> ${safeScheduleLabel}</div>
                               </td>
                             </tr>
                           </table>

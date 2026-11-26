@@ -23,6 +23,7 @@ import {
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
 import { useWorkspace } from '../context/WorkspaceContext';
+import { startGoogleOAuth } from '../utils/googleOAuth';
 import { WEBSITE_TYPES, getWebsiteTypeMeta } from '../types/project';
 import type { WebsitePerspective } from '../types/project';
 import {
@@ -108,7 +109,42 @@ export const ProjectOnboarding: React.FC = () => {
 
   const params = new URLSearchParams(location.search);
   const justCheckedOut = params.get('checkout') === 'success';
+  const checkoutIdParam = params.get('checkout_id') || '';
+  const queryOrgId = params.get('orgId') || '';
   const justAuthedGoogle = params.get('auth') === 'success';
+
+  useEffect(() => {
+    if (queryOrgId) {
+      setOrganizationId(queryOrgId);
+    }
+  }, [queryOrgId]);
+
+  useEffect(() => {
+    if (!justCheckedOut || !checkoutIdParam || isSandboxMode) return;
+    let cancelled = false;
+    const syncPolar = async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch('/api/polar/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ checkoutId: checkoutIdParam })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!cancelled && res.ok && data?.synced) {
+          await refreshWorkspace();
+        }
+      } catch (_) {}
+    };
+    syncPolar();
+    return () => {
+      cancelled = true;
+    };
+  }, [justCheckedOut, checkoutIdParam, isSandboxMode, getToken, refreshWorkspace]);
 
   useEffect(() => {
     setLocalGoogleConnected(googleConnected);
@@ -302,7 +338,7 @@ export const ProjectOnboarding: React.FC = () => {
   const selectedGtmContainerObj = gtmContainers.find((c) => c.containerId === selectedGtmContainerId);
   const selectedGtmWorkspaceObj = gtmWorkspaces.find((w) => w.workspaceId === selectedGtmWorkspaceId);
 
-  const handleConnectGoogle = () => {
+  const handleConnectGoogle = async () => {
     if (isSandboxMode) {
       setSandboxGoogleConnected(true);
       setLocalGoogleConnected(true);
@@ -311,12 +347,15 @@ export const ProjectOnboarding: React.FC = () => {
     try {
       window.sessionStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ projectName, websiteUrl, websiteType, step })
+        JSON.stringify({ projectName, websiteUrl, websiteType, organizationId, step })
       );
     } catch (_) {}
-    window.location.href = `/api/auth/google/login?clerkUserId=${encodeURIComponent(
-      user?.id || ''
-    )}&returnTo=${encodeURIComponent('/onboarding')}`;
+    try {
+      const returnPath = organizationId ? `/onboarding?orgId=${encodeURIComponent(organizationId)}` : '/onboarding';
+      await startGoogleOAuth(getToken, returnPath);
+    } catch (err: any) {
+      setErrorMsg(err?.message || 'Unable to connect Google account');
+    }
   };
 
   const toggleTemplateSelection = (id: string) => {
@@ -524,7 +563,11 @@ export const ProjectOnboarding: React.FC = () => {
       }
 
       await refreshWorkspace();
-      navigate(`/organization?created=${encodeURIComponent(createdProjectId)}`);
+      if (organizationId) {
+        navigate(`/organizations/${encodeURIComponent(organizationId)}?created=${encodeURIComponent(createdProjectId)}`);
+      } else {
+        navigate(`/organization?created=${encodeURIComponent(createdProjectId)}`);
+      }
     } catch (err: any) {
       setErrorMsg(err.message || 'Unable to create project. Please check your configuration.');
     } finally {

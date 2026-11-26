@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
+import { startGoogleOAuth } from '../utils/googleOAuth';
 import {
   Sliders,
   Save,
@@ -33,7 +34,6 @@ interface ProjectSettingsProps {
 
 export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => {
   const { getToken } = useAuth();
-  const { user } = useUser();
   const navigate = useNavigate();
   const { isSandboxMode, googleConnected, organizations, refreshWorkspace } = useWorkspace();
 
@@ -409,12 +409,13 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <h3 style={{ margin: 0, color: 'white', fontSize: '1.15rem' }}>Google Analytics 4 &amp; GTM Bindings</h3>
             {!googleConnected && !isSandboxMode && (
-              <a
-                href={`/api/auth/google/login?clerkUserId=${encodeURIComponent(user?.id || '')}&returnTo=${encodeURIComponent(`/projects/${project.id}/settings`)}`}
-                style={{ color: '#00F0FF', fontSize: '0.84rem', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+              <button
+                type="button"
+                onClick={() => startGoogleOAuth(getToken, `/projects/${project.id}/settings`).catch((e) => alert(e.message))}
+                style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', color: '#00F0FF', fontSize: '0.84rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
               >
                 Reconnect Google Account <ExternalLink size={14} />
-              </a>
+              </button>
             )}
           </div>
 

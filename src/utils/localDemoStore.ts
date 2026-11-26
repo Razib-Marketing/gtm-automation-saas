@@ -552,6 +552,48 @@ export function assignSandboxProjectsToOrg(projectIds: string[], organizationId:
   saveState(s);
 }
 
+export function addSandboxOrgMember(orgId: string, email: string, role: AccessRole) {
+  const s = getSandboxState();
+  const cleanEmail = email.toLowerCase().trim();
+  s.organizations = (s.organizations || []).map((o) => {
+    if (o.id !== orgId) return o;
+    const members = [...(o.members || [])];
+    const idx = members.findIndex((m) => m.email.toLowerCase() === cleanEmail);
+    const entry = {
+      id: idx >= 0 ? members[idx].id : 'om_loc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 5),
+      organization_id: orgId,
+      email: cleanEmail,
+      role,
+      status: 'active' as const,
+      created_at: new Date().toISOString()
+    };
+    if (idx >= 0) members[idx] = entry;
+    else members.push(entry);
+    return { ...o, members, memberCount: members.length };
+  });
+  saveState(s);
+}
+
+export function updateSandboxOrgMember(orgId: string, memberId: string, role: AccessRole) {
+  const s = getSandboxState();
+  s.organizations = (s.organizations || []).map((o) => {
+    if (o.id !== orgId) return o;
+    const members = (o.members || []).map((m) => (m.id === memberId ? { ...m, role } : m));
+    return { ...o, members };
+  });
+  saveState(s);
+}
+
+export function removeSandboxOrgMember(orgId: string, memberId: string) {
+  const s = getSandboxState();
+  s.organizations = (s.organizations || []).map((o) => {
+    if (o.id !== orgId) return o;
+    const members = (o.members || []).filter((m) => m.id !== memberId || m.role === 'owner');
+    return { ...o, members, memberCount: members.length };
+  });
+  saveState(s);
+}
+
 export function grantSandboxProjectAccess(projectIds: string[], emails: string[], role: AccessRole) {
   const s = getSandboxState();
   const nowIso = new Date().toISOString();

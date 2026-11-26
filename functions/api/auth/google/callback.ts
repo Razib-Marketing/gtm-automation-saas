@@ -1,26 +1,24 @@
-function decodeOAuthState(rawState: string | null): { clerkUserId: string; returnTo: string } {
-  if (!rawState) {
-    return { clerkUserId: 'unknown', returnTo: '/organization' };
-  }
-  try {
-    let b64 = rawState.replace(/-/g, '+').replace(/_/g, '/');
-    while (b64.length % 4) b64 += '=';
-    const decoded = atob(b64);
-    const parsed = JSON.parse(decoded);
-    if (parsed && typeof parsed.clerkUserId === 'string') {
-      const rt = typeof parsed.returnTo === 'string' && parsed.returnTo.startsWith('/') && !parsed.returnTo.startsWith('//')
-        ? parsed.returnTo
-        : '/organization';
-      return { clerkUserId: parsed.clerkUserId || 'unknown', returnTo: rt };
+import { verifyOAuthState } from '../../_security';
+
+function parseCookie(cookieHeader: string | null, name: string): string | null {
+  if (!cookieHeader) return null;
+  const pairs = cookieHeader.split(';');
+  for (const part of pairs) {
+    const eq = part.indexOf('=');
+    if (eq <= 0) continue;
+    const k = part.slice(0, eq).trim();
+    if (k === name) {
+      return decodeURIComponent(part.slice(eq + 1).trim());
     }
-  } catch (_) {}
-  return { clerkUserId: rawState, returnTo: '/organization' };
+  }
+  return null;
 }
 
 export async function onRequest(context: any) {
   const { env, request } = context;
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
+  const rawState = url.searchParams.get('state');
 
   if (!code) {
     return new Response('No authorization code provided', { status: 400 });
@@ -28,10 +26,30 @@ export async function onRequest(context: any) {
 
   const clientId = env.GOOGLE_CLIENT_ID;
   const clientSecret = env.GOOGLE_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    return new Response('Google OAuth is not configured', { status: 503 });
+  }
+
+  const cookieNonce = parseCookie(request.headers.get('Cookie'), 'gtm_oauth_nonce');
+  if (!cookieNonce) {
+    return new Response(
+      'Missing OAuth CSRF verification cookie. Please restart Google connection from your dashboard.',
+      { status: 403 }
+    );
+  }
+
+  const verifiedState = await verifyOAuthState(rawState, clientSecret, cookieNonce);
+  if (!verifiedState) {
+    return new Response(
+      'Invalid or expired OAuth state signature. Please restart Google connection from your dashboard.',
+      { status: 403 }
+    );
+  }
+
+  const { clerkUserId, returnTo } = verifiedState;
   const redirectUri = `${url.origin}/api/auth/google/callback`;
 
   try {
-    // 1. Exchange code for tokens
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -46,36 +64,33 @@ export async function onRequest(context: any) {
 
     const tokenData: any = await tokenResponse.json();
     if (!tokenResponse.ok) {
-      throw new Error(`Failed to exchange token: ${JSON.stringify(tokenData)}`);
+      throw new Error('Failed to exchange Google authorization code');
     }
 
     const { access_token, refresh_token, expires_in } = tokenData;
 
-    // 2. Fetch User Profile
     const profileResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${access_token}` }
     });
     const profileData: any = await profileResponse.json();
-
     if (!profileResponse.ok) {
-      throw new Error(`Failed to fetch profile: ${JSON.stringify(profileData)}`);
+      throw new Error('Failed to fetch Google user profile');
     }
 
-    const { clerkUserId, returnTo } = decodeOAuthState(url.searchParams.get('state'));
-
-    // 3. Save to D1 Database
     const connectionId = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + expires_in * 1000).toISOString();
-    await env.DB.prepare("DELETE FROM users WHERE id = 'undefined'").run();
-    await env.DB.prepare('DELETE FROM users WHERE email = ? AND id != ?').bind(profileData.email, clerkUserId).run();
+    const expiresAt = new Date(Date.now() + (Number(expires_in) || 3600) * 1000).toISOString();
+
     await env.DB.prepare('DELETE FROM gtm_connections WHERE user_id = ?').bind(clerkUserId).run();
 
+    // Preserve existing user subscription_tier; never delete other user rows by email!
     await env.DB.batch([
       env.DB.prepare(`
         INSERT INTO users (id, email, name, subscription_tier)
         VALUES (?, ?, ?, 'free')
-        ON CONFLICT(id) DO UPDATE SET email = excluded.email, name = excluded.name
-      `).bind(clerkUserId, profileData.email, profileData.name),
+        ON CONFLICT(id) DO UPDATE SET
+          email = CASE WHEN users.email IS NULL OR users.email = 'unknown@example.com' THEN excluded.email ELSE users.email END,
+          name = COALESCE(excluded.name, users.name)
+      `).bind(clerkUserId, profileData.email || 'unknown@example.com', profileData.name || ''),
 
       env.DB.prepare(`
         INSERT INTO gtm_connections (id, user_id, account_id, container_id, encrypted_refresh_token, token_expires_at)
@@ -83,10 +98,28 @@ export async function onRequest(context: any) {
       `).bind(connectionId, clerkUserId, refresh_token || 'no_refresh_token_provided', expiresAt)
     ]);
 
-    // 4. Redirect cleanly back to requested app view (e.g., /onboarding or /organization)
     const separator = returnTo.includes('?') ? '&' : '?';
-    return Response.redirect(`${url.origin}${returnTo}${separator}auth=success`, 302);
+    const isSecure = url.protocol === 'https:';
+    const clearCookie = [
+      'gtm_oauth_nonce=',
+      'HttpOnly',
+      'SameSite=Lax',
+      'Path=/api/auth/google',
+      'Max-Age=0',
+      ...(isSecure ? ['Secure'] : [])
+    ].join('; ');
+
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: `${url.origin}${returnTo}${separator}auth=success`,
+        'Set-Cookie': clearCookie
+      }
+    });
   } catch (error: any) {
-    return new Response(`Authentication Error: ${error.message}`, { status: 500 });
+    console.error('Google OAuth callback error:', error);
+    return new Response('Authentication failed. Please retry connecting your Google account.', {
+      status: 500
+    });
   }
 }
