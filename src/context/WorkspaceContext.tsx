@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { useAuth, useUser, useOrganization, useSession } from '@clerk/clerk-react';
+import { useAuth, useUser, useOrganization, useOrganizationList, useSession } from '@clerk/clerk-react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import type { Project, Organization } from '../types/project';
@@ -7,6 +7,7 @@ import {
   isLocalhost,
   getSandboxState,
   getEnrichedSandboxProjects,
+  deleteSandboxOrganization,
   SANDBOX_EVENT
 } from '../utils/localDemoStore';
 
@@ -31,6 +32,7 @@ interface WorkspaceContextValue {
   loading: boolean;
   isSandboxMode: boolean;
   refreshWorkspace: () => Promise<void>;
+  removeOrganization: (org: Organization) => Promise<{ ok: boolean; error?: string }>;
   getProjectById: (id?: string) => Project | undefined;
   getOrganizationById: (id?: string) => Organization | undefined;
 }
@@ -54,6 +56,7 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
   loading: true,
   isSandboxMode: false,
   refreshWorkspace: async () => {},
+  removeOrganization: async () => ({ ok: false }),
   getProjectById: () => undefined,
   getOrganizationById: () => undefined
 });
@@ -64,6 +67,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const { isLoaded, isSignedIn, orgId, orgRole, getToken } = useAuth();
   const { user } = useUser();
   const { organization: clerkOrg } = useOrganization();
+  const { userMemberships, setActive } = useOrganizationList({ userMemberships: { infinite: true } });
 
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
   const [workspaceLimit, setWorkspaceLimit] = useState<number>(0);
@@ -237,6 +241,72 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     [organizations]
   );
 
+  const removeOrganization = useCallback(
+    async (org: Organization): Promise<{ ok: boolean; error?: string }> => {
+      if (isSandboxMode) {
+        deleteSandboxOrganization(org.id);
+        await loadWorkspace();
+        return { ok: true };
+      }
+
+      try {
+        if (org.clerk_org_id) {
+          const membershipOrg = userMemberships.data?.find(
+            (m) => m.organization.id === org.clerk_org_id
+          )?.organization;
+          const clerkOrgObj =
+            clerkOrg?.id === org.clerk_org_id ? clerkOrg : membershipOrg;
+
+          const nextOrgId = userMemberships.data?.find(
+            (m) => m.organization.id !== org.clerk_org_id
+          )?.organization.id;
+
+          if (clerkOrgObj) {
+            await clerkOrgObj.destroy();
+          }
+
+          if (orgId === org.clerk_org_id && setActive && nextOrgId) {
+            try {
+              await setActive({ organization: nextOrgId });
+            } catch (_) {}
+          }
+        }
+
+        const token = await getToken();
+        if (!token) {
+          return { ok: false, error: 'Authentication session missing. Please sign in again.' };
+        }
+
+        const res = await fetch(`/api/organizations?id=${encodeURIComponent(org.id)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!res.ok && res.status !== 404) {
+          const data = await res.json().catch(() => ({}));
+          return { ok: false, error: data.error || 'Failed to delete organization' };
+        }
+
+        if (userMemberships.revalidate) {
+          try {
+            await userMemberships.revalidate();
+          } catch (_) {}
+        }
+
+        await loadWorkspace();
+        return { ok: true };
+      } catch (err: any) {
+        const msg =
+          err?.errors?.[0]?.longMessage ||
+          err?.errors?.[0]?.message ||
+          err?.message ||
+          'Failed to remove organization';
+        return { ok: false, error: msg };
+      }
+    },
+    [isSandboxMode, clerkOrg, orgId, userMemberships, setActive, getToken, loadWorkspace]
+  );
+
   return (
     <WorkspaceContext.Provider
       value={{
@@ -258,6 +328,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         loading,
         isSandboxMode,
         refreshWorkspace: loadWorkspace,
+        removeOrganization,
         getProjectById,
         getOrganizationById
       }}

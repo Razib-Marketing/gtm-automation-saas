@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useClerk } from '@clerk/clerk-react';
 import {
   FolderKanban,
   PlusCircle,
@@ -45,7 +45,6 @@ import {
   restoreSandboxProject,
   deleteSandboxProject,
   emptySandboxTrash,
-  addSandboxOrganization,
   assignSandboxProjectsToOrg,
   grantSandboxProjectAccess,
   revokeSandboxProjectAccess,
@@ -62,12 +61,13 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
     activeOrgId,
     setActiveOrgId,
     clerkOrgName,
-    activeClerkMirrorOrg,
     userTier,
     isSandboxMode,
-    refreshWorkspace
+    refreshWorkspace,
+    removeOrganization
   } = useWorkspace();
   const { getToken } = useAuth();
+  const { openCreateOrganization } = useClerk();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -107,11 +107,10 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
   const [existingGrants, setExistingGrants] = useState<ProjectAccessGrant[]>([]);
   const [loadingGrants, setLoadingGrants] = useState(false);
 
-  // Create Organization Modal state
-  const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
-  const [newOrgName, setNewOrgName] = useState('');
-  const [newOrgDesc, setNewOrgDesc] = useState('');
-  const [creatingOrg, setCreatingOrg] = useState(false);
+  // Remove Organization Modal state
+  const [orgToRemove, setOrgToRemove] = useState<Organization | null>(null);
+  const [removingOrg, setRemovingOrg] = useState(false);
+  const [removeOrgError, setRemoveOrgError] = useState('');
 
   // Bulk assign org state
   const [bulkOrgTarget, setBulkOrgTarget] = useState('');
@@ -134,9 +133,10 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
 
   useEffect(() => {
     if (urlCreateOrg) {
-      setShowCreateOrgModal(true);
+      openCreateOrganization({ afterCreateOrganizationUrl: '/organization' });
+      navigate('/organization', { replace: true });
     }
-  }, [urlCreateOrg]);
+  }, [urlCreateOrg, openCreateOrganization, navigate]);
 
   const isTrashView = scopedOrg ? urlTabParam === 'trash' : activeOrgId === 'trash';
 
@@ -554,45 +554,24 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
     }
   };
 
-  const handleCreateOrgSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newOrgName.trim()) return;
-    setCreatingOrg(true);
+  const handleConfirmRemoveOrg = async () => {
+    if (!orgToRemove) return;
+    setRemovingOrg(true);
+    setRemoveOrgError('');
     try {
-      if (isSandboxMode) {
-        const created = addSandboxOrganization({ name: newOrgName.trim(), description: newOrgDesc.trim() });
-        setNewOrgName('');
-        setNewOrgDesc('');
-        setShowCreateOrgModal(false);
-        setActiveOrgId(created.id);
-        await refreshWorkspace();
+      const target = orgToRemove;
+      const result = await removeOrganization(target);
+      if (!result.ok) {
+        setRemoveOrgError(result.error || 'Failed to remove organization');
         return;
       }
-      const token = await getToken();
-      const res = await fetch('/api/organizations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ name: newOrgName.trim(), description: newOrgDesc.trim() })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Failed to create organization');
-      setNewOrgName('');
-      setNewOrgDesc('');
-      setShowCreateOrgModal(false);
-      if (data.organization?.id) {
-        setActiveOrgId(data.organization.id);
-        await refreshWorkspace();
-        navigate(`/organizations/${encodeURIComponent(data.organization.id)}`);
-        return;
+      setOrgToRemove(null);
+      setActiveOrgId('all');
+      if (scopedOrg && scopedOrg.id === target.id) {
+        navigate('/organization', { replace: true });
       }
-      await refreshWorkspace();
-    } catch (err: any) {
-      alert(err.message || 'Unable to create organization');
     } finally {
-      setCreatingOrg(false);
+      setRemovingOrg(false);
     }
   };
 
@@ -823,9 +802,9 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
             >
               {scopedOrg ? <Building2 size={13} /> : <Layers size={13} />}
               {scopedOrg
-                ? `CLIENT ORGANIZATION • ${(scopedOrg.role || 'OWNER').toUpperCase()} • ${userTier.toUpperCase()} PLAN`
+                ? `ORGANIZATION • ${(scopedOrg.role || 'OWNER').toUpperCase()} • ${userTier.toUpperCase()} PLAN`
                 : clerkOrgName
-                ? `CLERK ORG • ${clerkOrgName.toUpperCase()} • ${userTier.toUpperCase()} PLAN`
+                ? `${clerkOrgName.toUpperCase()} • ${userTier.toUpperCase()} PLAN`
                 : `ORGANIZATION LEVEL • ${userTier.toUpperCase()} PLAN`}
             </div>
             <h1 className="dashboard-title">{scopedOrg ? scopedOrg.name : 'Organization Dashboard'}</h1>
@@ -884,13 +863,29 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
               </button>
             </div>
 
-            <Link
-              to={`/organizations/${encodeURIComponent(scopedOrg.id)}/access`}
-              className="org-scope-pill"
-              style={{ textDecoration: 'none', borderColor: 'rgba(0, 240, 255, 0.35)', color: '#00F0FF', background: 'rgba(0, 240, 255, 0.08)' }}
-            >
-              <Users size={13} /> {scopedOrg.memberCount ?? scopedOrg.members?.length ?? 1} Member(s) • Manage Access
-            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <Link
+                to={`/organizations/${encodeURIComponent(scopedOrg.id)}/access`}
+                className="org-scope-pill"
+                style={{ textDecoration: 'none', borderColor: 'rgba(0, 240, 255, 0.35)', color: '#00F0FF', background: 'rgba(0, 240, 255, 0.08)' }}
+              >
+                <Users size={13} /> {scopedOrg.memberCount ?? scopedOrg.members?.length ?? 1} Member(s) • Manage Access
+              </Link>
+              {(scopedOrg.role === 'owner' || scopedOrg.role === 'admin') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRemoveOrgError('');
+                    setOrgToRemove(scopedOrg);
+                  }}
+                  className="org-scope-pill trash-pill"
+                  style={{ borderColor: 'rgba(239, 68, 68, 0.35)', color: '#FCA5A5', background: 'rgba(239, 68, 68, 0.08)' }}
+                  title={`Remove ${scopedOrg.name}`}
+                >
+                  <Trash2 size={13} /> Remove Organization
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="org-switcher-bar">
@@ -920,38 +915,69 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
               </button>
 
               {organizations.map((org) => {
-                const isActiveClerkMirror = Boolean(activeClerkMirrorOrg && activeClerkMirrorOrg.id === org.id);
+                const canRemove = org.role === 'owner' || org.role === 'admin';
                 return (
-                  <button
+                  <div
                     key={org.id}
-                    type="button"
-                    className={`org-scope-pill ${activeOrgId === org.id || isActiveClerkMirror ? 'active' : ''}`}
-                    onClick={() => {
-                      navigate(`/organizations/${encodeURIComponent(org.id)}`);
-                      setSelectedIds([]);
-                    }}
+                    className={`org-scope-pill ${activeOrgId === org.id ? 'active' : ''}`}
+                    style={{ gap: '0.25rem' }}
                   >
-                    <Building2 size={13} /> {org.name}
-                    {org.clerk_org_id && (
-                      <span
-                        style={{
-                          fontSize: '0.62rem',
-                          padding: '0.08rem 0.38rem',
-                          borderRadius: '9999px',
-                          background: 'rgba(0, 240, 255, 0.14)',
-                          color: '#00F0FF',
-                          border: '1px solid rgba(0, 240, 255, 0.35)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em'
-                        }}
-                      >
-                        Clerk
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate(`/organizations/${encodeURIComponent(org.id)}`);
+                        setSelectedIds([]);
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                        margin: 0,
+                        minBlockSize: 'auto',
+                        color: 'inherit',
+                        font: 'inherit',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem'
+                      }}
+                    >
+                      <Building2 size={13} />
+                      <span>{org.name}</span>
+                      <span className="org-count-badge">
+                        {projects.filter((p) => p.organization_id === org.id).length}
                       </span>
+                    </button>
+                    {canRemove && (
+                      <button
+                        type="button"
+                        aria-label={`Remove ${org.name}`}
+                        title={`Remove ${org.name}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRemoveOrgError('');
+                          setOrgToRemove(org);
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          padding: '0.15rem',
+                          marginLeft: '0.15rem',
+                          minBlockSize: 'auto',
+                          color: '#9CA3AF',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '9999px'
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = '#FCA5A5'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = '#9CA3AF'; }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     )}
-                    <span className="org-count-badge">
-                      {projects.filter((p) => p.organization_id === org.id).length}
-                    </span>
-                  </button>
+                  </div>
                 );
               })}
 
@@ -984,7 +1010,7 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
 
             <button
               type="button"
-              onClick={() => setShowCreateOrgModal(true)}
+              onClick={() => openCreateOrganization({ afterCreateOrganizationUrl: '/organization' })}
               className="org-scope-pill"
               style={{ borderColor: 'rgba(0, 240, 255, 0.35)', color: '#00F0FF', background: 'rgba(0, 240, 255, 0.08)' }}
             >
@@ -2144,10 +2170,10 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
         )}
       </AnimatePresence>
 
-      {/* Create Organization Modal */}
+      {/* Remove Organization Confirmation Modal */}
       <AnimatePresence>
-        {showCreateOrgModal && (
-          <div className="org-modal-overlay" onClick={() => !creatingOrg && setShowCreateOrgModal(false)}>
+        {orgToRemove && (
+          <div className="org-modal-overlay" onClick={() => !removingOrg && setOrgToRemove(null)}>
             <motion.div
               role="dialog"
               aria-modal="true"
@@ -2158,57 +2184,61 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
               onClick={(e) => e.stopPropagation()}
             >
               <div className="org-modal-header">
-                <h3 className="org-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Building2 size={19} color="#00F0FF" /> Create Client Organization
+                <h3 className="org-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FCA5A5' }}>
+                  <Trash2 size={19} color="#EF4444" /> Remove Organization
                 </h3>
                 <button
                   type="button"
                   className="org-modal-close-btn"
-                  onClick={() => !creatingOrg && setShowCreateOrgModal(false)}
+                  onClick={() => !removingOrg && setOrgToRemove(null)}
                   aria-label="Close"
                 >
                   <X size={18} />
                 </button>
               </div>
-              <form onSubmit={handleCreateOrgSubmit} className="org-modal-body">
-                <div className="org-modal-field">
-                  <label className="org-modal-label">Organization / Management Company Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newOrgName}
-                    onChange={(e) => setNewOrgName(e.target.value)}
-                    placeholder="e.g. Cogwheel Hospitality Portfolio"
-                    className="module-input"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-                <div className="org-modal-field">
-                  <label className="org-modal-label">Description (Optional)</label>
-                  <input
-                    type="text"
-                    value={newOrgDesc}
-                    onChange={(e) => setNewOrgDesc(e.target.value)}
-                    placeholder="50 managed hotel websites"
-                    className="module-input"
-                    style={{ width: '100%' }}
-                  />
-                </div>
+              <div className="org-modal-body">
+                <p style={{ margin: '0 0 1rem', color: '#E5E7EB', fontSize: '0.92rem', lineHeight: 1.55 }}>
+                  Removing <strong>{orgToRemove.name}</strong> permanently deletes the organization. Your projects inside it will safely remain in your Personal Workspace.
+                </p>
+                {removeOrgError && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem 0.95rem',
+                      borderRadius: '10px',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                      color: '#FCA5A5',
+                      fontSize: '0.84rem',
+                      marginBottom: '1rem'
+                    }}
+                  >
+                    <AlertTriangle size={16} />
+                    <span>{removeOrgError}</span>
+                  </div>
+                )}
                 <div className="org-modal-actions">
                   <button
                     type="button"
                     className="org-btn-secondary"
-                    onClick={() => setShowCreateOrgModal(false)}
-                    disabled={creatingOrg}
+                    onClick={() => setOrgToRemove(null)}
+                    disabled={removingOrg}
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="org-btn-primary" disabled={creatingOrg}>
-                    {creatingOrg ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-                    Create Organization
+                  <button
+                    type="button"
+                    className="org-btn-danger"
+                    onClick={handleConfirmRemoveOrg}
+                    disabled={removingOrg}
+                  >
+                    {removingOrg ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                    {removingOrg ? 'Removing...' : 'Remove Organization'}
                   </button>
                 </div>
-              </form>
+              </div>
             </motion.div>
           </div>
         )}

@@ -40,7 +40,7 @@ export class ClerkOrgBoundary extends React.Component<
         >
           <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
           <div>
-            <strong>Clerk Organizations Notice:</strong> Enable <em>Organizations</em> inside your Clerk Dashboard (Configure &rarr; Organizations) to use Clerk&apos;s native organization switcher &amp; invitations alongside our built-in Client Organizations.
+            <strong>Organization Notice:</strong> Organization management is loading or unavailable on this session.
           </div>
         </div>
       );
@@ -141,7 +141,7 @@ export const ClerkOrgProfileWidget: React.FC<{ isSandboxMode?: boolean }> = ({ i
           fontSize: '0.9rem'
         }}
       >
-        Clerk Organization Profile is active on signed-in sessions (`app.gtmobserver.com`). Use the <strong>Client Organizations</strong> and <strong>Universal Project Access</strong> tabs here to test team sharing in Local Sandbox mode.
+        Organization management is active on signed-in sessions (`app.gtmobserver.com`). Use the <strong>Organizations</strong> and <strong>Universal Project Access</strong> tabs here to test team sharing in Local Sandbox mode.
       </div>
     );
   }
@@ -152,10 +152,10 @@ export const ClerkOrgProfileWidget: React.FC<{ isSandboxMode?: boolean }> = ({ i
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.85rem' }}>
           <div>
             <h3 style={{ margin: '0 0 0.25rem', color: '#FFFFFF', fontSize: '1.05rem' }}>
-              Active Clerk Organization
+              Active Organization
             </h3>
             <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.84rem' }}>
-              Switch between your personal workspace and Clerk Organizations, or create a new Clerk Organization and invite teammates.
+              Switch organizations, create a new organization, or invite teammates and manage roles.
             </p>
           </div>
           <ClerkOrgSwitcherWidget />

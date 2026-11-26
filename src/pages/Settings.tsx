@@ -471,7 +471,7 @@ export const Settings = () => {
                 className="settings-panel"
               >
                 <div className="panel-header">
-                  <h2>Clerk Organization &amp; Team</h2>
+                  <h2>Organization &amp; Team</h2>
                   <p>Switch active organization, manage team roles, and send member invitations.</p>
                 </div>
                 <div className="panel-body">

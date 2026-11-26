@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth, useClerk, useUser } from '@clerk/clerk-react';
 import {
   Building2,
   ShieldCheck,
@@ -20,13 +20,11 @@ import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
 import { ClerkOrgProfileWidget } from '../components/ui/ClerkOrgBoundary';
 import { useWorkspace } from '../context/WorkspaceContext';
-import type { AccessRole, ProjectAccessGrant } from '../types/project';
+import type { AccessRole, Organization, ProjectAccessGrant } from '../types/project';
 import {
   getSandboxState,
   grantSandboxProjectAccess,
   revokeSandboxProjectAccess,
-  addSandboxOrganization,
-  deleteSandboxOrganization,
   assignSandboxProjectsToOrg
 } from '../utils/localDemoStore';
 import './Dashboard.css';
@@ -35,8 +33,9 @@ import './AccessDashboard.css';
 
 export const AccessDashboard: React.FC = () => {
   const { getToken } = useAuth();
+  const { openCreateOrganization } = useClerk();
   const { user } = useUser();
-  const { projects, organizations, isSandboxMode, refreshWorkspace } = useWorkspace();
+  const { projects, organizations, isSandboxMode, refreshWorkspace, removeOrganization } = useWorkspace();
 
   const [activeTab, setActiveTab] = useState<'clerk_org' | 'universal' | 'organizations'>('clerk_org');
   const [grants, setGrants] = useState<ProjectAccessGrant[]>([]);
@@ -53,11 +52,9 @@ export const AccessDashboard: React.FC = () => {
   const [granting, setGranting] = useState(false);
   const [grantSearch, setGrantSearch] = useState('');
 
-  // Client Organization builder state
-  const [newOrgName, setNewOrgName] = useState('');
-  const [newOrgDesc, setNewOrgDesc] = useState('');
-  const [creatingOrg, setCreatingOrg] = useState(false);
+  // Organization management state
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
+  const [deletingOrgId, setDeletingOrgId] = useState<string | null>(null);
   const [orgMemberEmail, setOrgMemberEmail] = useState('');
   const [orgMemberRole, setOrgMemberRole] = useState<AccessRole>('editor');
   const [addingOrgMember, setAddingOrgMember] = useState(false);
@@ -245,70 +242,23 @@ export const AccessDashboard: React.FC = () => {
     }
   };
 
-  const handleCreateOrg = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newOrgName.trim()) return;
-    setCreatingOrg(true);
-    setErrorMsg('');
-    setBannerMsg('');
-    try {
-      if (isSandboxMode) {
-        const created = addSandboxOrganization({ name: newOrgName.trim(), description: newOrgDesc.trim() });
-        setNewOrgName('');
-        setNewOrgDesc('');
-        setSelectedOrgId(created.id);
-        await refreshWorkspace();
-        setBannerMsg(`Created organization "${created.name}".`);
-        return;
-      }
-
-      const token = await getToken();
-      const res = await fetch('/api/organizations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ name: newOrgName.trim(), description: newOrgDesc.trim() })
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Failed to create organization');
-      setNewOrgName('');
-      setNewOrgDesc('');
-      if (data.organization?.id) setSelectedOrgId(data.organization.id);
-      await refreshWorkspace();
-      setBannerMsg(`Organization "${data.organization?.name}" created.`);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to create organization');
-    } finally {
-      setCreatingOrg(false);
-    }
-  };
-
-  const handleDeleteOrg = async (orgId: string, orgName: string) => {
-    if (!confirm(`Delete organization "${orgName}"? All websites inside it will move safely back to your Personal workspace.`)) {
+  const handleDeleteOrg = async (org: Organization) => {
+    if (!confirm(`Remove organization "${org.name}"? All websites inside it will move safely back to your Personal workspace.`)) {
       return;
     }
     setErrorMsg('');
+    setBannerMsg('');
+    setDeletingOrgId(org.id);
     try {
-      if (isSandboxMode) {
-        deleteSandboxOrganization(orgId);
-        if (selectedOrgId === orgId) setSelectedOrgId('');
-        await refreshWorkspace();
+      const result = await removeOrganization(org);
+      if (!result.ok) {
+        setErrorMsg(result.error || 'Unable to delete organization');
         return;
       }
-      const token = await getToken();
-      const res = await fetch(`/api/organizations?id=${encodeURIComponent(orgId)}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'Failed to delete organization');
-      if (selectedOrgId === orgId) setSelectedOrgId('');
-      await refreshWorkspace();
-      setBannerMsg(`Deleted organization "${orgName}". Projects were moved to Personal.`);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Unable to delete organization');
+      if (selectedOrgId === org.id) setSelectedOrgId('');
+      setBannerMsg(`Removed organization "${org.name}". Projects were moved safely to Personal.`);
+    } finally {
+      setDeletingOrgId(null);
     }
   };
 
@@ -505,7 +455,7 @@ export const AccessDashboard: React.FC = () => {
             className={`access-tab-btn ${activeTab === 'clerk_org' ? 'active' : ''}`}
             onClick={() => setActiveTab('clerk_org')}
           >
-            <Users size={16} /> Clerk Organization
+            <Users size={16} /> Organization &amp; Team
           </button>
           <button
             type="button"
@@ -519,7 +469,7 @@ export const AccessDashboard: React.FC = () => {
             className={`access-tab-btn ${activeTab === 'organizations' ? 'active' : ''}`}
             onClick={() => setActiveTab('organizations')}
           >
-            <Building2 size={16} /> Client Organizations ({organizations.length})
+            <Building2 size={16} /> Organizations ({organizations.length})
           </button>
         </div>
 
@@ -810,49 +760,22 @@ export const AccessDashboard: React.FC = () => {
           <div className="access-grid-2col">
             {/* Left: Create + List Client Orgs */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <form onSubmit={handleCreateOrg} className="access-panel">
+              <div className="access-panel">
                 <h2 style={{ margin: '0 0 0.35rem', fontSize: '1.08rem', color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Building2 size={18} color="#00F0FF" /> Create Client Organization
+                  <Building2 size={18} color="#00F0FF" /> Create Organization
                 </h2>
-                <p style={{ margin: '0 0 1rem', fontSize: '0.8rem', color: '#9CA3AF' }}>
-                  Group 50+ websites for a management company into one Organization container.
+                <p style={{ margin: '0 0 1rem', fontSize: '0.82rem', color: '#9CA3AF', lineHeight: 1.5 }}>
+                  Create an organization to isolate 50+ client websites, invite team members, and manage portfolio access.
                 </p>
-
-                <div className="org-modal-field">
-                  <label className="org-modal-label">Organization / Company Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newOrgName}
-                    onChange={(e) => setNewOrgName(e.target.value)}
-                    placeholder="e.g. Cogwheel Hospitality (50 Hotels)"
-                    className="module-input"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-
-                <div className="org-modal-field">
-                  <label className="org-modal-label">Notes / Portfolio Description (Optional)</label>
-                  <input
-                    type="text"
-                    value={newOrgDesc}
-                    onChange={(e) => setNewOrgDesc(e.target.value)}
-                    placeholder="50 managed properties across North America"
-                    className="module-input"
-                    style={{ width: '100%' }}
-                  />
-                </div>
-
                 <button
-                  type="submit"
-                  disabled={creatingOrg}
+                  type="button"
+                  onClick={() => openCreateOrganization({ afterCreateOrganizationUrl: '/access' })}
                   className="org-btn-primary"
                   style={{ width: '100%', justifyContent: 'center' }}
                 >
-                  {creatingOrg ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                  Create Organization
+                  <Plus size={16} /> Create Organization
                 </button>
-              </form>
+              </div>
 
               <div className="access-panel">
                 <h3 style={{ margin: '0 0 0.85rem', fontSize: '0.96rem', color: '#FFFFFF' }}>
@@ -892,17 +815,22 @@ export const AccessDashboard: React.FC = () => {
                               {org.projectCount || 0} websites • {org.memberCount || 0} members • Role: {org.role || 'owner'}
                             </div>
                           </div>
-                          {org.role === 'owner' && (
+                          {(org.role === 'owner' || org.role === 'admin') && (
                             <button
                               type="button"
+                              disabled={deletingOrgId === org.id}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleDeleteOrg(org.id, org.name);
+                                handleDeleteOrg(org);
                               }}
                               className="org-action-btn delete-btn"
-                              title="Delete organization"
+                              title="Remove organization"
                             >
-                              <Trash2 size={14} />
+                              {deletingOrgId === org.id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={14} />
+                              )}
                             </button>
                           )}
                         </div>

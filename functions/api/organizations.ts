@@ -232,6 +232,9 @@ export async function onRequest(context: any) {
 
       const description = typeof body.description === 'string' ? body.description.trim() : '';
       const clerkOrgId = typeof body.clerkOrgId === 'string' && body.clerkOrgId.trim() ? body.clerkOrgId.trim() : null;
+      if (!clerkOrgId) {
+        return json({ error: 'Organizations must be created through the organization switcher.' }, 400);
+      }
       const orgId = 'org_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
 
       await env.DB.prepare(

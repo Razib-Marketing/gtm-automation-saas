@@ -31,7 +31,7 @@ import './Sidebar.css';
 
 export const Sidebar: React.FC = () => {
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const { signOut, openCreateOrganization } = useClerk();
   const location = useLocation();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
@@ -307,7 +307,7 @@ export const Sidebar: React.FC = () => {
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '__all__') navigate('/organization');
-                      else if (val === '__new__') navigate('/organization?createOrg=1');
+                      else if (val === '__new__') openCreateOrganization({ afterCreateOrganizationUrl: '/organization' });
                       else if (val) navigate(`/organizations/${encodeURIComponent(val)}`);
                     }}
                     className="sidebar-org-select"
@@ -533,14 +533,18 @@ export const Sidebar: React.FC = () => {
                     </Link>
                   )}
 
-                  <Link
-                    to="/organization?createOrg=1"
-                    onClick={closeDrawer}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeDrawer();
+                      openCreateOrganization({ afterCreateOrganizationUrl: '/organization' });
+                    }}
                     className="sidebar-org-subitem add-org"
+                    style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
                   >
                     <Plus size={14} />
                     <span className="sidebar-subitem-label">New Organization</span>
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
