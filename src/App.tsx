@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useParams, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate, useParams, Link } from 'react-router-dom';
 import { ClerkProvider, useAuth } from '@clerk/clerk-react';
 import { dark } from '@clerk/themes';
 import { Navbar } from './components/layout/Navbar';
@@ -205,9 +205,10 @@ const AppRoutes = () => {
     }
   }, [location]);
 
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+  const isAuthRoute = location.pathname.startsWith('/sign-in') || location.pathname.startsWith('/sign-up');
+
+  const routesElement = (
+      <Routes location={location} key={isAuthRoute ? 'auth-routes' : location.pathname}>
         <Route path="/" element={<RootRoute />} />
 
         {/* Organization Level Routes */}
@@ -336,6 +337,15 @@ const AppRoutes = () => {
         <Route path="/api-reference" element={<ApiReference />} />
         <Route path="/community" element={<Community />} />
       </Routes>
+  );
+
+  if (isAuthRoute) {
+    return routesElement;
+  }
+
+  return (
+    <AnimatePresence mode="wait">
+      {routesElement}
     </AnimatePresence>
   );
 };
@@ -393,32 +403,60 @@ const AppLayout = () => {
   );
 };
 
-const getDashboardUrl = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return '/organization';
+const ClerkProviderWithRoutes = () => {
+  const navigate = useNavigate();
+
+  const navigateWithOriginCheck = React.useCallback((to: string, replace = false) => {
+    if (/^https?:\/\//i.test(to)) {
+      try {
+        const target = new URL(to);
+        if (target.origin !== window.location.origin) {
+          if (replace) {
+            window.location.replace(to);
+          } else {
+            window.location.assign(to);
+          }
+          return;
+        }
+        navigate(`${target.pathname}${target.search}${target.hash}`, { replace });
+        return;
+      } catch (_) {
+        window.location.assign(to);
+        return;
+      }
     }
-  }
-  return 'https://app.gtmobserver.com/organization';
+    navigate(to, { replace });
+  }, [navigate]);
+
+  return (
+    <ClerkProvider
+      publishableKey={PUBLISHABLE_KEY}
+      routerPush={(to) => navigateWithOriginCheck(to, false)}
+      routerReplace={(to) => navigateWithOriginCheck(to, true)}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/organization"
+      signUpFallbackRedirectUrl="/organization"
+      allowedRedirectOrigins={[
+        'https://gtmobserver.com',
+        'https://www.gtmobserver.com',
+        'https://app.gtmobserver.com',
+        'https://dashboard.gtmobserver.com'
+      ]}
+      appearance={{ baseTheme: dark, variables: { colorPrimary: '#00F0FF', colorBackground: '#121212', colorText: 'white' } }}
+    >
+      <ErrorBoundary>
+        <AppLayout />
+      </ErrorBoundary>
+    </ClerkProvider>
+  );
 };
 
 function App() {
   return (
-    <ClerkProvider
-      publishableKey={PUBLISHABLE_KEY}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      afterSignInUrl={getDashboardUrl()}
-      afterSignUpUrl={getDashboardUrl()}
-      appearance={{ baseTheme: dark, variables: { colorPrimary: '#00F0FF', colorBackground: '#121212', colorText: 'white' } }}
-    >
-      <Router>
-        <ErrorBoundary>
-          <AppLayout />
-        </ErrorBoundary>
-      </Router>
-    </ClerkProvider>
+    <Router>
+      <ClerkProviderWithRoutes />
+    </Router>
   );
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { SignIn, ClerkLoaded, ClerkLoading } from '@clerk/clerk-react';
+import { SignIn, ClerkLoaded, ClerkLoading, useAuth } from '@clerk/clerk-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import '../components/layout/Navbar.css';
@@ -15,7 +16,12 @@ const getDashboardUrl = () => {
 };
 
 export const SignInPage = () => {
+  const { isLoaded, isSignedIn } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isSsoCallback = location.pathname.includes('sso-callback');
   const [tookTooLong, setTookTooLong] = useState(false);
+  const [ssoStalled, setSsoStalled] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -23,6 +29,25 @@ export const SignInPage = () => {
     }, 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    const target = getDashboardUrl();
+    if (/^https?:\/\//i.test(target) && new URL(target).origin !== window.location.origin) {
+      window.location.replace(target);
+    } else {
+      navigate('/organization', { replace: true });
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
+  useEffect(() => {
+    if (!isSsoCallback || isSignedIn) {
+      setSsoStalled(false);
+      return;
+    }
+    const timer = setTimeout(() => setSsoStalled(true), 8000);
+    return () => clearTimeout(timer);
+  }, [isSsoCallback, isSignedIn]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -59,7 +84,62 @@ export const SignInPage = () => {
           </div>
         </ClerkLoading>
         <ClerkLoaded>
-          <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" forceRedirectUrl={getDashboardUrl()} fallbackRedirectUrl={getDashboardUrl()} />
+          {isLoaded && isSignedIn ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', textAlign: 'center' }}>
+              <Loader2 className="animate-spin" size={36} color="#00F0FF" />
+              <p style={{ color: '#E5E7EB', fontSize: '1rem', fontWeight: 500 }}>Redirecting to your workspace...</p>
+            </div>
+          ) : (
+            <>
+              <SignIn
+                routing="path"
+                path="/sign-in"
+                signUpUrl="/sign-up"
+                fallbackRedirectUrl="/organization"
+                signUpFallbackRedirectUrl="/organization"
+              />
+              {ssoStalled && (
+                <div
+                  style={{
+                    marginTop: '1.25rem',
+                    maxWidth: '420px',
+                    width: '100%',
+                    background: 'rgba(15, 23, 38, 0.92)',
+                    border: '1px solid rgba(0, 240, 255, 0.25)',
+                    borderRadius: '12px',
+                    padding: '1.15rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: '#00F0FF', fontWeight: 600, marginBottom: '0.45rem' }}>
+                    <AlertCircle size={18} />
+                    <span>Sign-in Callback Interrupted</span>
+                  </div>
+                  <p style={{ color: '#9CA3AF', fontSize: '0.85rem', lineHeight: 1.5, margin: '0 0 1rem' }}>
+                    This OAuth callback may have expired or been interrupted. Return to Sign In to restart authentication cleanly.
+                  </p>
+                  <Link
+                    to="/sign-in"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 'var(--btn-padding)',
+                      minHeight: 'var(--btn-min-height)',
+                      borderRadius: 'var(--btn-radius)',
+                      background: 'linear-gradient(135deg, #4F46E5, #00F0FF)',
+                      color: '#FFFFFF',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Return to Sign In
+                  </Link>
+                </div>
+              )}
+            </>
+          )}
         </ClerkLoaded>
       </div>
     </div>
