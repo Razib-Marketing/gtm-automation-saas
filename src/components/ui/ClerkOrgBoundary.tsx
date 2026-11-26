@@ -99,10 +99,9 @@ export const ClerkOrgSwitcherWidget: React.FC<{
       }
     >
       <OrganizationSwitcher
-        hidePersonal={false}
         afterSelectOrganizationUrl="/organization"
-        afterSelectPersonalUrl="/organization"
         afterCreateOrganizationUrl="/organization"
+        afterLeaveOrganizationUrl="/choose-organization"
         appearance={{
           baseTheme: dark,
           variables: {
@@ -116,10 +115,10 @@ export const ClerkOrgSwitcherWidget: React.FC<{
             organizationSwitcherTrigger: {
               width: compact ? '100%' : 'auto',
               justifyContent: 'space-between',
-              padding: compact ? '0.48rem 0.7rem' : '0.55rem 0.9rem',
-              borderRadius: '10px',
+              padding: compact ? '0.48rem 0.7rem' : 'var(--btn-padding)',
+              borderRadius: 'var(--btn-radius, 10px)',
               background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(0, 240, 255, 0.2)',
               color: '#F3F4F6'
             }
           }

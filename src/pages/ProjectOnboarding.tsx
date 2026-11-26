@@ -61,7 +61,7 @@ export const ProjectOnboarding: React.FC = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isSandboxMode, googleConnected, organizations, activeOrgId, refreshWorkspace } = useWorkspace();
+  const { isSandboxMode, googleConnected, organizations, activeOrgId, activeClerkMirrorOrg, refreshWorkspace } = useWorkspace();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -70,7 +70,9 @@ export const ProjectOnboarding: React.FC = () => {
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [websiteType, setWebsiteType] = useState<WebsitePerspective>('general');
   const [organizationId, setOrganizationId] = useState<string>(() =>
-    activeOrgId && !['all', 'personal', 'shared', 'trash'].includes(activeOrgId) ? activeOrgId : ''
+    activeOrgId && !['all', 'personal', 'shared', 'trash'].includes(activeOrgId)
+      ? activeOrgId
+      : activeClerkMirrorOrg?.id || ''
   );
 
   // Step 2: Google Analytics (GA4)
@@ -116,8 +118,10 @@ export const ProjectOnboarding: React.FC = () => {
   useEffect(() => {
     if (queryOrgId) {
       setOrganizationId(queryOrgId);
+    } else if (!organizationId && activeClerkMirrorOrg?.id) {
+      setOrganizationId(activeClerkMirrorOrg.id);
     }
-  }, [queryOrgId]);
+  }, [queryOrgId, organizationId, activeClerkMirrorOrg]);
 
   useEffect(() => {
     if (!justCheckedOut || !checkoutIdParam || isSandboxMode) return;

@@ -141,7 +141,12 @@ export async function onRequestGet(context: any) {
       )
         .bind(clerkUserId)
         .first();
-      hasSharedAccess = Boolean(sharedGrant || orgMem || orgOwned);
+      const clerkOrgRow: any = auth.orgId
+        ? await env.DB.prepare('SELECT 1 FROM organizations WHERE clerk_org_id = ? LIMIT 1')
+            .bind(auth.orgId)
+            .first()
+        : null;
+      hasSharedAccess = Boolean(sharedGrant || orgMem || orgOwned || clerkOrgRow);
     } catch (_) {}
 
     const activeTier = (dbResult.subscription_tier || 'free').toLowerCase();

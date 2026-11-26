@@ -20,6 +20,7 @@ import { Community } from './pages/Community';
 import { Settings } from './pages/Settings';
 import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
+import { ChooseOrganizationPage } from './pages/ChooseOrganizationPage';
 import { OrganizationDashboard } from './pages/OrganizationDashboard';
 import { AccessDashboard } from './pages/AccessDashboard';
 import { OrganizationAccessPage } from './pages/OrganizationAccessPage';
@@ -205,7 +206,10 @@ const AppRoutes = () => {
     }
   }, [location]);
 
-  const isAuthRoute = location.pathname.startsWith('/sign-in') || location.pathname.startsWith('/sign-up');
+  const isAuthRoute =
+    location.pathname.startsWith('/sign-in') ||
+    location.pathname.startsWith('/sign-up') ||
+    location.pathname.startsWith('/choose-organization');
 
   const routesElement = (
       <Routes location={location} key={isAuthRoute ? 'auth-routes' : location.pathname}>
@@ -330,6 +334,7 @@ const AppRoutes = () => {
         {/* Auth & Public Marketing Pages */}
         <Route path="/sign-in/*" element={<SignInPage />} />
         <Route path="/sign-up/*" element={<SignUpPage />} />
+        <Route path="/choose-organization/*" element={<ChooseOrganizationPage />} />
         <Route path="/pricing" element={<Navigate to="/" replace />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
@@ -369,7 +374,10 @@ const AppLayout = () => {
     '/observer'
   ];
   const isInnerApp = innerPaths.some(path => location.pathname.startsWith(path));
-  const isAuthPage = location.pathname.startsWith('/sign-in') || location.pathname.startsWith('/sign-up');
+  const isAuthPage =
+    location.pathname.startsWith('/sign-in') ||
+    location.pathname.startsWith('/sign-up') ||
+    location.pathname.startsWith('/choose-organization');
 
   React.useEffect(() => {
     if (isMarketingDomain && isInnerApp) {
@@ -437,6 +445,7 @@ const ClerkProviderWithRoutes = () => {
       signUpUrl="/sign-up"
       signInFallbackRedirectUrl="/organization"
       signUpFallbackRedirectUrl="/organization"
+      taskUrls={{ 'choose-organization': '/choose-organization' }}
       allowedRedirectOrigins={[
         'https://gtmobserver.com',
         'https://www.gtmobserver.com',

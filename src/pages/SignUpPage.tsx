@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SignUp, ClerkLoaded, ClerkLoading, useAuth } from '@clerk/clerk-react';
+import { SignUp, ClerkLoaded, ClerkLoading, useAuth, useSession } from '@clerk/clerk-react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { X, Loader2, AlertCircle } from 'lucide-react';
@@ -17,6 +17,7 @@ const getDashboardUrl = () => {
 
 export const SignUpPage = () => {
   const { isLoaded, isSignedIn } = useAuth();
+  const { session } = useSession();
   const location = useLocation();
   const navigate = useNavigate();
   const isSsoCallback = location.pathname.includes('sso-callback');
@@ -32,13 +33,21 @@ export const SignUpPage = () => {
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
+    if (session?.currentTask?.key === 'choose-organization') {
+      if (!location.pathname.includes('choose-organization')) {
+        navigate('/choose-organization', { replace: true });
+      }
+      return;
+    }
+    if (session?.currentTask) return;
+
     const target = getDashboardUrl();
     if (/^https?:\/\//i.test(target) && new URL(target).origin !== window.location.origin) {
       window.location.replace(target);
     } else {
       navigate('/organization', { replace: true });
     }
-  }, [isLoaded, isSignedIn, navigate]);
+  }, [isLoaded, isSignedIn, session, location.pathname, navigate]);
 
   useEffect(() => {
     if (!isSsoCallback || isSignedIn) {

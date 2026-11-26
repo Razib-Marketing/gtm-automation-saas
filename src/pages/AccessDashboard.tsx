@@ -12,11 +12,13 @@ import {
   Loader2,
   ArrowRight,
   UserPlus,
+  Users,
   FolderKanban,
   KeyRound
 } from 'lucide-react';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
+import { ClerkOrgProfileWidget } from '../components/ui/ClerkOrgBoundary';
 import { useWorkspace } from '../context/WorkspaceContext';
 import type { AccessRole, ProjectAccessGrant } from '../types/project';
 import {
@@ -36,7 +38,7 @@ export const AccessDashboard: React.FC = () => {
   const { user } = useUser();
   const { projects, organizations, isSandboxMode, refreshWorkspace } = useWorkspace();
 
-  const [activeTab, setActiveTab] = useState<'universal' | 'organizations'>('universal');
+  const [activeTab, setActiveTab] = useState<'clerk_org' | 'universal' | 'organizations'>('clerk_org');
   const [grants, setGrants] = useState<ProjectAccessGrant[]>([]);
   const [sharedWithMe, setSharedWithMe] = useState<ProjectAccessGrant[]>([]);
   const [loadingAccess, setLoadingAccess] = useState(true);
@@ -500,6 +502,13 @@ export const AccessDashboard: React.FC = () => {
         <div className="access-tabs">
           <button
             type="button"
+            className={`access-tab-btn ${activeTab === 'clerk_org' ? 'active' : ''}`}
+            onClick={() => setActiveTab('clerk_org')}
+          >
+            <Users size={16} /> Clerk Organization
+          </button>
+          <button
+            type="button"
             className={`access-tab-btn ${activeTab === 'universal' ? 'active' : ''}`}
             onClick={() => setActiveTab('universal')}
           >
@@ -513,6 +522,13 @@ export const AccessDashboard: React.FC = () => {
             <Building2 size={16} /> Client Organizations ({organizations.length})
           </button>
         </div>
+
+        {/* TAB 0: CLERK ORGANIZATION */}
+        {activeTab === 'clerk_org' && (
+          <div className="access-panel">
+            <ClerkOrgProfileWidget isSandboxMode={isSandboxMode} />
+          </div>
+        )}
 
         {/* TAB 1: UNIVERSAL PROJECT ACCESS */}
         {activeTab === 'universal' && (

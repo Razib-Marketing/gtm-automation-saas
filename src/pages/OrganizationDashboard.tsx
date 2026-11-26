@@ -61,6 +61,8 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
     trashedProjects,
     activeOrgId,
     setActiveOrgId,
+    clerkOrgName,
+    activeClerkMirrorOrg,
     userTier,
     isSandboxMode,
     refreshWorkspace
@@ -822,6 +824,8 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
               {scopedOrg ? <Building2 size={13} /> : <Layers size={13} />}
               {scopedOrg
                 ? `CLIENT ORGANIZATION • ${(scopedOrg.role || 'OWNER').toUpperCase()} • ${userTier.toUpperCase()} PLAN`
+                : clerkOrgName
+                ? `CLERK ORG • ${clerkOrgName.toUpperCase()} • ${userTier.toUpperCase()} PLAN`
                 : `ORGANIZATION LEVEL • ${userTier.toUpperCase()} PLAN`}
             </div>
             <h1 className="dashboard-title">{scopedOrg ? scopedOrg.name : 'Organization Dashboard'}</h1>
@@ -915,22 +919,41 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                 Personal <span className="org-count-badge">{personalCount}</span>
               </button>
 
-              {organizations.map((org) => (
-                <button
-                  key={org.id}
-                  type="button"
-                  className={`org-scope-pill ${activeOrgId === org.id ? 'active' : ''}`}
-                  onClick={() => {
-                    navigate(`/organizations/${encodeURIComponent(org.id)}`);
-                    setSelectedIds([]);
-                  }}
-                >
-                  <Building2 size={13} /> {org.name}{' '}
-                  <span className="org-count-badge">
-                    {projects.filter((p) => p.organization_id === org.id).length}
-                  </span>
-                </button>
-              ))}
+              {organizations.map((org) => {
+                const isActiveClerkMirror = Boolean(activeClerkMirrorOrg && activeClerkMirrorOrg.id === org.id);
+                return (
+                  <button
+                    key={org.id}
+                    type="button"
+                    className={`org-scope-pill ${activeOrgId === org.id || isActiveClerkMirror ? 'active' : ''}`}
+                    onClick={() => {
+                      navigate(`/organizations/${encodeURIComponent(org.id)}`);
+                      setSelectedIds([]);
+                    }}
+                  >
+                    <Building2 size={13} /> {org.name}
+                    {org.clerk_org_id && (
+                      <span
+                        style={{
+                          fontSize: '0.62rem',
+                          padding: '0.08rem 0.38rem',
+                          borderRadius: '9999px',
+                          background: 'rgba(0, 240, 255, 0.14)',
+                          color: '#00F0FF',
+                          border: '1px solid rgba(0, 240, 255, 0.35)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em'
+                        }}
+                      >
+                        Clerk
+                      </span>
+                    )}
+                    <span className="org-count-badge">
+                      {projects.filter((p) => p.organization_id === org.id).length}
+                    </span>
+                  </button>
+                );
+              })}
 
               {sharedCount > 0 && (
                 <button

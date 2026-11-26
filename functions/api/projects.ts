@@ -451,10 +451,23 @@ export async function onRequest(context: any) {
 
     if (request.method === 'POST') {
       const body = await request.json().catch(() => ({}));
-      const organizationId =
+      let organizationId =
         typeof body.organizationId === 'string' && body.organizationId.trim()
           ? body.organizationId.trim()
           : null;
+
+      if (organizationId === '__personal__') {
+        organizationId = null;
+      } else if (!organizationId && auth.orgId) {
+        const clerkMirror: any = await env.DB.prepare(
+          'SELECT id FROM organizations WHERE clerk_org_id = ? LIMIT 1'
+        )
+          .bind(auth.orgId)
+          .first();
+        if (clerkMirror?.id) {
+          organizationId = clerkMirror.id;
+        }
+      }
 
       let orgName: string | null = null;
       if (organizationId) {

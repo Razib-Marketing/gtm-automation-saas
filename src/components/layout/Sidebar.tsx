@@ -25,6 +25,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { ClerkOrgSwitcherWidget } from '../ui/ClerkOrgBoundary';
 import { getWebsiteTypeMeta } from '../../types/project';
 import './Sidebar.css';
 
@@ -279,6 +280,7 @@ export const Sidebar: React.FC = () => {
             </div>
           ) : isOrgScopedMode ? (
             <div className="sidebar-project-context">
+              <ClerkOrgSwitcherWidget compact isSandboxMode={isSandboxMode} />
               <Link to="/organization" onClick={closeDrawer} className="sidebar-back-org">
                 <ArrowLeft size={14} aria-hidden="true" />
                 <span>All Organizations</span>
@@ -332,7 +334,7 @@ export const Sidebar: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
               <div className="sidebar-scope-pill org">
                 <Layers size={12} aria-hidden="true" />
                 <span>ORGANIZATION</span>
@@ -340,6 +342,7 @@ export const Sidebar: React.FC = () => {
                   {userTier.toUpperCase()}
                 </span>
               </div>
+              <ClerkOrgSwitcherWidget compact isSandboxMode={isSandboxMode} />
             </div>
           )}
         </div>

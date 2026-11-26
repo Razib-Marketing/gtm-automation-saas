@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth, useUser } from '@clerk/clerk-react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth, useUser, useOrganization, useSession } from '@clerk/clerk-react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import type { Project, Organization } from '../types/project';
@@ -19,6 +19,10 @@ interface WorkspaceContextValue {
   hasPolarCustomer: boolean;
   hasSharedAccess: boolean;
   googleConnected: boolean;
+  clerkOrgId: string | null;
+  clerkOrgName: string | null;
+  clerkOrgRole: string | null;
+  activeClerkMirrorOrg: Organization | null;
   organizations: Organization[];
   projects: Project[];
   trashedProjects: Project[];
@@ -38,6 +42,10 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
   hasPolarCustomer: false,
   hasSharedAccess: false,
   googleConnected: false,
+  clerkOrgId: null,
+  clerkOrgName: null,
+  clerkOrgRole: null,
+  activeClerkMirrorOrg: null,
   organizations: [],
   projects: [],
   trashedProjects: [],
@@ -53,8 +61,9 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
 export const useWorkspace = () => useContext(WorkspaceContext);
 
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isLoaded, isSignedIn, orgId, orgRole, getToken } = useAuth();
   const { user } = useUser();
+  const { organization: clerkOrg } = useOrganization();
 
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
   const [workspaceLimit, setWorkspaceLimit] = useState<number>(0);
@@ -131,17 +140,22 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const authHeaders = { Authorization: `Bearer ${token}` };
       const email = user.primaryEmailAddress?.emailAddress || '';
+      const orgEndpoint = clerkOrg?.name
+        ? `/api/organizations?clerkOrgName=${encodeURIComponent(clerkOrg.name)}`
+        : '/api/organizations';
 
-      const [meRes, authRes, orgRes, projRes] = await Promise.all([
+      // Sync active Clerk Organization into D1 mirror first so downstream checks/projects see it immediately
+      const orgRes = await fetch(orgEndpoint, { headers: authHeaders });
+      const orgData = await orgRes.json().catch(() => ({}));
+
+      const [meRes, authRes, projRes] = await Promise.all([
         fetch(`/api/user/me?email=${encodeURIComponent(email)}`, { headers: authHeaders }),
         fetch('/api/auth/status', { headers: authHeaders }),
-        fetch('/api/organizations', { headers: authHeaders }),
         fetch('/api/projects', { headers: authHeaders })
       ]);
 
       const meData = await meRes.json().catch(() => ({}));
       const authData = await authRes.json().catch(() => ({}));
-      const orgData = await orgRes.json().catch(() => ({}));
       const projData = await projRes.json().catch(() => ({}));
 
       if (meRes.ok && meData?.subscription_tier) {
@@ -166,7 +180,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setLoading(false);
     }
-  }, [effectiveLoaded, isSandboxMode, isSignedIn, user, getToken]);
+  }, [effectiveLoaded, isSandboxMode, isSignedIn, user, getToken, orgId, clerkOrg?.name]);
 
   useEffect(() => {
     loadWorkspace();
@@ -198,6 +212,14 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [isSandboxMode]);
 
   const hasActiveSubscription = userTier === 'pro' || userTier === 'custom';
+  const clerkOrgId = isSandboxMode ? null : orgId || null;
+  const clerkOrgName = isSandboxMode ? null : clerkOrg?.name || null;
+  const clerkOrgRole = isSandboxMode ? null : orgRole || null;
+
+  const activeClerkMirrorOrg = useMemo(
+    () => organizations.find((o) => clerkOrgId && o.clerk_org_id === clerkOrgId) || null,
+    [organizations, clerkOrgId]
+  );
 
   const getProjectById = useCallback(
     (id?: string) => {
@@ -224,6 +246,10 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         hasPolarCustomer,
         hasSharedAccess,
         googleConnected,
+        clerkOrgId,
+        clerkOrgName,
+        clerkOrgRole,
+        activeClerkMirrorOrg,
         organizations,
         projects,
         trashedProjects,
@@ -246,6 +272,7 @@ export const SubscriptionGate: React.FC<{
   allowFree?: boolean;
 }> = ({ children, allowFree = false }) => {
   const { isLoaded, isSignedIn } = useAuth();
+  const { session } = useSession();
   const { hasActiveSubscription, hasSharedAccess, projects, loading, isSandboxMode } = useWorkspace();
   const location = useLocation();
   const [waitExpired, setWaitExpired] = useState(false);
@@ -279,6 +306,10 @@ export const SubscriptionGate: React.FC<{
 
   if (!isSignedIn && !isSandboxMode) {
     return <Navigate to={`/sign-in?redirect_url=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  if (!isSandboxMode && session?.currentTask?.key === 'choose-organization') {
+    return <Navigate to="/choose-organization" replace />;
   }
 
   if (!allowFree && !hasActiveSubscription && !hasSharedAccess && projects.length === 0) {
