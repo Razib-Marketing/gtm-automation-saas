@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import {
-  Users,
   Building2,
   ShieldCheck,
   Plus,
@@ -18,7 +17,6 @@ import {
 } from 'lucide-react';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
-import { ClerkOrgProfileWidget } from '../components/ui/ClerkOrgBoundary';
 import { useWorkspace } from '../context/WorkspaceContext';
 import type { AccessRole, ProjectAccessGrant } from '../types/project';
 import {
@@ -38,7 +36,7 @@ export const AccessDashboard: React.FC = () => {
   const { user } = useUser();
   const { projects, organizations, isSandboxMode, refreshWorkspace } = useWorkspace();
 
-  const [activeTab, setActiveTab] = useState<'universal' | 'organizations' | 'clerk'>('universal');
+  const [activeTab, setActiveTab] = useState<'universal' | 'organizations'>('universal');
   const [grants, setGrants] = useState<ProjectAccessGrant[]>([]);
   const [sharedWithMe, setSharedWithMe] = useState<ProjectAccessGrant[]>([]);
   const [loadingAccess, setLoadingAccess] = useState(true);
@@ -514,13 +512,6 @@ export const AccessDashboard: React.FC = () => {
           >
             <Building2 size={16} /> Client Organizations ({organizations.length})
           </button>
-          <button
-            type="button"
-            className={`access-tab-btn ${activeTab === 'clerk' ? 'active' : ''}`}
-            onClick={() => setActiveTab('clerk')}
-          >
-            <Users size={16} /> Clerk Organization
-          </button>
         </div>
 
         {/* TAB 1: UNIVERSAL PROJECT ACCESS */}
@@ -533,7 +524,7 @@ export const AccessDashboard: React.FC = () => {
                   <UserPlus size={18} color="#00F0FF" /> Grant Access to Anyone
                 </h2>
                 <p style={{ margin: '0 0 1.1rem', fontSize: '0.82rem', color: '#9CA3AF' }}>
-                  Select 1 or all 50+ websites and invite any collaborator email (even on a free Clerk account).
+                  Select 1 or all 50+ websites and invite any collaborator email (they can sign in with any GTMObserver account).
                 </p>
 
                 <div className="org-modal-field">
@@ -1063,13 +1054,6 @@ export const AccessDashboard: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* TAB 3: CLERK ORGANIZATION */}
-        {activeTab === 'clerk' && (
-          <div className="access-panel">
-            <ClerkOrgProfileWidget isSandboxMode={isSandboxMode} />
           </div>
         )}
       </div>

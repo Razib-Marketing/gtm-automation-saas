@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { UserProfile, useUser, useAuth, RedirectToSignIn } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle, Clock, Check, Building2, ExternalLink } from 'lucide-react';
+import { CreditCard, User, Sparkles, AlertCircle, ArrowUpCircle, Clock, Check, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
-import { ClerkOrgProfileWidget } from '../components/ui/ClerkOrgBoundary';
 import { getTimezoneOptions, getBrowserTimezone } from '../data/observerTemplates';
 import { useWorkspace } from '../context/WorkspaceContext';
 import './Settings.css';
@@ -15,7 +14,7 @@ export const Settings = () => {
   const navigate = useNavigate();
   const { isSandboxMode, userTier: ctxTier, workspaceLimit: ctxLimit } = useWorkspace();
 
-  const [activeTab, setActiveTab] = useState<'subscription' | 'schedule' | 'organization' | 'profile'>('subscription');
+  const [activeTab, setActiveTab] = useState<'subscription' | 'schedule' | 'profile'>('subscription');
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
   const [workspaceLimit, setWorkspaceLimit] = useState(0);
   const [deploymentCount, setDeploymentCount] = useState(0);
@@ -192,12 +191,6 @@ export const Settings = () => {
                 onClick={() => setActiveTab('schedule')}
               >
                 <Clock size={18} /> Observer Schedule
-              </button>
-              <button 
-                className={`sidebar-link ${activeTab === 'organization' ? 'active' : ''}`}
-                onClick={() => setActiveTab('organization')}
-              >
-                <Building2 size={18} /> Clerk Organization
               </button>
               <button 
                 className={`sidebar-link ${activeTab === 'profile' ? 'active' : ''}`}
@@ -461,22 +454,6 @@ export const Settings = () => {
                     </div>
                   </form>
                 )}
-              </motion.div>
-            )}
-
-            {activeTab === 'organization' && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="settings-panel"
-              >
-                <div className="panel-header">
-                  <h2>Clerk Organization Management</h2>
-                  <p>Create or switch between Clerk Organizations, manage organization members, and invite team collaborators.</p>
-                </div>
-                <div className="panel-body">
-                  <ClerkOrgProfileWidget isSandboxMode={isSandboxMode} />
-                </div>
               </motion.div>
             )}
 

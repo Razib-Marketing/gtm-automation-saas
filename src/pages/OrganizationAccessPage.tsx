@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
-import { ClerkOrgProfileWidget } from '../components/ui/ClerkOrgBoundary';
 import { useWorkspace } from '../context/WorkspaceContext';
 import type { Organization, AccessRole, ProjectAccessGrant } from '../types/project';
 import {
@@ -713,23 +712,6 @@ export const OrganizationAccessPage: React.FC<OrganizationAccessPageProps> = ({ 
               </div>
             )}
           </div>
-        </div>
-
-        {/* Section 3: Clerk Organization Sync */}
-        <div className="access-panel">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div>
-              <h3 style={{ margin: 0, color: '#FFFFFF', fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <ShieldCheck size={17} color="#00F0FF" /> Clerk Enterprise Organization Directory
-              </h3>
-              <p style={{ margin: '0.25rem 0 0', color: '#9CA3AF', fontSize: '0.82rem' }}>
-                {organization.clerk_org_id
-                  ? `Linked cleanly with Clerk Organization (${organization.clerk_org_id}).`
-                  : 'Create or switch active Clerk Organizations to auto-sync Clerk SSO teams & memberships.'}
-              </p>
-            </div>
-          </div>
-          <ClerkOrgProfileWidget isSandboxMode={isSandboxMode} />
         </div>
       </div>
     </PageTransition>

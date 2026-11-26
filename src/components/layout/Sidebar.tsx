@@ -24,7 +24,6 @@ import {
   Plus
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
-import { ClerkOrgSwitcherWidget } from '../ui/ClerkOrgBoundary';
 import { getWebsiteTypeMeta } from '../../types/project';
 import './Sidebar.css';
 
@@ -331,7 +330,6 @@ export const Sidebar: React.FC = () => {
             </div>
           ) : (
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <ClerkOrgSwitcherWidget compact isSandboxMode={isSandboxMode} />
               <div className="sidebar-scope-pill org">
                 <Layers size={12} aria-hidden="true" />
                 <span>ORGANIZATION</span>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth, useUser, useOrganization } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import type { Project, Organization } from '../types/project';
@@ -24,7 +24,6 @@ interface WorkspaceContextValue {
   trashedProjects: Project[];
   activeOrgId: ActiveOrgScope;
   setActiveOrgId: (scope: ActiveOrgScope) => void;
-  clerkOrg: { id: string; name: string } | null;
   loading: boolean;
   isSandboxMode: boolean;
   refreshWorkspace: () => Promise<void>;
@@ -44,7 +43,6 @@ const WorkspaceContext = createContext<WorkspaceContextValue>({
   trashedProjects: [],
   activeOrgId: 'all',
   setActiveOrgId: () => {},
-  clerkOrg: null,
   loading: true,
   isSandboxMode: false,
   refreshWorkspace: async () => {},
@@ -57,7 +55,6 @@ export const useWorkspace = () => useContext(WorkspaceContext);
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
-  const { organization: clerkOrganization } = useOrganization();
 
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
   const [workspaceLimit, setWorkspaceLimit] = useState<number>(0);
@@ -83,10 +80,6 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const effectiveLoaded = isLoaded || clerkTimedOutLocally;
   const isSandboxMode = localEnv && effectiveLoaded && !isSignedIn;
-
-  const clerkOrg = clerkOrganization
-    ? { id: clerkOrganization.id, name: clerkOrganization.name }
-    : null;
 
   const loadWorkspace = useCallback(async () => {
     if (!effectiveLoaded) return;
@@ -138,14 +131,11 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const authHeaders = { Authorization: `Bearer ${token}` };
       const email = user.primaryEmailAddress?.emailAddress || '';
-      const orgNameQuery = clerkOrganization?.name
-        ? `?clerkOrgName=${encodeURIComponent(clerkOrganization.name)}`
-        : '';
 
       const [meRes, authRes, orgRes, projRes] = await Promise.all([
         fetch(`/api/user/me?email=${encodeURIComponent(email)}`, { headers: authHeaders }),
         fetch('/api/auth/status', { headers: authHeaders }),
-        fetch(`/api/organizations${orgNameQuery}`, { headers: authHeaders }),
+        fetch('/api/organizations', { headers: authHeaders }),
         fetch('/api/projects', { headers: authHeaders })
       ]);
 
@@ -176,7 +166,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setLoading(false);
     }
-  }, [effectiveLoaded, isSandboxMode, isSignedIn, user, getToken, clerkOrganization?.id, clerkOrganization?.name]);
+  }, [effectiveLoaded, isSandboxMode, isSignedIn, user, getToken]);
 
   useEffect(() => {
     loadWorkspace();
@@ -239,7 +229,6 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         trashedProjects,
         activeOrgId,
         setActiveOrgId,
-        clerkOrg,
         loading,
         isSandboxMode,
         refreshWorkspace: loadWorkspace,
