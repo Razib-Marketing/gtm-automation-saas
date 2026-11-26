@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
-import { UserButton, useUser } from '@clerk/clerk-react';
+import { UserButton, useClerk, useUser } from '@clerk/clerk-react';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -21,7 +21,8 @@ import {
   Building2,
   ChevronDown,
   Users,
-  Plus
+  Plus,
+  LogOut
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { getWebsiteTypeMeta } from '../../types/project';
@@ -29,8 +30,10 @@ import './Sidebar.css';
 
 export const Sidebar: React.FC = () => {
   const { user } = useUser();
+  const { signOut } = useClerk();
   const location = useLocation();
   const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
   const {
     userTier,
     hasActiveSubscription,
@@ -579,17 +582,40 @@ export const Sidebar: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
-              <UserButton
-                afterSignOutUrl="https://gtmobserver.com"
-                appearance={{ elements: { userButtonAvatarBox: { width: '2.5rem', height: '2.5rem' } } }}
-              />
-              <div className="sidebar-user-info">
-                <span className="sidebar-user-name">
-                  {user?.firstName} {user?.lastName}
-                </span>
-                <span className="sidebar-user-email">{user?.primaryEmailAddress?.emailAddress}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', width: '100%' }}>
+                <UserButton
+                  afterSignOutUrl="https://gtmobserver.com"
+                  appearance={{ elements: { userButtonAvatarBox: { width: '2.4rem', height: '2.4rem' } } }}
+                />
+                <div className="sidebar-user-info">
+                  <span className="sidebar-user-name">
+                    {user?.firstName} {user?.lastName}
+                  </span>
+                  <span className="sidebar-user-email">{user?.primaryEmailAddress?.emailAddress}</span>
+                </div>
               </div>
+              <button
+                type="button"
+                className="sidebar-logout-btn"
+                disabled={signingOut}
+                onClick={async () => {
+                  setSigningOut(true);
+                  const isLocal =
+                    typeof window !== 'undefined' &&
+                    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+                  try {
+                    await signOut({ redirectUrl: isLocal ? '/' : 'https://gtmobserver.com' });
+                  } catch (_) {
+                    window.location.href = isLocal ? '/' : 'https://gtmobserver.com';
+                  } finally {
+                    setSigningOut(false);
+                  }
+                }}
+              >
+                <LogOut size={16} aria-hidden="true" />
+                <span>{signingOut ? 'Logging out...' : 'Log Out'}</span>
+              </button>
             </div>
           )}
         </div>
