@@ -96,13 +96,15 @@
 }
 
 .navbar-cta {
-  padding: 0.55rem 1.25rem;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
   font-size: 0.875rem;
   font-weight: 600;
+  line-height: 1.2;
   background-color: #121212;
   border: 1px solid rgba(0, 240, 255, 0.3);
   color: #00F0FF;
-  border-radius: 9999px;
+  border-radius: var(--btn-radius);
   text-decoration: none;
   transition: all 0.3s;
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
@@ -110,6 +112,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.45rem;
 }
 
 .navbar-cta:hover {
@@ -123,12 +126,15 @@
   background-color: rgba(255, 255, 255, 0.05);
   text-decoration: none;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1.2;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
   white-space: nowrap;
@@ -242,17 +248,19 @@
 }
 
 .mobile-auth .navbar-login {
-  font-size: 1.05rem;
-  padding: 0.75rem;
+  font-size: 1rem;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
   text-align: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
+  border-radius: var(--btn-radius);
 }
 
 .mobile-auth .navbar-cta {
   width: 100%;
   text-align: center;
-  padding: 0.875rem;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
   font-size: 1rem;
 }

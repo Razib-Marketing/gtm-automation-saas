@@ -93,12 +93,16 @@
   color: #0B0F19;
   font-size: 13px;
   font-weight: 700;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: none;
   cursor: pointer;
   transition: all 0.2s;
   box-shadow: 0 4px 12px rgba(0, 240, 255, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-cookie-accept:hover,
@@ -114,10 +118,14 @@
   color: #E2E8F0;
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   cursor: pointer;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-cookie-secondary:hover,
@@ -133,8 +141,9 @@
   color: #94A3B8;
   font-size: 12px;
   font-weight: 600;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -261,11 +270,15 @@ input:checked + .slider:before {
   color: #FFFFFF;
   font-size: 12px;
   font-weight: 700;
-  padding: 7px 14px;
-  border-radius: 6px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: none;
   cursor: pointer;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-cookie-save:hover,

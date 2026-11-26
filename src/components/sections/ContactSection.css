@@ -129,13 +129,15 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  padding: 1rem;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
   background: linear-gradient(135deg, #4F46E5, #00F0FF);
   color: white;
   border: none;
-  border-radius: 9999px;
-  font-size: 1.125rem;
+  border-radius: var(--btn-radius);
+  font-size: 1rem;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   transition: all 0.3s;
   margin-top: 1rem;

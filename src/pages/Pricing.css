@@ -14,14 +14,17 @@
   background-color: rgba(255, 255, 255, 0.05);
   text-decoration: none;
   font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
+  line-height: 1.2;
+  transition: all 0.25s ease;
 }
 
 .btn-home-link:hover {
@@ -211,21 +214,22 @@
 }
 
 .checkout-btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   text-align: center;
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  font-size: 0.95rem;
   font-weight: 600;
-  border-radius: 9999px;
+  line-height: 1.2;
+  border-radius: var(--btn-radius);
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   width: 100%;
   border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
 }
 
 .checkout-btn:disabled {
@@ -269,4 +273,239 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* Executive Active Subscription Banner Card */
+.billing-active-card {
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  background: linear-gradient(135deg, rgba(15, 23, 38, 0.92) 0%, rgba(10, 14, 24, 0.96) 100%);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  border-radius: 18px;
+  padding: clamp(1.35rem, 2.5vw, 1.85rem) clamp(1.35rem, 3vw, 2rem);
+  margin-bottom: 2rem;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(0, 240, 255, 0.16);
+}
+
+.billing-active-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00F0FF, #6366F1, transparent);
+}
+
+.billing-active-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.billing-active-identity {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.billing-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.billing-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.28rem 0.72rem;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.32);
+  color: #34D399;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.billing-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 8px #10B981;
+}
+
+.billing-tier-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.28);
+  color: #00F0FF;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.billing-active-title {
+  margin: 0.7rem 0 0.35rem;
+  color: #FFFFFF;
+  font-size: clamp(1.2rem, 1.05rem + 0.6vw, 1.45rem);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+.billing-active-desc {
+  margin: 0;
+  color: #94A3B8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.billing-capacity-box {
+  min-width: 240px;
+  flex: 0 1 290px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 0.95rem 1.15rem;
+}
+
+.billing-capacity-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.billing-capacity-label {
+  color: #94A3B8;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.billing-capacity-value {
+  color: #FFFFFF;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.billing-capacity-value span {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.billing-capacity-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin: 0.6rem 0 0.45rem;
+}
+
+.billing-capacity-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #00F0FF, #6366F1);
+  transition: width 0.35s ease;
+}
+
+.billing-capacity-note {
+  color: #94A3B8;
+  font-size: 0.76rem;
+}
+
+.billing-active-actions {
+  margin-top: 1.4rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.billing-action-btn {
+  padding: var(--btn-padding);
+  border-radius: var(--btn-radius);
+  min-height: var(--btn-min-height);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.billing-action-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.billing-action-btn.primary {
+  background: #FFFFFF;
+  border: 1px solid #FFFFFF;
+  color: #030308;
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.12);
+}
+
+.billing-action-btn.primary:hover:not(:disabled) {
+  background: #F1F5F9;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(255, 255, 255, 0.2);
+}
+
+.billing-action-btn.accent {
+  background: rgba(0, 240, 255, 0.09);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  color: #00F0FF;
+}
+
+.billing-action-btn.accent:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.16);
+  border-color: rgba(0, 240, 255, 0.6);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.billing-action-btn.outline {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #F1F5F9;
+}
+
+.billing-action-btn.outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 720px) {
+  .billing-capacity-box {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  .billing-action-btn {
+    flex: 1 1 auto;
+  }
 }

@@ -572,8 +572,9 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                 onClick={handleTrashProject}
                 disabled={deleting}
                 style={{
-                  padding: '0.6rem 1.1rem',
-                  borderRadius: '8px',
+                  padding: 'var(--btn-padding)',
+                  minHeight: 'var(--btn-min-height)',
+                  borderRadius: 'var(--btn-radius)',
                   border: '1px solid rgba(245, 158, 11, 0.45)',
                   background: 'rgba(245, 158, 11, 0.14)',
                   color: '#FCD34D',
@@ -581,7 +582,8 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem'
+                  justifyContent: 'center',
+                  gap: '0.45rem'
                 }}
               >
                 {deleting ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />}
@@ -592,8 +594,9 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                 onClick={() => setConfirmDelete(true)}
                 disabled={deleting}
                 style={{
-                  padding: '0.6rem 1.1rem',
-                  borderRadius: '8px',
+                  padding: 'var(--btn-padding)',
+                  minHeight: 'var(--btn-min-height)',
+                  borderRadius: 'var(--btn-radius)',
                   border: '1px solid rgba(239, 68, 68, 0.45)',
                   background: 'rgba(239, 68, 68, 0.14)',
                   color: '#FCA5A5',
@@ -601,7 +604,8 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem'
+                  justifyContent: 'center',
+                  gap: '0.45rem'
                 }}
               >
                 <Trash2 size={15} /> Delete Permanently
@@ -614,8 +618,9 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                 onClick={handleDelete}
                 disabled={deleting}
                 style={{
-                  padding: '0.6rem 1.15rem',
-                  borderRadius: '8px',
+                  padding: 'var(--btn-padding)',
+                  minHeight: 'var(--btn-min-height)',
+                  borderRadius: 'var(--btn-radius)',
                   border: 'none',
                   background: '#DC2626',
                   color: 'white',
@@ -623,7 +628,8 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.4rem'
+                  justifyContent: 'center',
+                  gap: '0.45rem'
                 }}
               >
                 {deleting ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />}
@@ -633,12 +639,17 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 style={{
-                  padding: '0.6rem 1rem',
-                  borderRadius: '8px',
+                  padding: 'var(--btn-padding)',
+                  minHeight: 'var(--btn-min-height)',
+                  borderRadius: 'var(--btn-radius)',
                   border: '1px solid rgba(255,255,255,0.16)',
                   background: 'transparent',
                   color: '#D1D5DB',
-                  cursor: 'pointer'
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 Cancel

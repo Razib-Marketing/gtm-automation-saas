@@ -10,14 +10,17 @@
 .access-tab-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.62rem 1.15rem;
-  border-radius: 10px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
   color: #9CA3AF;
   font-size: 0.86rem;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   transition: all 0.2s ease;
 }

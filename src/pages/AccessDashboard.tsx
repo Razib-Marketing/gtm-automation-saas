@@ -774,7 +774,7 @@ export const AccessDashboard: React.FC = () => {
                             <Link
                               to={`/projects/${s.project_id}/dashboard`}
                               className="org-btn-secondary"
-                              style={{ textDecoration: 'none', padding: '0.35rem 0.75rem', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                              style={{ textDecoration: 'none' }}
                             >
                               Open <ArrowRight size={13} />
                             </Link>
@@ -1008,7 +1008,6 @@ export const AccessDashboard: React.FC = () => {
                         disabled={assignProjectIds.length === 0 || assigningOrg}
                         onClick={handleBulkAssignToSelectedOrg}
                         className="org-btn-primary"
-                        style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem' }}
                       >
                         {assigningOrg ? <Loader2 size={14} className="animate-spin" /> : null}
                         Assign Selected ({assignProjectIds.length})

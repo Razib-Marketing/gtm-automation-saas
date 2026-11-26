@@ -151,7 +151,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({ project }) => 
             <Link
               to={`/projects/${project.id}/observer`}
               className="btn-deploy-bulk"
-              style={{ marginTop: 0, textDecoration: 'none', padding: '0.72rem 1.25rem', fontSize: '0.88rem' }}
+              style={{ marginTop: 0, textDecoration: 'none' }}
             >
               <ShieldCheck size={16} style={{ marginRight: '0.4rem' }} />
               GA4 Observer &amp; Audit

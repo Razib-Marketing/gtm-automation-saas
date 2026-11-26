@@ -12,7 +12,9 @@ import {
   AlertCircle,
   CheckCircle2,
   FlaskConical,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Building2
 } from 'lucide-react';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
 import { PageTransition } from '../components/ui/PageTransition';
@@ -322,81 +324,77 @@ export const Billing: React.FC = () => {
           </div>
         )}
 
-        {hasActiveSubscription && (
-          <div
-            className="module-card"
-            style={{
-              padding: '1.5rem',
-              marginBottom: '2rem',
-              border: '1px solid rgba(0, 240, 255, 0.3)',
-              background: 'rgba(0, 240, 255, 0.05)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              cursor: 'default'
-            }}
-          >
-            <div>
-              <div style={{ color: '#00F0FF', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em' }}>
-                ACTIVE SUBSCRIPTION • POLAR.SH SYNCED
+        {hasActiveSubscription && (() => {
+          const capacityPct = workspaceLimit > 0
+            ? Math.min(100, Math.max(projects.length > 0 ? 4 : 0, Math.round((projects.length / workspaceLimit) * 100)))
+            : 100;
+          const remainingSlots = workspaceLimit > 0 ? Math.max(0, workspaceLimit - projects.length) : 0;
+
+          return (
+            <div className="billing-active-card">
+              <div className="billing-active-top">
+                <div className="billing-active-identity">
+                  <div className="billing-badge-row">
+                    <span className="billing-status-pill">
+                      <span className="billing-status-dot" />
+                      Active Subscription • Polar.sh Synced
+                    </span>
+                    <span className="billing-tier-pill">{userTier.toUpperCase()} Tier</span>
+                  </div>
+                  <h3 className="billing-active-title">
+                    {userTier === 'custom'
+                      ? customProduct?.name || 'GTMObserver Custom Scale Plan'
+                      : proProduct?.name || 'GTMObserver Pro Plan'}
+                  </h3>
+                  <p className="billing-active-desc">
+                    {projects.length === 0
+                      ? 'No projects configured yet. Launch guided onboarding to connect GA4, GTM, and scheduled alerts.'
+                      : `Managing ${projects.length} active project${projects.length === 1 ? '' : 's'} with isolated GTM deployments, GA4 audits, and cron monitors.`}
+                  </p>
+                </div>
+
+                <div className="billing-capacity-box">
+                  <div className="billing-capacity-header">
+                    <span className="billing-capacity-label">Workspace Capacity</span>
+                    <span className="billing-capacity-value">
+                      {projects.length}
+                      {workspaceLimit > 0 ? <span> / {workspaceLimit}</span> : <span> active</span>}
+                    </span>
+                  </div>
+                  <div className="billing-capacity-track">
+                    <div className="billing-capacity-fill" style={{ width: `${capacityPct}%` }} />
+                  </div>
+                  <div className="billing-capacity-note">
+                    {workspaceLimit > 0
+                      ? `${remainingSlots} project slot${remainingSlots === 1 ? '' : 's'} remaining in plan`
+                      : 'Active workspace quota unlocked'}
+                  </div>
+                </div>
               </div>
-              <h3 style={{ margin: '0.25rem 0', color: 'white', fontSize: '1.2rem' }}>
-                {userTier === 'custom'
-                  ? customProduct?.name || 'GTMObserver Custom Scale Plan'
-                  : proProduct?.name || 'GTMObserver Pro Plan'}
-              </h3>
-              <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.88rem' }}>
-                {projects.length === 0
-                  ? 'You have no projects configured yet. Start onboarding to set up your first project.'
-                  : `You currently have ${projects.length} active project${projects.length === 1 ? '' : 's'} in your organization${workspaceLimit > 0 ? ` (capacity: ${workspaceLimit})` : ''}.`}
-              </p>
+
+              <div className="billing-active-actions">
+                <Link to="/onboarding" className="billing-action-btn primary">
+                  <Plus size={16} />
+                  New Project
+                  <ArrowRight size={15} />
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleOpenPortal}
+                  disabled={portalLoading}
+                  className="billing-action-btn accent"
+                >
+                  {portalLoading ? <Loader2 size={15} className="animate-spin" /> : <ExternalLink size={15} />}
+                  Manage Billing &amp; Invoices
+                </button>
+                <Link to="/organization" className="billing-action-btn outline">
+                  <Building2 size={15} />
+                  Organization Dashboard
+                </Link>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={handleOpenPortal}
-                disabled={portalLoading}
-                style={{
-                  padding: '0.75rem 1.15rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(0, 240, 255, 0.35)',
-                  background: 'rgba(0, 240, 255, 0.08)',
-                  color: '#00F0FF',
-                  fontWeight: 600,
-                  fontSize: '0.88rem',
-                  cursor: portalLoading ? 'wait' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem'
-                }}
-              >
-                {portalLoading ? <Loader2 size={15} className="animate-spin" /> : <ExternalLink size={15} />}
-                Manage Billing &amp; Invoices
-              </button>
-              <Link to="/onboarding" className="btn-deploy-bulk" style={{ marginTop: 0, textDecoration: 'none', padding: '0.75rem 1.25rem' }}>
-                + Configure New Project <ArrowRight size={16} style={{ marginLeft: '0.4rem' }} />
-              </Link>
-              <Link
-                to="/organization"
-                style={{
-                  textDecoration: 'none',
-                  padding: '0.75rem 1.25rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(255,255,255,0.16)',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  display: 'inline-flex',
-                  alignItems: 'center'
-                }}
-              >
-                Open Organization Dashboard
-              </Link>
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
         {isSandboxMode && (
           <div

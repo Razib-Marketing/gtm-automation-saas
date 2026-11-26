@@ -384,7 +384,7 @@ export const OrganizationAccessPage: React.FC<OrganizationAccessPageProps> = ({ 
           <Link
             to={`/onboarding?orgId=${encodeURIComponent(organization.id)}`}
             className="btn-deploy-bulk"
-            style={{ marginTop: 0, textDecoration: 'none', padding: '0.7rem 1.2rem' }}
+            style={{ marginTop: 0, textDecoration: 'none' }}
           >
             <Plus size={16} style={{ marginRight: '0.4rem' }} />
             New Project in {organization.name}
@@ -659,7 +659,7 @@ export const OrganizationAccessPage: React.FC<OrganizationAccessPageProps> = ({ 
                   <option value="editor">Editor</option>
                   <option value="admin">Admin</option>
                 </select>
-                <button type="submit" disabled={grantingDirect} className="org-btn-primary" style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}>
+                <button type="submit" disabled={grantingDirect} className="org-btn-primary">
                   {grantingDirect ? <Loader2 size={14} className="animate-spin" /> : 'Grant'}
                 </button>
               </form>

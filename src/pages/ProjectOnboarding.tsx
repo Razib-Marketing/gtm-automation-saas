@@ -847,7 +847,7 @@ export const ProjectOnboarding: React.FC = () => {
                       setStep(2);
                     }}
                     className="btn-deploy-bulk"
-                    style={{ marginTop: 0, padding: '0.75rem 1.5rem' }}
+                    style={{ marginTop: 0 }}
                   >
                     Next: Connect Google Analytics <ChevronRight size={17} style={{ marginLeft: '0.35rem' }} />
                   </button>
@@ -891,7 +891,7 @@ export const ProjectOnboarding: React.FC = () => {
                       type="button"
                       onClick={handleConnectGoogle}
                       className="btn-deploy-bulk"
-                      style={{ marginTop: 0, padding: '0.8rem 1.6rem' }}
+                      style={{ marginTop: 0 }}
                     >
                       {isSandboxMode ? 'Connect Sample Google Account (Local)' : 'Authorize Google Account →'}
                     </button>
@@ -995,7 +995,7 @@ export const ProjectOnboarding: React.FC = () => {
                     type="button"
                     onClick={() => setStep(3)}
                     className="btn-deploy-bulk"
-                    style={{ marginTop: 0, padding: '0.75rem 1.5rem' }}
+                    style={{ marginTop: 0 }}
                   >
                     Next: Connect Google Tag Manager <ChevronRight size={17} style={{ marginLeft: '0.35rem' }} />
                   </button>
@@ -1145,7 +1145,7 @@ export const ProjectOnboarding: React.FC = () => {
                     type="button"
                     onClick={() => setStep(4)}
                     className="btn-deploy-bulk"
-                    style={{ marginTop: 0, padding: '0.75rem 1.5rem' }}
+                    style={{ marginTop: 0 }}
                   >
                     Next: Configure Triggers &amp; Rules <ChevronRight size={17} style={{ marginLeft: '0.35rem' }} />
                   </button>
@@ -1522,7 +1522,7 @@ export const ProjectOnboarding: React.FC = () => {
                     onClick={handleCreateProject}
                     disabled={submitting}
                     className="btn-deploy-bulk"
-                    style={{ marginTop: 0, padding: '0.8rem 1.75rem' }}
+                    style={{ marginTop: 0 }}
                   >
                     {submitting ? (
                       <>

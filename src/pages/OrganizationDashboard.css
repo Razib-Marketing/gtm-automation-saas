@@ -212,7 +212,7 @@
 
 .org-action-btn {
   padding: 0.45rem;
-  border-radius: 8px;
+  border-radius: var(--btn-radius);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: #9CA3AF;
@@ -329,13 +329,19 @@
 }
 
 .org-btn-secondary {
-  padding: 0.65rem 1.25rem;
-  border-radius: 8px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.05);
   color: #E5E7EB;
   font-size: 0.88rem;
   font-weight: 600;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -346,16 +352,19 @@
 }
 
 .org-btn-primary {
-  padding: 0.65rem 1.35rem;
-  border-radius: 8px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: none;
   background: linear-gradient(135deg, #00F0FF 0%, #4F46E5 100%);
   color: #FFFFFF;
   font-size: 0.88rem;
   font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
   transition: all 0.25s ease;
 }
@@ -367,16 +376,19 @@
 }
 
 .org-btn-danger {
-  padding: 0.65rem 1.35rem;
-  border-radius: 8px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(239, 68, 68, 0.3);
   background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
   color: #FFFFFF;
   font-size: 0.88rem;
   font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
   transition: all 0.25s ease;
 }
@@ -599,13 +611,15 @@
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  padding: 0.8rem 1.25rem;
-  border-radius: 10px;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  border-radius: var(--btn-radius);
   background: linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(79, 70, 229, 0.12) 100%);
   border: 1px solid rgba(0, 240, 255, 0.25);
   color: #00F0FF;
   font-size: 0.88rem;
   font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
   transition: all 0.25s ease;
   text-decoration: none;

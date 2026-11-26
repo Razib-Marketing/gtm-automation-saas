@@ -3,6 +3,10 @@
   line-height: 1.5;
   font-weight: 400;
   --target-size: 24px;
+  --btn-radius: 10px;
+  --btn-padding: 0.72rem 1.4rem;
+  --btn-padding-sm: 0.5rem 1rem;
+  --btn-min-height: 42px;
 
   color-scheme: dark;
   color: rgba(255, 255, 255, 0.9);

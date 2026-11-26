@@ -763,7 +763,7 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
             <Link
               to={`/projects/${createdProject.id}/dashboard`}
               className="btn-deploy-bulk"
-              style={{ marginTop: 0, textDecoration: 'none', padding: '0.5rem 1rem', fontSize: '0.84rem' }}
+              style={{ marginTop: 0, textDecoration: 'none' }}
             >
               Enter Project Workspace &rarr;
             </Link>
@@ -845,7 +845,7 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
             <Link
               to={scopedOrg ? `/onboarding?orgId=${encodeURIComponent(scopedOrg.id)}` : '/onboarding'}
               className="btn-deploy-bulk"
-              style={{ marginTop: 0, textDecoration: 'none', padding: '0.72rem 1.25rem' }}
+              style={{ marginTop: 0, textDecoration: 'none' }}
             >
               <PlusCircle size={17} style={{ marginRight: '0.45rem' }} />
               {scopedOrg ? `New Project in ${scopedOrg.name}` : 'New Project Setup'}
@@ -1066,7 +1066,6 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                 type="button"
                 onClick={() => setEmptyTrashConfirm(true)}
                 className="org-btn-danger"
-                style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}
               >
                 <Trash2 size={14} /> Empty Trash ({visibleTrashedProjects.length})
               </button>
@@ -1205,7 +1204,6 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                     disabled={bulkProcessing}
                     onClick={handleBulkAssignOrg}
                     className="org-btn-secondary"
-                    style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
                   >
                     Assign Org
                   </button>
@@ -1214,7 +1212,6 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                     disabled={bulkProcessing}
                     onClick={() => openShareModal(projects.filter((p) => selectedIds.includes(p.id)))}
                     className="org-btn-primary"
-                    style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem' }}
                   >
                     <UserPlus size={14} /> Grant Access
                   </button>
@@ -1223,7 +1220,6 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                     disabled={bulkProcessing}
                     onClick={handleBulkMoveToTrash}
                     className="org-btn-danger"
-                    style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
                   >
                     <Trash2 size={14} /> Move to Trash
                   </button>
@@ -1285,7 +1281,7 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                             disabled={restoringId === project.id}
                             onClick={() => handleRestoreProject(project)}
                             className="org-btn-secondary"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#6EE7B7', borderColor: 'rgba(16, 185, 129, 0.35)' }}
+                            style={{ color: '#6EE7B7', borderColor: 'rgba(16, 185, 129, 0.35)' }}
                           >
                             {restoringId === project.id ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
                             Restore
@@ -1294,7 +1290,6 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                             type="button"
                             onClick={() => setProjectToPermDelete(project)}
                             className="org-btn-danger"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.78rem' }}
                           >
                             <Trash2 size={13} /> Delete Forever
                           </button>
@@ -1469,7 +1464,6 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                             type="button"
                             onClick={() => navigate(`/projects/${project.id}/dashboard`)}
                             className="org-btn-primary"
-                            style={{ padding: '0.38rem 0.72rem', fontSize: '0.76rem' }}
                           >
                             Open &rarr;
                           </button>

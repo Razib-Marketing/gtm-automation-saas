@@ -1625,7 +1625,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
                       <button
                         onClick={() => setAuditCurrentPage(p => Math.max(1, p - 1))}
                         disabled={auditCurrentPage === 1}
-                        style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '9999px', color: auditCurrentPage === 1 ? '#6B7280' : '#fff', cursor: auditCurrentPage === 1 ? 'not-allowed' : 'pointer', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}
+                        style={{ padding: 'var(--btn-padding)', minHeight: 'var(--btn-min-height)', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--btn-radius)', fontWeight: 600, color: auditCurrentPage === 1 ? '#6B7280' : '#fff', cursor: auditCurrentPage === 1 ? 'not-allowed' : 'pointer', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}
                       >
                         Previous
                       </button>
@@ -1635,7 +1635,7 @@ export const Dashboard: React.FC<{ project?: Project }> = ({ project }) => {
                       <button
                         onClick={() => setAuditCurrentPage(p => Math.min(Math.ceil(recentAudits.length / AUDITS_PER_PAGE), p + 1))}
                         disabled={auditCurrentPage === Math.ceil(recentAudits.length / AUDITS_PER_PAGE)}
-                        style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '9999px', color: auditCurrentPage === Math.ceil(recentAudits.length / AUDITS_PER_PAGE) ? '#6B7280' : '#fff', cursor: auditCurrentPage === Math.ceil(recentAudits.length / AUDITS_PER_PAGE) ? 'not-allowed' : 'pointer', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}
+                        style={{ padding: 'var(--btn-padding)', minHeight: 'var(--btn-min-height)', background: 'rgba(255,255,255,0.05)', borderRadius: 'var(--btn-radius)', fontWeight: 600, color: auditCurrentPage === Math.ceil(recentAudits.length / AUDITS_PER_PAGE) ? '#6B7280' : '#fff', cursor: auditCurrentPage === Math.ceil(recentAudits.length / AUDITS_PER_PAGE) ? 'not-allowed' : 'pointer', border: '1px solid rgba(255,255,255,0.1)', transition: 'all 0.3s ease' }}
                       >
                         Next
                       </button>

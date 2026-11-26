@@ -106,12 +106,14 @@
 }
 
 .btn-primary {
-  padding: 0.95rem 2rem;
-  font-size: clamp(0.95rem, 0.9rem + 0.35vw, 1.1rem);
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  font-size: clamp(0.92rem, 0.88rem + 0.25vw, 1rem);
   font-weight: 600;
+  line-height: 1.2;
   background: linear-gradient(135deg, #4F46E5, #00F0FF);
   color: white;
-  border-radius: 9999px;
+  border-radius: var(--btn-radius);
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.5);
@@ -119,6 +121,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
 }
 
 .btn-primary:hover {
@@ -128,17 +131,20 @@
 }
 
 .btn-secondary {
-  padding: 0.95rem 1.85rem;
-  font-size: clamp(0.92rem, 0.88rem + 0.3vw, 1rem);
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  font-size: clamp(0.92rem, 0.88rem + 0.25vw, 1rem);
   font-weight: 600;
+  line-height: 1.2;
   color: white;
-  border-radius: 9999px;
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.15);
   text-decoration: none;
   transition: background-color 0.3s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
 }
 
 @media (max-width: 639px) {

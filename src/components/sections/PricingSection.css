@@ -122,15 +122,19 @@
 }
 
 .btn-outline {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
+  padding: var(--btn-padding);
+  min-height: var(--btn-min-height);
+  font-size: 0.95rem;
   font-weight: 600;
+  line-height: 1.2;
   color: white;
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 9999px;
+  border-radius: var(--btn-radius);
   text-decoration: none;
   transition: all 0.3s;
   cursor: pointer;

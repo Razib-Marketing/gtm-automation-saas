@@ -78,15 +78,17 @@
 .mobile-topbar-quick-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  min-height: 40px;
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.55rem;
+  min-height: var(--btn-min-height);
+  padding: var(--btn-padding);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.05);
   color: #E5E7EB;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
+  line-height: 1.2;
   text-decoration: none;
 }
 
@@ -551,14 +553,15 @@
   justify-content: center;
   gap: 0.5rem;
   width: 100%;
-  min-height: 38px;
-  padding: 0.48rem 0.85rem;
-  border-radius: 0.5rem;
+  min-height: var(--btn-min-height);
+  padding: var(--btn-padding);
+  border-radius: var(--btn-radius);
   border: 1px solid rgba(239, 68, 68, 0.28);
   background: rgba(239, 68, 68, 0.08);
   color: #FCA5A5;
-  font-size: 0.84rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   transition: all 0.2s ease;
 }
