@@ -1,35 +1,37 @@
 # GTMObserver
 > The Edge-Native Google Tag Manager Automation & Autonomous GA4 Telemetry Platform.
 
-GTMObserver (https://gtmobserver.com) is an enterprise analytics automation SaaS built natively on Cloudflare Workers edge architecture. It solves two critical challenges for digital analytics agencies, e-commerce brands, and marketing teams:
-1. **Automated Google Tag Manager (GTM) Deployment**: 1-click deployment of production-grade tracking architectures directly into Google Tag Manager containers via the official Google Tag Manager API. Eliminates manual tag creation, custom JavaScript debugging, and human errors.
-2. **Autonomous GA4 Telemetry Observer & Alerts**: 24/7 background edge monitoring that continuously evaluates Google Analytics 4 properties. Detects tracking crashes, conversion dropoffs, key event anomalies, and traffic fluctuations against historical baselines, dispatching real-time email alerts to teams and clients before revenue is lost.
+GTMObserver (https://gtmobserver.com) is a multi-tenant analytics automation SaaS built natively on Cloudflare Workers and D1 edge architecture. It serves digital agencies, hospitality portfolios, e-commerce brands, and solo practitioners across **Personal Workspaces** and **Organizations**:
+
+1. **Multi-Tenant Organizations, Personal Workspaces & Universal Sharing**: Organize 50+ client websites into Organizations or Personal Workspaces with Clerk authentication, manage team roles, share per-project access (`viewer`, `editor`, `admin`) with anyone by email, and safely retire projects to Trash (automatically closing all attached GA4 monitors).
+2. **Automated Google Tag Manager (GTM) Deployment & Audits**: 1-click deployment of pre-validated tracking recipes directly into Google Tag Manager workspaces via the GTM API v2, paired with GTM health audits and downloadable A4 PDF reports.
+3. **Autonomous GA4 Telemetry Observer & 22-Point Audits**: Background edge monitoring running every 15 minutes (`*/15 * * * *`) with custom IANA timezones, evaluating 14 GA4 metrics across 11 comparison windows and 20 templates, alongside a 22-point GA4 Property Audit with executive A4 PDF exports.
 
 ## Core Capabilities
-- **Automated GTM Recipe Library**:
-  - Basic Outbound Clicks (phone `tel:`, email `mailto:`, generic outbound links).
-  - Social Engagement (Facebook, Instagram, LinkedIn, YouTube, TikTok outbound clicks).
-  - WordPress Form Ecosystem (Elementor Forms, Contact Form 7, Gravity Forms, HubSpot).
-  - Hotel & Hospitality Booking Engines (Synxis / SBE, StayNTouch, Revinate, Zmail).
-  - E-Commerce Data Layers (WooCommerce standard GA4 events: `view_item`, `add_to_cart`, `purchase`).
-  - Scroll Depth (25%, 50%, 75%, 90% threshold triggers).
-  - Video Tracking (HTML5, YouTube, Vimeo play/pause/complete).
-- **GA4 Real-Time Anomaly Detection**:
-  - Evaluates live metrics (`sessions`, `keyEvents`/conversions, `purchaseRevenue`, `screenPageViews`).
-  - Dimensional traffic segmentation (All Traffic, Organic Search, Paid Search, Social, Referral, Email).
-  - Flexible comparison periods (Yesterday vs 2 Days Ago, Yesterday vs Last Week, Last 7 vs Previous 7, Last 28 vs Previous 28, Last 30 vs Previous 30, Yearly).
-  - Multi-condition compound evaluation (Match ALL or Match ANY rules).
-  - Automated Cron execution runs every hour at the Cloudflare edge.
-- **Enterprise Multi-Recipient Dispatch**:
-  - Real-time alert emails with DKIM/SPF authenticated deliverability via Resend (`alerts@gtmobserver.com`).
-  - Dual history logging (Automated issue incidents vs Manual test reports).
-  - Client-ready telemetry breakdowns with baseline comparisons and percentage changes.
+- **Workspaces, Onboarding & Polar.sh Billing**:
+  - Personal vs. Organization sign-up and workspace switcher (`/sign-up`, `/choose-organization`, `/organization`, `/organizations/:orgId`).
+  - Guided 4-step Project Onboarding linking Google Analytics 4, Google Tag Manager containers/workspaces, and starter GA4 Observer monitors.
+  - Polar.sh subscription sync and one-click Customer Portal for invoices and workspace capacity management.
+  - Safe Trash workflow with immediate monitor closure, Restore, Permanent Delete, and Empty Trash.
+- **Automated GTM Recipe Library & Health Audits**:
+  - Basic Outbound Clicks (`tel:`, `mailto:`, Google Maps, Apple Maps/Waze, TripAdvisor, Booking.com, Expedia, Agoda, generic external links).
+  - Engagement & Social Tracking (Scroll Depth 25/50/75/90%, YouTube/Vimeo Video, Universal Social clicks).
+  - WordPress, CRM & Hospitality Forms (Elementor, Contact Form 7, Gravity Forms, HubSpot, Salesforce, Revinate, Zmail Direct, Generic HTML, custom PHP `sendmail.php`).
+  - Hotel & Hospitality Booking Engines (StayNTouch, Synxis/SBE, Windsurfer, Mews, iHotelier, Safara).
+  - WooCommerce Standard GA4 E-Commerce (`view_item`, `add_to_cart`, checkout funnel, `purchase`).
+  - GTM Health Audits detecting duplicate tags, shared triggers, and orphaned triggers/variables with server-rendered A4 PDF exports.
+- **GA4 Real-Time Anomaly Detection & 22-Point Audits**:
+  - Evaluates 14 metrics (`sessions`, `activeUsers`, `totalUsers`, `newUsers`, `engagementRate`, `bounceRate`, `averageSessionDuration`, `keyEvents`, `transactions`, `totalRevenue`, `ecommercePurchases`, `sessionKeyEventRate`, `screenPageViews`, `eventCount`).
+  - Dimensional segmentation by Channel/Source, Medium, and Device Category across 11 comparison windows (`Yesterday vs Last Week`, `Day over Day`, `WoW`, `MoM`, `28-Day`, `YoY`).
+  - Compound `Match ANY` / `Match ALL` logic with Cloudflare Cron sweeps every 15 minutes (`*/15 * * * *`).
+  - Authenticated Resend HTML + PDF email alerts with separate Automated Issue and Manual Report histories.
+  - 22-Point GA4 Property Audit covering cross-domain/referrals, 9 integrations (GSC, Google Ads, BigQuery, Signals, Enhanced Measurement, DV360, SA360, AdSense, MP Secrets), data retention/attribution, PII URL checks, and Key Events with branded A4 PDF export.
 
 ## Key Links & Resources
 - Main Website: https://gtmobserver.com
+- Web Application: https://app.gtmobserver.com
 - Full Technical Documentation: https://gtmobserver.com/docs
 - API Reference: https://gtmobserver.com/api-reference
 - Community Modules: https://gtmobserver.com/community
 - Full LLM Knowledge Base: https://gtmobserver.com/llms-full.txt
-- General Inquiries: info@gtmobserver.com
-- Technical & Form Direct: contact@gtmobserver.com
+- Inquiries & Support: info@gtmobserver.com / contact@gtmobserver.com

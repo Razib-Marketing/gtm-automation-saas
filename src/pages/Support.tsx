@@ -21,7 +21,7 @@ export const Support: React.FC = () => {
             Support &amp; Documentation Hub
           </h1>
           <p className="dashboard-subtitle">
-            Guides for Organization &amp; Project workspaces, GTM recipes, GA4 Observer schedules, and 22-point audits.
+            Guides for Personal &amp; Organization workspaces, team access sharing, project Trash &amp; monitor controls, GTM recipes, GA4 Observer schedules, and 22-point PDF audits.
           </p>
         </motion.div>
 
@@ -30,7 +30,7 @@ export const Support: React.FC = () => {
             <BookOpen size={24} color="#00F0FF" style={{ marginBottom: '0.75rem' }} />
             <h3 style={{ color: 'white', margin: '0 0 0.45rem' }}>Platform Documentation</h3>
             <p style={{ color: '#9CA3AF', fontSize: '0.86rem', lineHeight: 1.55, marginBottom: '1rem' }}>
-              Explore full documentation covering Organization &amp; Project workspaces, Onboarding, GTM recipes, GA4 Observer rules, and 22-point audits.
+              Explore full documentation covering Personal &amp; Organization workspaces, Access &amp; Teams, Onboarding, GTM recipes, GA4 Observer rules, and PDF audits.
             </p>
             <Link to="/docs" style={{ color: '#00F0FF', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
               Read Documentation <ArrowRight size={15} />
@@ -52,7 +52,7 @@ export const Support: React.FC = () => {
             <CreditCard size={24} color="#10B981" style={{ marginBottom: '0.75rem' }} />
             <h3 style={{ color: 'white', margin: '0 0 0.45rem' }}>Billing &amp; Onboarding</h3>
             <p style={{ color: '#9CA3AF', fontSize: '0.86rem', lineHeight: 1.55, marginBottom: '1rem' }}>
-              Upgrade organization capacity, review invoice plans, or launch guided onboarding for a new project.
+              Manage your Polar.sh subscription, check workspace capacity, open the billing portal, or launch guided onboarding for a new project.
             </p>
             <Link to="/billing" style={{ color: '#34D399', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.88rem' }}>
               Go to Billing <ArrowRight size={15} />
@@ -72,7 +72,7 @@ export const Support: React.FC = () => {
           <a
             href="mailto:info@gtmobserver.com"
             className="btn-deploy-bulk"
-            style={{ marginTop: 0, textDecoration: 'none', padding: '0.7rem 1.25rem', fontSize: '0.88rem' }}
+            style={{ marginTop: 0, textDecoration: 'none' }}
           >
             Email info@gtmobserver.com
           </a>

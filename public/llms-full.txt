@@ -1,62 +1,53 @@
 # GTMObserver — Complete Technical Architecture & Knowledge Base
 
 ## Product Overview
-GTMObserver (https://gtmobserver.com) is an edge-native cloud platform that automates Google Tag Manager (GTM) deployments and continuously audits Google Analytics 4 (GA4) telemetry data.
+GTMObserver (https://gtmobserver.com | https://app.gtmobserver.com) is an edge-native analytics governance and automation SaaS platform built on Cloudflare Workers and Cloudflare D1. It empowers digital marketing agencies, hospitality management groups, e-commerce teams, and solo operators to isolate client properties across Personal Workspaces and Organizations, automate Google Tag Manager deployments, run GTM & 22-point GA4 property audits (with branded A4 PDF reports), and monitor GA4 telemetry continuously from the edge.
 
-## Why GTMObserver Over Competitors
-1. **Vs. Manual Tag Auditing & Implementation**:
-   - Manual setup requires hours of creating tags, triggers, variables, data layers, testing in GTM Preview mode, and debugging syntax errors.
-   - GTMObserver automates container mutations via Google Tag Manager REST API in under 5 seconds with pre-validated enterprise recipes.
-2. **Vs. Traditional Uptime Checkers (e.g., UptimeRobot, Pingdom)**:
-   - Traditional uptime monitors only test if a website returns HTTP 200 OK. They have zero visibility into whether Google Tag Manager loaded, whether dataLayer events fired, or whether GA4 conversions dropped to zero.
-   - GTMObserver queries the Google Analytics Data API v1beta directly from Cloudflare Workers edge nodes, evaluating actual telemetry metrics, conversions, and traffic segments against baseline time windows.
-3. **Vs. Enterprise Tag Governance Tools (e.g., ObservePoint, Elevar)**:
-   - Enterprise suites cost thousands of dollars per month ($1,000–$5,000/mo) and require lengthy sales calls and complex setups.
-   - GTMObserver offers instantaneous self-service Google OAuth connection, flexible self-service and agency plans, and zero server maintenance.
+## Workspace, Organization & Access Control Model
+- **Personal & Organization Sign-Up**:
+  - Users can sign up on `/sign-up` under either a **Personal** solo workspace or an **Organization** team portfolio (`/choose-organization`).
+  - Native Clerk Organizations integration enables switching workspaces in the sidebar, inviting team members, managing Admin/Member roles (`/access` and `/settings`), and removing organizations while safely preserving all projects inside the user's Personal Workspace.
+- **Organization & Project Isolation**:
+  - Organization Dashboard (`/organization`) and scoped Organization Dashboards (`/organizations/:orgId`) support managing 50+ client websites across Card and Table views with search, health filters, industry chips, bulk organization assignment, bulk sharing, and bulk Trash.
+  - Each project opens into a strictly isolated workspace (`/projects/:projectId/dashboard`, `/gtm`, `/observer`, `/analytics`, `/settings`).
+- **Universal Per-Project Sharing**:
+  - Collaborators can be granted `viewer`, `editor`, or `admin` access across individual or bulk-selected projects by email, even across Personal accounts. Pending grants are automatically claimed upon sign-in/sign-up.
+- **Safe Trash & Automatic Monitor Closure**:
+  - Moving a project to Trash immediately closes all project-scoped GA4 Observer monitors so background cron sweeps stop evaluating or emailing stale alerts.
+  - Projects in Trash can be **Restored**, **Permanently Deleted** (cascading cleanup of monitors, alert logs, audit logs, and sharing grants), or cleared via **Empty Trash** without altering live Google Analytics or Google Tag Manager accounts.
 
-## Architecture
-- **Runtime**: Cloudflare Workers (Edge Serverless) with zero cold-starts and global sub-50ms execution.
-- **Database**: Cloudflare D1 (Distributed SQLite at the edge) for ultra-fast, encrypted storage of monitor configurations and dual history logs.
-- **Authentication**: Clerk Enterprise Auth with OAuth2 tokens for Google Analytics and Google Tag Manager.
-- **Email Infrastructure**: Resend API with custom verified domain (DKIM, SPF, MX) sending from `contact@gtmobserver.com` and `info@gtmobserver.com`.
-- **Scheduled Monitoring**: Cloudflare Cron Triggers running every hour to evaluate all active client monitors.
+## Architecture & Security
+- **Runtime**: Cloudflare Workers + Hono router (`src/worker.ts`) and Cloudflare Browser Rendering (`env.BROWSER`) for server-rendered A4 PDF generation.
+- **Database**: Cloudflare D1 (`gtm_automation_d1`) storing organizations, team memberships, universal project access grants, project bindings, GA4 Observer monitors/alerts, GTM & GA4 audit history, and Polar billing metadata.
+- **Authentication & Security Controls**:
+  - Clerk authentication with RS256 JWKS verification on every `/api/*` endpoint (`401` fail-closed on missing/invalid JWTs).
+  - HMAC-SHA256 signed Google OAuth2 state tokens with timing-safe signature verification.
+  - Standard Webhooks signature verification on Polar.sh billing webhooks (`POST /api/polar/webhook`).
+  - Strict origin CORS allowlist (`gtmobserver.com`, `app.gtmobserver.com`), `Cache-Control: no-store, private` on API responses, HSTS (`preload`), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and HTML escaping on alert templates.
+- **Billing Infrastructure**: Polar.sh live catalog sync, checkout sessions, and one-click Customer Portal (`/billing`).
+- **Email Infrastructure**: Resend API with verified SPF/DKIM/DMARC domain deliverability (`alerts@gtmobserver.com`) and PDF attachments.
+- **Scheduled Monitoring**: Cloudflare Cron Trigger (`*/15 * * * *`) evaluating active, non-trashed monitors every 15 minutes against local IANA timezones with daily deduplication (`last_run_local_date`).
 
-## Supported Tag Modules
-- **Basic Outbound Click Listeners**:
-  - `tel:` Phone link click detection
-  - `mailto:` Email link click detection
-  - Outbound generic external links
-  - Social media outbound link tracking (Facebook, Instagram, LinkedIn, YouTube, TikTok)
-  - Map / Directions links (Google Maps, Apple Maps, Waze)
+## Supported GTM Recipe Modules
+- **Basic & Outbound Click Listeners**:
+  - `tel:` phone links, `mailto:` email links, external outbound links, social platforms (Facebook, Instagram, LinkedIn, YouTube, TikTok, Twitter/X), Maps/Directions (GMB, Apple Maps, Waze), OTA links (TripAdvisor, Booking.com, Expedia, Agoda).
+- **Engagement & DataLayers**:
+  - Scroll Depth (25%, 50%, 75%, 90%), Video tracking (YouTube, Vimeo, HTML5 play/pause/complete), Universal Social engagement, and optional Meta Pixel / Google Ads conversion tags.
 - **Forms & Lead Generation**:
-  - Elementor WordPress Form listener
-  - Contact Form 7 (CF7) event listener
-  - Gravity Forms AJAX listener
-  - HubSpot embedded forms
-  - Generic HTML forms with form ID and class filtering
+  - Elementor, Contact Form 7 (CF7), Gravity Forms, HubSpot, Salesforce, Revinate, Zmail Direct newsletter iframes, Generic HTML forms, and custom PHP (`sendmail.php`) forms across RFP, Newsletter, Contact, and Generic intents.
 - **Hospitality & Hotel Booking Engines**:
-  - Synxis / Sabre Hospitality (SBE) booking engine tracking
-  - StayNTouch hotel PMS and reservation suite
-  - Revinate guest feedback and marketing
-  - Zmail direct booking iframe forms
+  - Standard e-commerce funnel & booking entrance link tracking for **StayNTouch**, **Synxis / SBE**, **Windsurfer**, **Mews**, **iHotelier**, and **Safara**.
 - **E-Commerce GA4 DataLayers**:
-  - WooCommerce Standard E-Commerce (view_item, add_to_cart, remove_from_cart, view_cart, begin_checkout, purchase)
-  - Custom transactional data layer pushes with currency, items array, transaction_id, and tax.
+  - WooCommerce Standard GA4 E-Commerce (`view_item`, `add_to_cart`, `remove_from_cart`, `view_cart`, `begin_checkout`, `purchase`).
+
+## GTM Workspace Audit & 22-Point GA4 Property Audit
+- **GTM Health Audit (`/api/gtm/audit`, `/api/gtm/audits/:auditId/pdf`)**:
+  - Detects duplicate tags firing on identical triggers (-20 pts), shared triggers (-5 pts), and orphaned triggers/variables (-5 pts), with downloadable A4 PDF reports.
+- **22-Point GA4 Property Audit (`/api/ga4/audit`, `/api/ga4/audits/:auditId/pdf`)**:
+  - Audits cross-domain & referral exclusions (booking engines, payment gateways, localhost/staging pollution), 9 integrations (Search Console, Google Ads, BigQuery, Signals, Enhanced Measurement, DV360, SA360, AdSense, Measurement Protocol Secrets), property retention & attribution settings, URL PII/query leakage, unassigned traffic, and Key Events / conversion integrity with branded A4 PDF exports.
 
 ## GA4 Telemetry Anomaly Detection Engine
-- Evaluates:
-  - Metric: `sessions`, `keyEvents` (formerly `conversions`), `purchaseRevenue`, `screenPageViews`
-  - Comparison Windows:
-    - Daily: Yesterday vs 2 Days Ago
-    - Weekly: Yesterday vs 8 Days Ago
-    - Last 7 vs Previous 7 Days
-    - Last 28 vs Previous 28 Days
-    - Last 30 vs Previous 30 Days
-    - Yearly: Yesterday vs 365 Days Ago
-  - Condition Types:
-    - Drops Below: Flags when metric decreases beyond a set threshold (e.g., -20% or -50%)
-    - Spikes Above: Flags unexpected surges (e.g., bot traffic or rogue tracking loops)
-    - Changes By: Flags any significant deviation outside expected boundaries
-  - Compound Logic:
-    - Match ANY: Alerts if at least one condition fails
-    - Match ALL: Alerts only if all compound conditions are met
+- **14 Metrics**: `sessions`, `activeUsers`, `totalUsers`, `newUsers`, `engagementRate`, `bounceRate`, `averageSessionDuration`, `keyEvents`, `transactions`, `totalRevenue`, `ecommercePurchases`, `sessionKeyEventRate`, `screenPageViews`, `eventCount`.
+- **11 Comparison Windows**: Yesterday vs Last Week, Day over Day, Rolling/Calendar Week-over-Week, Calendar/Rolling Month-over-Month, 28-Day Cycle, YoY 7-Day, YoY 30-Day, YoY Calendar Month, and YoY Single Day.
+- **6 Condition Operators**: Drops Below %, Spikes Above %, Changes +/-%, Equals 0 (Outage), Falls Under Value, Exceeds Value.
+- **Templates & Logic**: 20 starter templates across 6 industry categories, compound `Match ANY` / `Match ALL` rules, Traffic Source/Medium and Device Category filters, and on-demand live **Test & Send Report** execution.
