@@ -805,6 +805,8 @@ export const OrganizationDashboard: React.FC<{ scopedOrg?: Organization }> = ({ 
                 ? `ORGANIZATION • ${(scopedOrg.role || 'OWNER').toUpperCase()} • ${userTier.toUpperCase()} PLAN`
                 : clerkOrgName
                 ? `${clerkOrgName.toUpperCase()} • ${userTier.toUpperCase()} PLAN`
+                : activeOrgId === 'personal'
+                ? `PERSONAL WORKSPACE • ${userTier.toUpperCase()} PLAN`
                 : `ORGANIZATION LEVEL • ${userTier.toUpperCase()} PLAN`}
             </div>
             <h1 className="dashboard-title">{scopedOrg ? scopedOrg.name : 'Organization Dashboard'}</h1>

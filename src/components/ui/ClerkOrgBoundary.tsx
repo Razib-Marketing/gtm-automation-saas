@@ -1,7 +1,7 @@
 import React from 'react';
-import { OrganizationSwitcher, OrganizationProfile } from '@clerk/clerk-react';
+import { OrganizationSwitcher, OrganizationProfile, useAuth, useClerk } from '@clerk/clerk-react';
 import { dark } from '@clerk/themes';
-import { Building2, AlertCircle } from 'lucide-react';
+import { Building2, AlertCircle, Plus, User } from 'lucide-react';
 
 interface BoundaryState {
   hasError: boolean;
@@ -99,9 +99,11 @@ export const ClerkOrgSwitcherWidget: React.FC<{
       }
     >
       <OrganizationSwitcher
+        hidePersonal={false}
+        afterSelectPersonalUrl="/organization?scope=personal"
         afterSelectOrganizationUrl="/organization"
         afterCreateOrganizationUrl="/organization"
-        afterLeaveOrganizationUrl="/choose-organization"
+        afterLeaveOrganizationUrl="/organization?scope=personal"
         appearance={{
           baseTheme: dark,
           variables: {
@@ -129,6 +131,9 @@ export const ClerkOrgSwitcherWidget: React.FC<{
 };
 
 export const ClerkOrgProfileWidget: React.FC<{ isSandboxMode?: boolean }> = ({ isSandboxMode = false }) => {
+  const { orgId } = useAuth();
+  const { openCreateOrganization } = useClerk();
+
   if (isSandboxMode) {
     return (
       <div
@@ -155,24 +160,75 @@ export const ClerkOrgProfileWidget: React.FC<{ isSandboxMode?: boolean }> = ({ i
               Active Organization
             </h3>
             <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.84rem' }}>
-              Switch organizations, create a new organization, or invite teammates and manage roles.
+              Switch between Personal Account and Organizations, create a new organization, or invite teammates and manage roles.
             </p>
           </div>
           <ClerkOrgSwitcherWidget />
         </div>
 
-        <OrganizationProfile
-          routing="hash"
-          appearance={{
-            baseTheme: dark,
-            variables: {
-              colorPrimary: '#00F0FF',
-              colorBackground: '#0E1420',
-              colorText: '#F9FAFB',
-              borderRadius: '12px'
-            }
-          }}
-        />
+        {!orgId ? (
+          <div
+            style={{
+              padding: '1.5rem',
+              borderRadius: '14px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.85rem', maxWidth: '580px' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  background: 'rgba(0, 240, 255, 0.12)',
+                  border: '1px solid rgba(0, 240, 255, 0.28)',
+                  color: '#00F0FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <User size={19} />
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 0.25rem', color: '#FFFFFF', fontSize: '1rem' }}>
+                  Personal Account Active
+                </h4>
+                <p style={{ margin: 0, color: '#9CA3AF', fontSize: '0.86rem', lineHeight: 1.5 }}>
+                  You are currently working in your Personal Workspace. Switch to an existing organization above or create a new organization to invite team members and assign roles.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => openCreateOrganization({ afterCreateOrganizationUrl: '/access' })}
+              className="org-btn-primary"
+            >
+              <Plus size={16} />
+              Create Organization
+            </button>
+          </div>
+        ) : (
+          <OrganizationProfile
+            routing="hash"
+            appearance={{
+              baseTheme: dark,
+              variables: {
+                colorPrimary: '#00F0FF',
+                colorBackground: '#0E1420',
+                colorText: '#F9FAFB',
+                borderRadius: '12px'
+              }
+            }}
+          />
+        )}
       </div>
     </ClerkOrgBoundary>
   );

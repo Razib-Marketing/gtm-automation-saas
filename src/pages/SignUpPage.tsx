@@ -2,27 +2,45 @@ import { useState, useEffect } from 'react';
 import { SignUp, ClerkLoaded, ClerkLoading, useAuth, useSession } from '@clerk/clerk-react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { BackgroundMesh } from '../components/ui/BackgroundMesh';
-import { X, Loader2, AlertCircle } from 'lucide-react';
+import { X, Loader2, AlertCircle, User, Building2 } from 'lucide-react';
 import '../components/layout/Navbar.css';
 
-const getDashboardUrl = () => {
+const SIGNUP_INTENT_KEY = 'gtm_signup_intent';
+
+const getDashboardUrl = (personal = false) => {
+  const suffix = personal ? '/organization?scope=personal' : '/organization';
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return '/organization';
+      return suffix;
     }
   }
-  return 'https://app.gtmobserver.com/organization';
+  return `https://app.gtmobserver.com${suffix}`;
 };
 
 export const SignUpPage = () => {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn, orgId } = useAuth();
   const { session } = useSession();
   const location = useLocation();
   const navigate = useNavigate();
   const isSsoCallback = location.pathname.includes('sso-callback');
   const [tookTooLong, setTookTooLong] = useState(false);
   const [ssoStalled, setSsoStalled] = useState(false);
+  const [signupMode, setSignupMode] = useState<'personal' | 'organization'>(() => {
+    if (typeof window !== 'undefined') {
+      const q = new URLSearchParams(window.location.search).get('type');
+      if (q === 'organization' || q === 'personal') return q;
+      const saved = sessionStorage.getItem(SIGNUP_INTENT_KEY);
+      if (saved === 'organization') return 'organization';
+    }
+    return 'personal';
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(SIGNUP_INTENT_KEY, signupMode);
+    }
+  }, [signupMode]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,13 +59,23 @@ export const SignUpPage = () => {
     }
     if (session?.currentTask) return;
 
-    const target = getDashboardUrl();
+    const intent = signupMode;
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(SIGNUP_INTENT_KEY);
+    }
+
+    if (intent === 'organization' && !orgId) {
+      navigate('/choose-organization', { replace: true });
+      return;
+    }
+
+    const target = getDashboardUrl(intent === 'personal');
     if (/^https?:\/\//i.test(target) && new URL(target).origin !== window.location.origin) {
       window.location.replace(target);
     } else {
-      navigate('/organization', { replace: true });
+      navigate(target, { replace: true });
     }
-  }, [isLoaded, isSignedIn, session, location.pathname, navigate]);
+  }, [isLoaded, isSignedIn, session, orgId, signupMode, location.pathname, navigate]);
 
   useEffect(() => {
     if (!isSsoCallback || isSignedIn) {
@@ -100,11 +128,99 @@ export const SignUpPage = () => {
             </div>
           ) : (
             <>
+              {!isSsoCallback && (
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: '400px',
+                    marginBottom: '1rem',
+                    padding: '0.85rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 38, 0.88)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(12px)'
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.06em',
+                      color: '#94A3B8',
+                      textTransform: 'uppercase',
+                      marginBottom: '0.55rem'
+                    }}
+                  >
+                    Choose Workspace Type
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.55rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setSignupMode('personal')}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        padding: 'var(--btn-padding)',
+                        minHeight: 'var(--btn-min-height)',
+                        borderRadius: 'var(--btn-radius)',
+                        border: signupMode === 'personal'
+                          ? '1px solid rgba(0, 240, 255, 0.55)'
+                          : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: signupMode === 'personal'
+                          ? 'rgba(0, 240, 255, 0.14)'
+                          : 'rgba(255, 255, 255, 0.03)',
+                        color: signupMode === 'personal' ? '#00F0FF' : '#CBD5E1',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <User size={15} />
+                      Personal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignupMode('organization')}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.45rem',
+                        padding: 'var(--btn-padding)',
+                        minHeight: 'var(--btn-min-height)',
+                        borderRadius: 'var(--btn-radius)',
+                        border: signupMode === 'organization'
+                          ? '1px solid rgba(0, 240, 255, 0.55)'
+                          : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: signupMode === 'organization'
+                          ? 'rgba(0, 240, 255, 0.14)'
+                          : 'rgba(255, 255, 255, 0.03)',
+                        color: signupMode === 'organization' ? '#00F0FF' : '#CBD5E1',
+                        fontSize: '0.84rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <Building2 size={15} />
+                      Organization
+                    </button>
+                  </div>
+                  <p style={{ margin: '0.55rem 0 0', fontSize: '0.78rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                    {signupMode === 'organization'
+                      ? 'Create a team organization for client portfolios & shared members.'
+                      : 'Solo personal workspace for your own websites & GA4 monitors.'}
+                  </p>
+                </div>
+              )}
               <SignUp
                 routing="path"
                 path="/sign-up"
                 signInUrl="/sign-in"
-                fallbackRedirectUrl="/organization"
+                fallbackRedirectUrl={signupMode === 'organization' ? '/choose-organization' : '/organization?scope=personal'}
                 signInFallbackRedirectUrl="/organization"
               />
               {ssoStalled && (
