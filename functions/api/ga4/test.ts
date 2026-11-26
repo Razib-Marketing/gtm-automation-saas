@@ -2,6 +2,9 @@ import {
   ensureUsersSchema,
   ensureMonitorsSchema,
   ensureAlertsSchema,
+  ensureProjectsSchema,
+  getClerkAuthContext,
+  resolveProjectAccess,
   isValidTimeHHMM,
   sanitizeTimezone,
   resolveDateRanges,
@@ -20,8 +23,8 @@ export async function onRequest(context: any) {
   const { env, request } = context;
 
   // Verify Auth
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const auth = getClerkAuthContext(request);
+  if (!auth) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
@@ -48,6 +51,7 @@ export async function onRequest(context: any) {
     await ensureUsersSchema(env.DB);
     await ensureMonitorsSchema(env.DB);
     await ensureAlertsSchema(env.DB);
+    await ensureProjectsSchema(env.DB);
 
     const monitor: any = await env.DB.prepare(
       `SELECT m.*, u.schedule_time AS user_schedule_time, u.schedule_timezone AS user_schedule_timezone
@@ -58,6 +62,18 @@ export async function onRequest(context: any) {
 
     if (!monitor) {
       return new Response(JSON.stringify({ error: 'Monitor not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    let canAccessMonitor = monitor.user_id === auth.userId;
+    if (!canAccessMonitor && monitor.project_id) {
+      const access = await resolveProjectAccess(env.DB, auth, monitor.project_id);
+      if (access) canAccessMonitor = true;
+    }
+    if (!canAccessMonitor) {
+      return new Response(JSON.stringify({ error: 'Monitor not found or access denied' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });

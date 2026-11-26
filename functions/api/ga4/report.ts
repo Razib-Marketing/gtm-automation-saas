@@ -1,9 +1,11 @@
 import { getGoogleAccessToken } from '../gtm/_utils';
+import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from './_shared';
 
 export async function onRequestGet(context: any) {
   const { env, request } = context;
   const url = new URL(request.url);
   const propertyIdParam = url.searchParams.get('propertyId');
+  const projectIdParam = (url.searchParams.get('projectId') || '').trim();
 
   if (!propertyIdParam) {
     return new Response(JSON.stringify({ error: 'Missing propertyId' }), { 
@@ -18,7 +20,16 @@ export async function onRequestGet(context: any) {
     : `properties/${propertyIdParam}`;
 
   try {
-    const accessToken = await getGoogleAccessToken(env, request);
+    let fallbackOwnerId: string | null = null;
+    if (projectIdParam && env.DB) {
+      await ensureProjectsSchema(env.DB);
+      const authCtx = getClerkAuthContext(request);
+      const access = authCtx ? await resolveProjectAccess(env.DB, authCtx, projectIdParam) : null;
+      if (access) {
+        fallbackOwnerId = access.project.user_id;
+      }
+    }
+    const accessToken = await getGoogleAccessToken(env, request, fallbackOwnerId);
 
     // Fetch last 30 days of daily data
     const dailyReportRes = await fetch(`https://analyticsdata.googleapis.com/v1beta/${propertyId}:runReport`, {

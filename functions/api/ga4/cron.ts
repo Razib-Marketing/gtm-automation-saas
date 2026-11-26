@@ -2,6 +2,7 @@ import {
   ensureUsersSchema,
   ensureMonitorsSchema,
   ensureAlertsSchema,
+  ensureProjectsSchema,
   isMonitorDue,
   resolveDateRanges,
   mapMetricName,
@@ -56,12 +57,27 @@ export async function onRequestGet(context: any) {
     await ensureUsersSchema(env.DB);
     await ensureMonitorsSchema(env.DB);
     await ensureAlertsSchema(env.DB);
+    await ensureProjectsSchema(env.DB);
 
     const { results: monitors } = await env.DB.prepare(
-      `SELECT m.*, u.schedule_time AS user_schedule_time, u.schedule_timezone AS user_schedule_timezone
+      `SELECT m.*, u.schedule_time AS user_schedule_time, u.schedule_timezone AS user_schedule_timezone,
+              p.user_id AS project_owner_id
        FROM ga4_monitors m
        LEFT JOIN users u ON m.user_id = u.id
-       WHERE m.status = 'active'`
+       LEFT JOIN projects p ON m.project_id = p.id
+       WHERE (m.status IS NULL OR m.status = 'active')
+         AND (m.project_id IS NULL OR (p.id IS NOT NULL AND (p.status IS NULL OR p.status = 'active')))
+         AND NOT (
+           m.project_id IS NULL
+           AND EXISTS (
+             SELECT 1 FROM projects tp
+             WHERE tp.user_id = m.user_id AND tp.ga4_property_id = m.property_id AND tp.status = 'trashed'
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM projects ap
+             WHERE ap.user_id = m.user_id AND ap.ga4_property_id = m.property_id AND (ap.status IS NULL OR ap.status = 'active')
+           )
+         )`
     ).all();
 
     const logs: string[] = [];
@@ -74,10 +90,20 @@ export async function onRequestGet(context: any) {
           return;
         }
 
-        // 1. Get User's Refresh Token
-        const userConn = await env.DB.prepare(
+        // 1. Get User's Refresh Token (fallback to project owner if shared collaborator created monitor)
+        let userConn = await env.DB.prepare(
           'SELECT encrypted_refresh_token FROM gtm_connections WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
         ).bind(monitor.user_id).first();
+
+        if (
+          (!userConn || !userConn.encrypted_refresh_token || userConn.encrypted_refresh_token === 'no_refresh_token_provided') &&
+          monitor.project_owner_id &&
+          monitor.project_owner_id !== monitor.user_id
+        ) {
+          userConn = await env.DB.prepare(
+            'SELECT encrypted_refresh_token FROM gtm_connections WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+          ).bind(monitor.project_owner_id).first();
+        }
 
         if (!userConn || !userConn.encrypted_refresh_token || userConn.encrypted_refresh_token === 'no_refresh_token_provided') {
           logs.push(`Skipped ${monitor.id} (${monitor.property_name}): missing Google refresh token`);

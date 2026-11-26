@@ -2,15 +2,16 @@ import type { Context } from 'hono';
 import type { WorkerBindings } from '../_types';
 import { renderPdfFromHtml, sanitizeFilename } from '../_pdf';
 import { buildGa4AuditPdfHtml } from '../_pdfTemplates';
-import { ensureProjectsSchema, getClerkUserId } from './_shared';
+import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from './_shared';
 
 export async function handleGa4AuditPdf(
   c: Context<{ Bindings: WorkerBindings }>
 ): Promise<Response> {
-  const userId = getClerkUserId(c.req.raw);
-  if (!userId) {
+  const auth = getClerkAuthContext(c.req.raw);
+  if (!auth) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
+  const userId = auth.userId;
 
   const auditId = (c.req.param('auditId') || '').trim();
   if (!auditId) {
@@ -43,22 +44,27 @@ export async function handleGa4AuditPdf(
          a.passed_count,
          a.raw_data,
          a.created_at,
-         p.id AS owned_project_id,
          p.name AS project_name,
          p.website_url AS website_url
        FROM ga4_audit_logs a
-       LEFT JOIN projects p ON a.project_id = p.id AND p.user_id = a.user_id
-       WHERE a.id = ? AND a.user_id = ?
+       LEFT JOIN projects p ON a.project_id = p.id
+       WHERE a.id = ?
        LIMIT 1`
     )
-      .bind(auditId, userId)
+      .bind(auditId)
       .first();
 
     if (!row) {
       return c.json({ error: 'GA4 audit report not found' }, 404);
     }
 
-    if (row.project_id && !row.owned_project_id) {
+    const effectiveProjectId = row.project_id || requestedProjectId;
+    if (effectiveProjectId) {
+      const access = await resolveProjectAccess(c.env.DB, auth, effectiveProjectId);
+      if (!access) {
+        return c.json({ error: 'GA4 audit report not found' }, 404);
+      }
+    } else if (row.user_id !== userId) {
       return c.json({ error: 'GA4 audit report not found' }, 404);
     }
 

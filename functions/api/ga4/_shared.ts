@@ -68,6 +68,75 @@ export async function ensureAlertsSchema(db: any) {
   } catch (_) {}
 }
 
+export async function ensureOrganizationsSchema(db: any) {
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS organizations (
+        id TEXT PRIMARY KEY,
+        clerk_org_id TEXT,
+        name TEXT NOT NULL,
+        slug TEXT,
+        description TEXT,
+        owner_user_id TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `).run();
+  } catch (_) {}
+
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS organization_members (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        user_id TEXT,
+        email TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'member',
+        invited_by TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(organization_id, email)
+      )
+    `).run();
+  } catch (_) {}
+
+  try {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS project_access (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        granted_to_user_id TEXT,
+        granted_to_email TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'editor',
+        granted_by_user_id TEXT NOT NULL,
+        granted_by_email TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(project_id, granted_to_email)
+      )
+    `).run();
+  } catch (_) {}
+
+  const orgMigrations = [
+    'ALTER TABLE projects ADD COLUMN deleted_at TIMESTAMP',
+    'ALTER TABLE projects ADD COLUMN organization_id TEXT',
+    'CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(organization_id)',
+    'CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)',
+    'CREATE INDEX IF NOT EXISTS idx_proj_access_pid ON project_access(project_id)',
+    'CREATE INDEX IF NOT EXISTS idx_proj_access_email ON project_access(granted_to_email)',
+    'CREATE INDEX IF NOT EXISTS idx_proj_access_uid ON project_access(granted_to_user_id)',
+    'CREATE INDEX IF NOT EXISTS idx_org_members_oid ON organization_members(organization_id)',
+    'CREATE INDEX IF NOT EXISTS idx_org_members_email ON organization_members(email)',
+    'CREATE INDEX IF NOT EXISTS idx_org_clerk_id ON organizations(clerk_org_id)'
+  ];
+
+  for (const sql of orgMigrations) {
+    try {
+      await db.prepare(sql).run();
+    } catch (_) {}
+  }
+}
+
 export async function ensureProjectsSchema(db: any) {
   try {
     await db.prepare(`
@@ -88,6 +157,8 @@ export async function ensureProjectsSchema(db: any) {
         ga4_property_name TEXT,
         measurement_id TEXT,
         status TEXT DEFAULT 'active',
+        deleted_at TIMESTAMP,
+        organization_id TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
@@ -127,23 +198,257 @@ export async function ensureProjectsSchema(db: any) {
       await db.prepare(sql).run();
     } catch (_) {}
   }
+
+  await ensureOrganizationsSchema(db);
 }
 
-export function getClerkUserId(request: Request): string | null {
+export interface ClerkAuthContext {
+  userId: string;
+  orgId: string | null;
+  orgRole: string | null;
+  email: string | null;
+}
+
+export function getClerkAuthContext(request: Request): ClerkAuthContext | null {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.split(' ')[1];
+  if (!token || token === 'null' || token === 'undefined') return null;
+  const parts = token.split('.');
+  if (parts.length < 2 || !parts[1]) return null;
   try {
-    let payloadBase64 = token.split('.')[1];
-    payloadBase64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    let payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     while (payloadBase64.length % 4) {
       payloadBase64 += '=';
     }
     const payload = JSON.parse(atob(payloadBase64));
-    return payload.sub || null;
+    if (!payload.sub) return null;
+
+    // Support both Clerk v1 (org_id, org_role) and v2 (o.id, o.rol) session JWT claims
+    const orgId = payload.org_id || payload.o?.id || null;
+    const orgRole = payload.org_role || payload.o?.rol || null;
+    const email = typeof payload.email === 'string' ? payload.email.toLowerCase().trim() : null;
+
+    return {
+      userId: payload.sub,
+      orgId: orgId ? String(orgId) : null,
+      orgRole: orgRole ? String(orgRole) : null,
+      email
+    };
   } catch (_) {
     return null;
   }
+}
+
+export function getClerkUserId(request: Request): string | null {
+  return getClerkAuthContext(request)?.userId || null;
+}
+
+export type AccessRole = 'owner' | 'admin' | 'editor' | 'viewer';
+
+export function normalizeAccessRole(raw?: string | null): AccessRole {
+  const r = (raw || '').toLowerCase().trim();
+  if (r === 'owner') return 'owner';
+  if (r === 'admin' || r === 'org:admin') return 'admin';
+  if (r === 'viewer' || r === 'read' || r === 'readonly') return 'viewer';
+  return 'editor';
+}
+
+export function roleRank(role: AccessRole | string | null | undefined): number {
+  switch (normalizeAccessRole(role)) {
+    case 'owner':
+      return 4;
+    case 'admin':
+      return 3;
+    case 'editor':
+      return 2;
+    case 'viewer':
+    default:
+      return 1;
+  }
+}
+
+export function canEditProject(role: AccessRole | string | null | undefined): boolean {
+  return roleRank(role) >= 2;
+}
+
+export function canManageProject(role: AccessRole | string | null | undefined): boolean {
+  return roleRank(role) >= 3;
+}
+
+export function canShareProject(role: AccessRole | string | null | undefined): boolean {
+  return roleRank(role) >= 2;
+}
+
+export async function resolveUserEmail(db: any, userId: string): Promise<string> {
+  if (!db || !userId) return '';
+  try {
+    const row: any = await db.prepare('SELECT email FROM users WHERE id = ?').bind(userId).first();
+    return (row?.email || '').toLowerCase().trim();
+  } catch (_) {
+    return '';
+  }
+}
+
+export async function claimPendingAccess(db: any, userId: string, email?: string | null): Promise<void> {
+  if (!db || !userId) return;
+  const resolvedEmail = (email || (await resolveUserEmail(db, userId))).toLowerCase().trim();
+  if (!resolvedEmail || resolvedEmail === 'unknown@example.com') return;
+  try {
+    await db
+      .prepare('UPDATE project_access SET granted_to_user_id = ? WHERE LOWER(granted_to_email) = LOWER(?) AND (granted_to_user_id IS NULL OR granted_to_user_id != ?)')
+      .bind(userId, resolvedEmail, userId)
+      .run();
+  } catch (_) {}
+  try {
+    await db
+      .prepare("UPDATE organization_members SET user_id = ?, status = 'active' WHERE LOWER(email) = LOWER(?) AND (user_id IS NULL OR user_id != ?)")
+      .bind(userId, resolvedEmail, userId)
+      .run();
+  } catch (_) {}
+}
+
+export interface ResolvedProjectAccess {
+  project: any;
+  role: AccessRole;
+  source: 'owner' | 'organization' | 'shared';
+}
+
+export async function resolveProjectAccess(
+  db: any,
+  auth: ClerkAuthContext | string,
+  projectId: string,
+  options?: { allowTrashed?: boolean }
+): Promise<ResolvedProjectAccess | null> {
+  if (!db || !projectId) return null;
+  const ctx: ClerkAuthContext =
+    typeof auth === 'string'
+      ? { userId: auth, orgId: null, orgRole: null, email: null }
+      : auth;
+
+  const project: any = await db
+    .prepare('SELECT * FROM projects WHERE id = ? LIMIT 1')
+    .bind(projectId)
+    .first();
+
+  if (!project) return null;
+  if (!options?.allowTrashed && project.status === 'trashed') return null;
+
+  if (project.user_id === ctx.userId) {
+    return { project, role: 'owner', source: 'owner' };
+  }
+
+  const userEmail = ctx.email || (await resolveUserEmail(db, ctx.userId));
+
+  let bestRole: AccessRole | null = null;
+  let bestSource: 'owner' | 'organization' | 'shared' = 'shared';
+
+  // Check organization-level access if project belongs to an organization
+  if (project.organization_id) {
+    const org: any = await db
+      .prepare('SELECT * FROM organizations WHERE id = ? LIMIT 1')
+      .bind(project.organization_id)
+      .first();
+
+    if (org) {
+      if (org.owner_user_id === ctx.userId) {
+        return { project, role: 'admin', source: 'organization' };
+      }
+
+      if (ctx.orgId && org.clerk_org_id && org.clerk_org_id === ctx.orgId) {
+        const cRole: AccessRole = ctx.orgRole?.toLowerCase().includes('admin') ? 'admin' : 'editor';
+        if (!bestRole || roleRank(cRole) > roleRank(bestRole)) {
+          bestRole = cRole;
+          bestSource = 'organization';
+        }
+      }
+
+      const memberRow: any = await db
+        .prepare(
+          `SELECT role FROM organization_members
+           WHERE organization_id = ? AND (user_id = ? OR (? != '' AND LOWER(email) = LOWER(?)))
+           LIMIT 1`
+        )
+        .bind(project.organization_id, ctx.userId, userEmail, userEmail)
+        .first();
+
+      if (memberRow) {
+        const mRole = normalizeAccessRole(memberRow.role);
+        if (!bestRole || roleRank(mRole) > roleRank(bestRole)) {
+          bestRole = mRole;
+          bestSource = 'organization';
+        }
+      }
+    }
+  }
+
+  // Check universal direct project_access grant
+  const grantRow: any = await db
+    .prepare(
+      `SELECT role FROM project_access
+       WHERE project_id = ? AND (granted_to_user_id = ? OR (? != '' AND LOWER(granted_to_email) = LOWER(?)))
+       LIMIT 1`
+    )
+    .bind(projectId, ctx.userId, userEmail, userEmail)
+    .first();
+
+  if (grantRow) {
+    const gRole = normalizeAccessRole(grantRow.role);
+    if (!bestRole || roleRank(gRole) > roleRank(bestRole)) {
+      bestRole = gRole;
+      bestSource = 'shared';
+    }
+  }
+
+  if (!bestRole) return null;
+  return { project, role: bestRole, source: bestSource };
+}
+
+export async function resolveOrganizationAccess(
+  db: any,
+  auth: ClerkAuthContext | string,
+  organizationId: string
+): Promise<{ organization: any; role: AccessRole } | null> {
+  if (!db || !organizationId) return null;
+  const ctx: ClerkAuthContext =
+    typeof auth === 'string'
+      ? { userId: auth, orgId: null, orgRole: null, email: null }
+      : auth;
+
+  const org: any = await db
+    .prepare('SELECT * FROM organizations WHERE id = ? LIMIT 1')
+    .bind(organizationId)
+    .first();
+
+  if (!org) return null;
+  if (org.owner_user_id === ctx.userId) {
+    return { organization: org, role: 'owner' };
+  }
+
+  let bestRole: AccessRole | null = null;
+  if (ctx.orgId && org.clerk_org_id && org.clerk_org_id === ctx.orgId) {
+    bestRole = ctx.orgRole?.toLowerCase().includes('admin') ? 'admin' : 'editor';
+  }
+
+  const userEmail = ctx.email || (await resolveUserEmail(db, ctx.userId));
+  const memberRow: any = await db
+    .prepare(
+      `SELECT role FROM organization_members
+       WHERE organization_id = ? AND (user_id = ? OR (? != '' AND LOWER(email) = LOWER(?)))
+       LIMIT 1`
+    )
+    .bind(organizationId, ctx.userId, userEmail, userEmail)
+    .first();
+
+  if (memberRow) {
+    const mRole = normalizeAccessRole(memberRow.role);
+    if (!bestRole || roleRank(mRole) > roleRank(bestRole)) {
+      bestRole = mRole;
+    }
+  }
+
+  if (!bestRole) return null;
+  return { organization: org, role: bestRole };
 }
 
 export function isValidTimeHHMM(val?: string | null): boolean {

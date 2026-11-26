@@ -3,16 +3,19 @@ import {
   ensureMonitorsSchema,
   ensureAlertsSchema,
   ensureProjectsSchema,
-  getClerkUserId,
+  getClerkAuthContext,
+  resolveProjectAccess,
+  canEditProject,
   isValidTimeHHMM,
   sanitizeTimezone
 } from './_shared';
 
 export async function onRequest(context: any) {
   const { env, request } = context;
-  const userId = getClerkUserId(request);
+  const auth = getClerkAuthContext(request);
+  const userId = auth?.userId || null;
 
-  if (!userId) {
+  if (!auth || !userId) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
@@ -37,24 +40,34 @@ export async function onRequest(context: any) {
       const userScheduleTimezone = sanitizeTimezone(userScheduleRow?.schedule_timezone);
 
       let rawMonitors: any[] = [];
+      let scopeOwnerId = userId;
+      let projectAccessRole = 'owner';
+
       if (filterProjectId) {
+        const access = await resolveProjectAccess(env.DB, auth, filterProjectId);
+        if (!access) {
+          return new Response(JSON.stringify({ error: 'Project not found or access denied' }), { status: 404 });
+        }
+        scopeOwnerId = access.project.user_id;
+        projectAccessRole = access.role;
+
         const res = await env.DB.prepare(
           `SELECT * FROM ga4_monitors
-           WHERE user_id = ?
-             AND (project_id = ? OR (project_id IS NULL AND ? != '' AND property_id = ?))
+           WHERE (status IS NULL OR status = 'active')
+             AND (project_id = ? OR (project_id IS NULL AND user_id = ? AND ? != '' AND property_id = ?))
            ORDER BY created_at DESC`
-        ).bind(userId, filterProjectId, filterPropertyId, filterPropertyId).all();
+        ).bind(filterProjectId, scopeOwnerId, filterPropertyId, filterPropertyId).all();
         rawMonitors = res.results || [];
       } else {
         const res = await env.DB.prepare(
-          'SELECT * FROM ga4_monitors WHERE user_id = ? ORDER BY created_at DESC'
+          "SELECT * FROM ga4_monitors WHERE user_id = ? AND (status IS NULL OR status = 'active') ORDER BY created_at DESC"
         ).bind(userId).all();
         rawMonitors = res.results || [];
       }
 
       const { results: rawAlerts } = await env.DB.prepare(
         'SELECT * FROM ga4_alerts WHERE user_id = ? ORDER BY created_at DESC LIMIT 100'
-      ).bind(userId).all();
+      ).bind(scopeOwnerId).all();
 
       const allowedMonitorIds = new Set(rawMonitors.map((m: any) => m.id));
       const filteredRawAlerts = filterProjectId
@@ -104,6 +117,7 @@ export async function onRequest(context: any) {
       return new Response(JSON.stringify({
         monitors,
         alerts,
+        accessRole: projectAccessRole,
         accountSchedule: {
           time: userScheduleTime,
           timezone: userScheduleTimezone
@@ -119,6 +133,22 @@ export async function onRequest(context: any) {
       await ensureMonitorsSchema(env.DB);
       await ensureUsersSchema(env.DB);
       await ensureProjectsSchema(env.DB);
+
+      const body = await request.json();
+      const { id, propertyId, propertyName, comparisonPeriod, matchType } = body;
+      const projectId = typeof body.projectId === 'string' && body.projectId.trim() ? body.projectId.trim() : null;
+
+      let sharedOwnerId: string | null = null;
+      if (projectId) {
+        const projAccess = await resolveProjectAccess(env.DB, auth, projectId);
+        if (!projAccess) {
+          return new Response(JSON.stringify({ error: 'Project not found or access denied' }), { status: 404 });
+        }
+        if (!canEditProject(projAccess.role)) {
+          return new Response(JSON.stringify({ error: 'Viewers cannot create or edit GA4 monitors.' }), { status: 403 });
+        }
+        sharedOwnerId = projAccess.project.user_id;
+      }
 
       let userRow: any = null;
       try {
@@ -137,16 +167,13 @@ export async function onRequest(context: any) {
       const isAdmin = ADMIN_EMAILS.includes(userEmail);
       const tier = isAdmin ? 'custom' : (userRow?.subscription_tier || 'free');
 
-      if (tier === 'free') {
+      // Allow shared editors/admins on an active project even if their personal account is free
+      if (tier === 'free' && !sharedOwnerId) {
         return new Response(JSON.stringify({
           error: 'An active paid subscription (Pro or Custom) is required to activate GA4 anomaly monitors. Please choose a plan in Billing.',
           requiresUpgrade: true
         }), { status: 403, headers: { 'Content-Type': 'application/json' } });
       }
-
-      const body = await request.json();
-      const { id, propertyId, propertyName, comparisonPeriod, matchType } = body;
-      const projectId = typeof body.projectId === 'string' && body.projectId.trim() ? body.projectId.trim() : null;
 
       let alertEmail = body.alertEmail;
       if (Array.isArray(body.alertEmails) && body.alertEmails.length > 0) {
@@ -214,39 +241,66 @@ export async function onRequest(context: any) {
 
       let monitorId = id;
       if (id) {
-        // Update existing
-        await env.DB.prepare(
-          `UPDATE ga4_monitors
-          SET project_id = COALESCE(?, project_id), property_id = ?, property_name = ?, metric = ?, threshold_percentage = ?, comparison_period = ?, alert_email = ?, condition_type = ?, conditions = ?, match_type = ?, schedule_time = ?, schedule_timezone = ?, schedule_frequency = ?, website_type = ?, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ? AND user_id = ?`
-        ).bind(
-          projectId,
-          propertyId,
-          propertyName || propertyId,
-          primaryMetric,
-          primaryThreshold,
-          comparisonPeriod || 'yesterday_vs_last_week',
-          alertEmail,
-          primaryCondition,
-          conditionsJson,
-          resolvedMatchType,
-          resolvedScheduleTime,
-          resolvedScheduleTimezone,
-          resolvedScheduleFrequency,
-          resolvedWebsiteType,
-          id,
-          userId
-        ).run();
+        // Update existing (scoped to owner OR shared project)
+        if (projectId) {
+          await env.DB.prepare(
+            `UPDATE ga4_monitors
+            SET project_id = COALESCE(?, project_id), property_id = ?, property_name = ?, metric = ?, threshold_percentage = ?, comparison_period = ?, alert_email = ?, condition_type = ?, conditions = ?, match_type = ?, schedule_time = ?, schedule_timezone = ?, schedule_frequency = ?, website_type = ?, status = 'active', updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND (user_id = ? OR project_id = ?)`
+          ).bind(
+            projectId,
+            propertyId,
+            propertyName || propertyId,
+            primaryMetric,
+            primaryThreshold,
+            comparisonPeriod || 'yesterday_vs_last_week',
+            alertEmail,
+            primaryCondition,
+            conditionsJson,
+            resolvedMatchType,
+            resolvedScheduleTime,
+            resolvedScheduleTimezone,
+            resolvedScheduleFrequency,
+            resolvedWebsiteType,
+            id,
+            userId,
+            projectId
+          ).run();
+        } else {
+          await env.DB.prepare(
+            `UPDATE ga4_monitors
+            SET project_id = COALESCE(?, project_id), property_id = ?, property_name = ?, metric = ?, threshold_percentage = ?, comparison_period = ?, alert_email = ?, condition_type = ?, conditions = ?, match_type = ?, schedule_time = ?, schedule_timezone = ?, schedule_frequency = ?, website_type = ?, status = 'active', updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND user_id = ?`
+          ).bind(
+            projectId,
+            propertyId,
+            propertyName || propertyId,
+            primaryMetric,
+            primaryThreshold,
+            comparisonPeriod || 'yesterday_vs_last_week',
+            alertEmail,
+            primaryCondition,
+            conditionsJson,
+            resolvedMatchType,
+            resolvedScheduleTime,
+            resolvedScheduleTimezone,
+            resolvedScheduleFrequency,
+            resolvedWebsiteType,
+            id,
+            userId
+          ).run();
+        }
       } else {
         // Create new
         monitorId = 'mon_' + Date.now() + Math.random().toString(36).substring(2, 9);
+        const ownerUserId = sharedOwnerId || userId;
         await env.DB.prepare(
           `INSERT INTO ga4_monitors
-          (id, user_id, project_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type, conditions, match_type, schedule_time, schedule_timezone, schedule_frequency, website_type)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          (id, user_id, project_id, property_id, property_name, metric, threshold_percentage, comparison_period, alert_email, condition_type, conditions, match_type, schedule_time, schedule_timezone, schedule_frequency, website_type, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`
         ).bind(
           monitorId,
-          userId,
+          ownerUserId,
           projectId,
           propertyId,
           propertyName || propertyId,
@@ -292,7 +346,21 @@ export async function onRequest(context: any) {
 
       if (!id) return new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 });
 
-      await env.DB.prepare('DELETE FROM ga4_monitors WHERE id = ? AND user_id = ?').bind(id, userId).run();
+      const monRow: any = await env.DB.prepare('SELECT id, user_id, project_id FROM ga4_monitors WHERE id = ?')
+        .bind(id)
+        .first();
+      if (!monRow) return new Response(JSON.stringify({ error: 'Monitor not found' }), { status: 404 });
+
+      let authorized = monRow.user_id === userId;
+      if (!authorized && monRow.project_id) {
+        const access = await resolveProjectAccess(env.DB, auth, monRow.project_id);
+        if (access && canEditProject(access.role)) authorized = true;
+      }
+      if (!authorized) {
+        return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+      }
+
+      await env.DB.prepare('DELETE FROM ga4_monitors WHERE id = ?').bind(id).run();
 
       return new Response(JSON.stringify({ success: true }), { status: 200 });
     } catch (e: any) {

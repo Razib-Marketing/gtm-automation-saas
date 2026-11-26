@@ -6,9 +6,57 @@ export type WebsitePerspective =
   | 'saas'
   | 'content';
 
+export type AccessRole = 'owner' | 'admin' | 'editor' | 'viewer';
+
+export interface OrganizationMember {
+  id: string;
+  organization_id: string;
+  user_id?: string | null;
+  email: string;
+  role: AccessRole | string;
+  status: 'active' | 'invited' | string;
+  created_at?: string;
+}
+
+export interface Organization {
+  id: string;
+  clerk_org_id?: string | null;
+  name: string;
+  slug?: string | null;
+  description?: string | null;
+  owner_user_id: string;
+  role?: AccessRole;
+  projectCount?: number;
+  trashedCount?: number;
+  memberCount?: number;
+  members?: OrganizationMember[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProjectAccessGrant {
+  id: string;
+  project_id: string;
+  project_name?: string;
+  website_url?: string | null;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  gtm_container_public_id?: string | null;
+  ga4_property_name?: string | null;
+  granted_to_user_id?: string | null;
+  granted_to_email: string;
+  role: AccessRole;
+  granted_by_user_id?: string;
+  granted_by_email?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Project {
   id: string;
   user_id?: string;
+  organization_id?: string | null;
+  organization_name?: string | null;
   name: string;
   website_url?: string | null;
   website_type?: WebsitePerspective | string;
@@ -23,6 +71,7 @@ export interface Project {
   ga4_property_name?: string | null;
   measurement_id?: string | null;
   status?: string;
+  deleted_at?: string | null;
   created_at?: string;
   updated_at?: string;
   monitorCount?: number;
@@ -32,6 +81,9 @@ export interface Project {
   ga4AuditCount?: number;
   latestGtmScore?: number | null;
   latestGa4Score?: number | null;
+  sharedWithCount?: number;
+  accessRole?: AccessRole;
+  accessSource?: 'owner' | 'organization' | 'shared';
 }
 
 export const WEBSITE_TYPES: Array<{

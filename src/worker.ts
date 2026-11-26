@@ -37,6 +37,8 @@ import * as route_28 from '../functions/api/user/track-deployment.ts';
 import * as route_polar_checkout from '../functions/api/polar/checkout.ts';
 import * as route_polar_webhook from '../functions/api/polar/webhook.ts';
 import * as route_projects from '../functions/api/projects.ts';
+import * as route_organizations from '../functions/api/organizations.ts';
+import * as route_access from '../functions/api/access.ts';
 
 const routes = {
   '/api/auth/google/callback': route_0,
@@ -70,6 +72,8 @@ const routes = {
   '/api/polar/checkout': route_polar_checkout,
   '/api/polar/webhook': route_polar_webhook,
   '/api/projects': route_projects,
+  '/api/organizations': route_organizations,
+  '/api/access': route_access,
   '/api/user/me': route_27,
   '/api/user/track-deployment': route_28,
 };
@@ -163,7 +167,7 @@ app.get('*', async (c) => {
   }
 
   // 4. If visiting an app route on the marketing domain, redirect to app.gtmobserver.com
-  const appRoutes = ['/organization', '/billing', '/onboarding', '/dashboard', '/observer', '/projects', '/analytics', '/settings', '/support'];
+  const appRoutes = ['/organization', '/access', '/billing', '/onboarding', '/dashboard', '/observer', '/projects', '/analytics', '/settings', '/support'];
   const isAppRoute = appRoutes.some(r => url.pathname === r || url.pathname.startsWith(r + '/'));
 
   if (host === 'gtmobserver.com') {

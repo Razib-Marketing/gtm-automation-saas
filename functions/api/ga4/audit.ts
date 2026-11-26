@@ -1,5 +1,5 @@
 import { getGoogleAccessToken, extractClerkUserId } from '../gtm/_utils';
-import { ensureProjectsSchema } from './_shared';
+import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from './_shared';
 import {
   analyzeGa4AuditSnapshot,
   buildDemoGa4Snapshot,
@@ -102,13 +102,16 @@ export async function onRequest(context: any) {
 
       let results: any[] = [];
       if (filterProjectId) {
+        const authCtx = getClerkAuthContext(request);
+        const access = authCtx ? await resolveProjectAccess(env.DB, authCtx, filterProjectId) : null;
+        const ownerId = access?.project?.user_id || clerkUserId;
         const res = await env.DB.prepare(
           `SELECT id, project_id, property_id, property_name, health_score, critical_count, warning_count, passed_count, raw_data, created_at
            FROM ga4_audit_logs
-           WHERE user_id = ? AND (project_id = ? OR (project_id IS NULL AND ? != '' AND property_id = ?))
+           WHERE (project_id = ? OR (project_id IS NULL AND user_id = ? AND ? != '' AND property_id = ?))
            ORDER BY created_at DESC
            LIMIT 25`
-        ).bind(clerkUserId, filterProjectId, normPropFilter, normPropFilter).all();
+        ).bind(filterProjectId, ownerId, normPropFilter, normPropFilter).all();
         results = res.results || [];
       } else {
         const res = await env.DB.prepare(
@@ -167,7 +170,16 @@ export async function onRequest(context: any) {
 
   try {
     const clerkUserId = extractClerkUserId(request);
-    const accessToken = await getGoogleAccessToken(env, request);
+    let fallbackOwnerId: string | null = null;
+    if (filterProjectId && env.DB) {
+      await ensureGa4AuditLogsSchema(env.DB);
+      const authCtx = getClerkAuthContext(request);
+      const access = authCtx ? await resolveProjectAccess(env.DB, authCtx, filterProjectId) : null;
+      if (access) {
+        fallbackOwnerId = access.project.user_id;
+      }
+    }
+    const accessToken = await getGoogleAccessToken(env, request, fallbackOwnerId);
     const headers = { 'Authorization': `Bearer ${accessToken}` };
     const apiAccessNotes: string[] = [];
 

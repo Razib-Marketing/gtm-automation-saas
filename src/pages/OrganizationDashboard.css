@@ -387,6 +387,162 @@
   transform: translateY(-1px);
 }
 
+/* Organization Switcher Bar */
+.org-switcher-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.35rem;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  background: rgba(15, 20, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.org-scope-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.org-scope-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #9CA3AF;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.org-scope-pill:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #FFFFFF;
+}
+
+.org-scope-pill.active {
+  background: rgba(0, 240, 255, 0.14);
+  border-color: rgba(0, 240, 255, 0.45);
+  color: #00F0FF;
+}
+
+.org-scope-pill.trash-pill.active {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #FCA5A5;
+}
+
+.org-count-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.08rem 0.4rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+}
+
+/* View Switcher & Bulk Action Bar */
+.org-view-toggle {
+  display: inline-flex;
+  padding: 0.25rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 0.2rem;
+}
+
+.org-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #9CA3AF;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.org-view-btn.active {
+  background: rgba(0, 240, 255, 0.15);
+  color: #00F0FF;
+}
+
+.org-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.8rem 1.15rem;
+  margin-bottom: 1.25rem;
+  border-radius: 12px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.32);
+}
+
+/* 50-Site High-Density Table */
+.org-table-container {
+  overflow-x: auto;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(22, 29, 42, 0.78) 0%, rgba(13, 17, 26, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.org-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  text-align: left;
+}
+
+.org-table th {
+  padding: 0.85rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9CA3AF;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  white-space: nowrap;
+}
+
+.org-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #E5E7EB;
+  vertical-align: middle;
+}
+
+.org-table tr:hover td {
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.org-table tr:last-child td {
+  border-bottom: none;
+}
+
+.org-action-btn.share-btn:hover {
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6EE7B7;
+}
+
+
 
 .org-project-integrations {
   display: flex;

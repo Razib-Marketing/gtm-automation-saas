@@ -21,6 +21,7 @@ import { Settings } from './pages/Settings';
 import { SignInPage } from './pages/SignInPage';
 import { SignUpPage } from './pages/SignUpPage';
 import { OrganizationDashboard } from './pages/OrganizationDashboard';
+import { AccessDashboard } from './pages/AccessDashboard';
 import { Billing } from './pages/Billing';
 import { ProjectOnboarding } from './pages/ProjectOnboarding';
 import { ProjectOverview } from './pages/ProjectOverview';
@@ -182,6 +183,14 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="/access"
+          element={
+            <SubscriptionGate>
+              <AccessDashboard />
+            </SubscriptionGate>
+          }
+        />
+        <Route
           path="/billing"
           element={
             <SubscriptionGate allowFree>
@@ -285,6 +294,7 @@ const AppLayout = () => {
 
   const innerPaths = [
     '/organization',
+    '/access',
     '/billing',
     '/onboarding',
     '/projects',

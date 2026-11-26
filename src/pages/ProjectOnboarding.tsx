@@ -60,7 +60,7 @@ export const ProjectOnboarding: React.FC = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
-  const { isSandboxMode, googleConnected, refreshWorkspace } = useWorkspace();
+  const { isSandboxMode, googleConnected, organizations, activeOrgId, refreshWorkspace } = useWorkspace();
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -68,6 +68,9 @@ export const ProjectOnboarding: React.FC = () => {
   const [projectName, setProjectName] = useState('');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [websiteType, setWebsiteType] = useState<WebsitePerspective>('general');
+  const [organizationId, setOrganizationId] = useState<string>(() =>
+    activeOrgId && !['all', 'personal', 'shared', 'trash'].includes(activeOrgId) ? activeOrgId : ''
+  );
 
   // Step 2: Google Analytics (GA4)
   const [localGoogleConnected, setLocalGoogleConnected] = useState(googleConnected);
@@ -349,6 +352,7 @@ export const ProjectOnboarding: React.FC = () => {
         name: projectName.trim(),
         websiteUrl: websiteUrl.trim(),
         websiteType,
+        organizationId: organizationId || null,
         ga4PropertyId: selectedGa4PropertyId || null,
         ga4PropertyName: selectedGa4Obj?.displayName || selectedGa4PropertyId || null,
         gtmAccountId: selectedGtmAccountId || null,
@@ -368,6 +372,7 @@ export const ProjectOnboarding: React.FC = () => {
           name: payload.name,
           website_url: payload.websiteUrl,
           website_type: payload.websiteType,
+          organization_id: payload.organizationId,
           ga4_property_id: payload.ga4PropertyId,
           ga4_property_name: payload.ga4PropertyName,
           gtm_account_id: payload.gtmAccountId,
@@ -719,6 +724,25 @@ export const ProjectOnboarding: React.FC = () => {
                         style={{ width: '100%', paddingLeft: '2.25rem' }}
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.45rem' }}>
+                      Client Organization (Optional)
+                    </label>
+                    <select
+                      value={organizationId}
+                      onChange={(e) => setOrganizationId(e.target.value)}
+                      className="module-input"
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">Personal Workspace</option>
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name} ({org.projectCount || 0} websites)
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

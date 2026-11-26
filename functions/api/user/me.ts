@@ -3,6 +3,7 @@ import {
   ensureMonitorsSchema,
   ensureProjectsSchema,
   getClerkUserId,
+  claimPendingAccess,
   isValidTimeHHMM,
   isValidTimezone,
   sanitizeTimezone
@@ -95,13 +96,44 @@ export async function onRequestGet(context: any) {
 
     let projectCount = 0;
     try {
-      const projRow: any = await env.DB.prepare('SELECT COUNT(*) as cnt FROM projects WHERE user_id = ?').bind(clerkUserId).first();
+      const projRow: any = await env.DB.prepare(
+        "SELECT COUNT(*) as cnt FROM projects WHERE user_id = ? AND (status IS NULL OR status = 'active')"
+      )
+        .bind(clerkUserId)
+        .first();
       projectCount = projRow ? (projRow.cnt || 0) : 0;
+    } catch (_) {}
+
+    await claimPendingAccess(env.DB, clerkUserId, resolvedEmail);
+
+    let hasSharedAccess = false;
+    try {
+      const sharedGrant: any = await env.DB.prepare(
+        `SELECT 1 FROM project_access
+         WHERE granted_to_user_id = ? OR (? != '' AND LOWER(granted_to_email) = LOWER(?))
+         LIMIT 1`
+      )
+        .bind(clerkUserId, resolvedEmail, resolvedEmail)
+        .first();
+      const orgMem: any = await env.DB.prepare(
+        `SELECT 1 FROM organization_members
+         WHERE user_id = ? OR (? != '' AND LOWER(email) = LOWER(?))
+         LIMIT 1`
+      )
+        .bind(clerkUserId, resolvedEmail, resolvedEmail)
+        .first();
+      const orgOwned: any = await env.DB.prepare(
+        'SELECT 1 FROM organizations WHERE owner_user_id = ? LIMIT 1'
+      )
+        .bind(clerkUserId)
+        .first();
+      hasSharedAccess = Boolean(sharedGrant || orgMem || orgOwned);
     } catch (_) {}
 
     const activeTier = (dbResult.subscription_tier || 'free').toLowerCase();
     dbResult.audit_count = auditCount;
     dbResult.project_count = projectCount;
+    dbResult.has_shared_access = hasSharedAccess;
     dbResult.has_active_subscription = activeTier === 'pro' || activeTier === 'custom';
     dbResult.schedule_time = isValidTimeHHMM(dbResult.schedule_time) ? dbResult.schedule_time : '08:00';
     dbResult.schedule_timezone = sanitizeTimezone(dbResult.schedule_timezone);

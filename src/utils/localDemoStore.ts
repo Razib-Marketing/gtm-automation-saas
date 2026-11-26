@@ -1,4 +1,4 @@
-import type { Project } from '../types/project';
+import type { Project, Organization, ProjectAccessGrant, AccessRole } from '../types/project';
 
 const SANDBOX_STORAGE_KEY = 'gtmobserver_local_sandbox_v1';
 export const SANDBOX_EVENT = 'gtmobserver:sandbox-updated';
@@ -6,6 +6,8 @@ export const SANDBOX_EVENT = 'gtmobserver:sandbox-updated';
 export interface SandboxState {
   tier: 'free' | 'pro' | 'custom';
   googleConnected: boolean;
+  organizations: Organization[];
+  projectAccess: ProjectAccessGrant[];
   projects: Project[];
   monitors: any[];
   alerts: any[];
@@ -51,9 +53,40 @@ export function isLocalhost(): boolean {
 
 function buildDefaultSeedState(): SandboxState {
   const nowIso = new Date().toISOString();
+  const organizations: Organization[] = [
+    {
+      id: 'org_demo_hospitality',
+      name: 'Harbor Hospitality Group',
+      slug: 'harbor-hospitality',
+      description: '50-property hotel & resort management portfolio',
+      owner_user_id: 'sandbox_user',
+      role: 'owner',
+      members: [
+        {
+          id: 'om_demo_1',
+          organization_id: 'org_demo_hospitality',
+          user_id: 'sandbox_user',
+          email: 'ovi@razibmarketing.net',
+          role: 'owner',
+          status: 'active'
+        },
+        {
+          id: 'om_demo_2',
+          organization_id: 'org_demo_hospitality',
+          email: 'analytics@cogwheelmarketing.com',
+          role: 'admin',
+          status: 'active'
+        }
+      ],
+      created_at: nowIso
+    }
+  ];
+
   const projects: Project[] = [
     {
       id: 'proj_demo_harbor',
+      organization_id: 'org_demo_hospitality',
+      organization_name: 'Harbor Hospitality Group',
       name: 'Harbor Grand Hotel & Resort',
       website_url: 'https://harborgrandhotel.com',
       website_type: 'hospitality',
@@ -280,9 +313,23 @@ function buildDefaultSeedState(): SandboxState {
     }
   ];
 
+  const projectAccess: ProjectAccessGrant[] = [
+    {
+      id: 'pa_demo_1',
+      project_id: 'proj_demo_apex',
+      project_name: 'Apex Commerce Store',
+      granted_to_email: 'growth@apexcommerce.io',
+      role: 'editor',
+      granted_by_email: 'ovi@razibmarketing.net',
+      created_at: nowIso
+    }
+  ];
+
   return {
     tier: 'pro',
     googleConnected: true,
+    organizations,
+    projectAccess,
     projects,
     monitors,
     alerts,
@@ -312,6 +359,8 @@ export function getSandboxState(): SandboxState {
     return {
       tier: parsed.tier || 'pro',
       googleConnected: Boolean(parsed.googleConnected),
+      organizations: Array.isArray(parsed.organizations) ? parsed.organizations : [],
+      projectAccess: Array.isArray(parsed.projectAccess) ? parsed.projectAccess : [],
       projects: Array.isArray(parsed.projects) ? parsed.projects : [],
       monitors: Array.isArray(parsed.monitors) ? parsed.monitors : [],
       alerts: Array.isArray(parsed.alerts) ? parsed.alerts : [],
@@ -327,9 +376,13 @@ export function getSandboxState(): SandboxState {
 
 export function getEnrichedSandboxProjects(): Project[] {
   const s = getSandboxState();
+  const orgLookup = new Map((s.organizations || []).map((o) => [o.id, o.name]));
   return s.projects.map((p) => {
+    const isTrashed = p.status === 'trashed';
     const pMonitors = s.monitors.filter(
-      (m) => m.project_id === p.id || (!m.project_id && p.ga4_property_id && m.property_id === p.ga4_property_id)
+      (m) =>
+        (isTrashed || m.status !== 'trashed') &&
+        (m.project_id === p.id || (!m.project_id && p.ga4_property_id && m.property_id === p.ga4_property_id))
     );
     const monIds = new Set(pMonitors.map((m) => m.id));
     const pAlerts = s.alerts.filter((a) => a.project_id === p.id || monIds.has(a.monitor_id));
@@ -339,15 +392,20 @@ export function getEnrichedSandboxProjects(): Project[] {
     const pGa4Audits = s.ga4Audits.filter(
       (a) => a.projectId === p.id || (p.ga4_property_id && a.propertyId === p.ga4_property_id)
     );
+    const sharedCnt = (s.projectAccess || []).filter((pa) => pa.project_id === p.id).length;
     return {
       ...p,
+      organization_name: p.organization_id ? orgLookup.get(p.organization_id) || p.organization_name || null : null,
       monitorCount: pMonitors.length,
       alertCount: pAlerts.length,
       recentAlertCount: pAlerts.length,
       gtmAuditCount: pGtmAudits.length,
       ga4AuditCount: pGa4Audits.length,
       latestGtmScore: pGtmAudits[0]?.healthScore ?? null,
-      latestGa4Score: pGa4Audits[0]?.healthScore ?? null
+      latestGa4Score: pGa4Audits[0]?.healthScore ?? null,
+      sharedWithCount: sharedCnt,
+      accessRole: p.accessRole || 'owner',
+      accessSource: p.accessSource || 'owner'
     };
   });
 }
@@ -369,6 +427,8 @@ export function addSandboxProject(input: Partial<Project> & { name: string }): P
   const nowIso = new Date().toISOString();
   const created: Project = {
     id: 'proj_loc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    organization_id: input.organization_id || null,
+    organization_name: input.organization_name || null,
     name: input.name,
     website_url: input.website_url || '',
     website_type: input.website_type || 'general',
@@ -383,6 +443,7 @@ export function addSandboxProject(input: Partial<Project> & { name: string }): P
     ga4_property_name: input.ga4_property_name || null,
     measurement_id: input.measurement_id || null,
     status: 'active',
+    deleted_at: null,
     created_at: nowIso,
     updated_at: nowIso
   };
@@ -403,11 +464,123 @@ export function updateSandboxProject(projectId: string, patch: Partial<Project>)
   return updated;
 }
 
+export function trashSandboxProject(projectId: string) {
+  const s = getSandboxState();
+  const nowIso = new Date().toISOString();
+  s.projects = s.projects.map((p) =>
+    p.id === projectId ? { ...p, status: 'trashed', deleted_at: nowIso, updated_at: nowIso } : p
+  );
+  s.monitors = s.monitors.map((m) =>
+    m.project_id === projectId ? { ...m, status: 'trashed' } : m
+  );
+  saveState(s);
+}
+
+export function restoreSandboxProject(projectId: string) {
+  const s = getSandboxState();
+  const nowIso = new Date().toISOString();
+  s.projects = s.projects.map((p) =>
+    p.id === projectId ? { ...p, status: 'active', deleted_at: null, updated_at: nowIso } : p
+  );
+  s.monitors = s.monitors.map((m) =>
+    m.project_id === projectId ? { ...m, status: 'active' } : m
+  );
+  saveState(s);
+}
+
 export function deleteSandboxProject(projectId: string) {
   const s = getSandboxState();
   s.projects = s.projects.filter((p) => p.id !== projectId);
   s.monitors = s.monitors.filter((m) => m.project_id !== projectId);
   s.alerts = s.alerts.filter((a) => a.project_id !== projectId);
+  s.projectAccess = (s.projectAccess || []).filter((pa) => pa.project_id !== projectId);
+  saveState(s);
+}
+
+export function emptySandboxTrash() {
+  const s = getSandboxState();
+  const trashedIds = new Set(s.projects.filter((p) => p.status === 'trashed').map((p) => p.id));
+  s.projects = s.projects.filter((p) => p.status !== 'trashed');
+  s.monitors = s.monitors.filter((m) => !trashedIds.has(m.project_id));
+  s.alerts = s.alerts.filter((a) => !trashedIds.has(a.project_id));
+  s.projectAccess = (s.projectAccess || []).filter((pa) => !trashedIds.has(pa.project_id));
+  saveState(s);
+}
+
+export function addSandboxOrganization(input: { name: string; description?: string }): Organization {
+  const s = getSandboxState();
+  const org: Organization = {
+    id: 'org_loc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+    name: input.name,
+    description: input.description || '',
+    owner_user_id: 'sandbox_user',
+    role: 'owner',
+    members: [
+      {
+        id: 'om_loc_' + Date.now(),
+        organization_id: '',
+        email: 'ovi@razibmarketing.net',
+        role: 'owner',
+        status: 'active'
+      }
+    ],
+    created_at: new Date().toISOString()
+  };
+  s.organizations = [org, ...(s.organizations || [])];
+  saveState(s);
+  return org;
+}
+
+export function deleteSandboxOrganization(orgId: string) {
+  const s = getSandboxState();
+  s.organizations = (s.organizations || []).filter((o) => o.id !== orgId);
+  s.projects = s.projects.map((p) =>
+    p.organization_id === orgId ? { ...p, organization_id: null, organization_name: null } : p
+  );
+  saveState(s);
+}
+
+export function assignSandboxProjectsToOrg(projectIds: string[], organizationId: string | null) {
+  const s = getSandboxState();
+  const setIds = new Set(projectIds);
+  const orgName = organizationId
+    ? (s.organizations || []).find((o) => o.id === organizationId)?.name || null
+    : null;
+  s.projects = s.projects.map((p) =>
+    setIds.has(p.id) ? { ...p, organization_id: organizationId, organization_name: orgName } : p
+  );
+  saveState(s);
+}
+
+export function grantSandboxProjectAccess(projectIds: string[], emails: string[], role: AccessRole) {
+  const s = getSandboxState();
+  const nowIso = new Date().toISOString();
+  const next = [...(s.projectAccess || [])];
+  for (const pid of projectIds) {
+    const proj = s.projects.find((p) => p.id === pid);
+    for (const email of emails) {
+      const cleanEmail = email.toLowerCase().trim();
+      const idx = next.findIndex((g) => g.project_id === pid && g.granted_to_email === cleanEmail);
+      const item: ProjectAccessGrant = {
+        id: idx >= 0 ? next[idx].id : 'pa_loc_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        project_id: pid,
+        project_name: proj?.name || pid,
+        granted_to_email: cleanEmail,
+        role,
+        granted_by_email: 'ovi@razibmarketing.net',
+        created_at: nowIso
+      };
+      if (idx >= 0) next[idx] = item;
+      else next.unshift(item);
+    }
+  }
+  s.projectAccess = next;
+  saveState(s);
+}
+
+export function revokeSandboxProjectAccess(grantId: string) {
+  const s = getSandboxState();
+  s.projectAccess = (s.projectAccess || []).filter((g) => g.id !== grantId);
   saveState(s);
 }
 
@@ -439,6 +612,8 @@ export function resetSandboxToNewUser() {
   saveState({
     tier: 'free',
     googleConnected: false,
+    organizations: [],
+    projectAccess: [],
     projects: [],
     monitors: [],
     alerts: [],

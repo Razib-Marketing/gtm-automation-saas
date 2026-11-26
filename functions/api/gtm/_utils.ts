@@ -30,15 +30,32 @@ export function extractClerkUserId(request: Request): string {
   }
 }
 
-export async function getGoogleAccessToken(env: any, request: Request) {
+export async function getGoogleAccessToken(
+  env: any,
+  request: Request,
+  fallbackOwnerUserId?: string | null
+) {
   const clerkUserId = extractClerkUserId(request);
 
-  const dbResult = await env.DB.prepare(`
+  let dbResult = await env.DB.prepare(`
     SELECT encrypted_refresh_token 
     FROM gtm_connections 
     WHERE user_id = ? 
     ORDER BY created_at DESC LIMIT 1
   `).bind(clerkUserId).first();
+
+  if (
+    (!dbResult || !dbResult.encrypted_refresh_token || dbResult.encrypted_refresh_token === 'no_refresh_token_provided') &&
+    fallbackOwnerUserId &&
+    fallbackOwnerUserId !== clerkUserId
+  ) {
+    dbResult = await env.DB.prepare(`
+      SELECT encrypted_refresh_token 
+      FROM gtm_connections 
+      WHERE user_id = ? 
+      ORDER BY created_at DESC LIMIT 1
+    `).bind(fallbackOwnerUserId).first();
+  }
 
   if (!dbResult || !dbResult.encrypted_refresh_token || dbResult.encrypted_refresh_token === 'no_refresh_token_provided') {
     throw new Error('Google account not connected or missing refresh token. Please re-authenticate Google on the Dashboard.');

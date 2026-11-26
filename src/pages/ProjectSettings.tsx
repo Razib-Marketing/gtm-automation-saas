@@ -22,6 +22,7 @@ import {
   SANDBOX_GTM_CONTAINERS,
   SANDBOX_GTM_WORKSPACES,
   updateSandboxProject,
+  trashSandboxProject,
   deleteSandboxProject
 } from '../utils/localDemoStore';
 import './Dashboard.css';
@@ -34,13 +35,14 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
   const { getToken } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
-  const { isSandboxMode, googleConnected, refreshWorkspace } = useWorkspace();
+  const { isSandboxMode, googleConnected, organizations, refreshWorkspace } = useWorkspace();
 
   const [name, setName] = useState(project.name || '');
   const [websiteUrl, setWebsiteUrl] = useState(project.website_url || '');
   const [websiteType, setWebsiteType] = useState<WebsitePerspective>(
     (project.website_type as WebsitePerspective) || 'general'
   );
+  const [organizationId, setOrganizationId] = useState<string>(project.organization_id || '');
   const [ga4PropertyId, setGa4PropertyId] = useState(project.ga4_property_id || '');
   const [gtmAccountId, setGtmAccountId] = useState(project.gtm_account_id || '');
   const [gtmContainerId, setGtmContainerId] = useState(project.gtm_container_id || '');
@@ -62,6 +64,7 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
     setName(project.name || '');
     setWebsiteUrl(project.website_url || '');
     setWebsiteType((project.website_type as WebsitePerspective) || 'general');
+    setOrganizationId(project.organization_id || '');
     setGa4PropertyId(project.ga4_property_id || '');
     setGtmAccountId(project.gtm_account_id || '');
     setGtmContainerId(project.gtm_container_id || '');
@@ -163,6 +166,7 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
         name: name.trim(),
         websiteUrl: websiteUrl.trim(),
         websiteType,
+        organizationId: organizationId || null,
         ga4PropertyId: ga4PropertyId || null,
         ga4PropertyName: ga4Obj?.displayName || (ga4PropertyId === project.ga4_property_id ? project.ga4_property_name : ga4PropertyId) || null,
         gtmAccountId: gtmAccountId || null,
@@ -180,6 +184,7 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
           name: payload.name,
           website_url: payload.websiteUrl,
           website_type: payload.websiteType,
+          organization_id: payload.organizationId,
           ga4_property_id: payload.ga4PropertyId,
           ga4_property_name: payload.ga4PropertyName,
           gtm_account_id: payload.gtmAccountId,
@@ -218,6 +223,34 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
     }
   };
 
+  const handleTrashProject = async () => {
+    setDeleting(true);
+    setErrorMsg('');
+    try {
+      if (isSandboxMode) {
+        trashSandboxProject(project.id);
+        await refreshWorkspace();
+        navigate('/organization');
+        return;
+      }
+
+      const token = await getToken();
+      const res = await fetch(`/api/projects?id=${encodeURIComponent(project.id)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to move project to trash');
+      }
+      await refreshWorkspace();
+      navigate('/organization');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Error moving project to trash');
+      setDeleting(false);
+    }
+  };
+
   const handleDelete = async () => {
     setDeleting(true);
     setErrorMsg('');
@@ -230,7 +263,7 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
       }
 
       const token = await getToken();
-      const res = await fetch(`/api/projects?id=${encodeURIComponent(project.id)}`, {
+      const res = await fetch(`/api/projects?id=${encodeURIComponent(project.id)}&permanent=true`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -348,6 +381,25 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
                 {WEBSITE_TYPES.map((wt) => (
                   <option key={wt.value} value={wt.value}>
                     {wt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', color: '#E5E7EB', fontSize: '0.84rem', fontWeight: 600, marginBottom: '0.4rem' }}>
+                Client Organization
+              </label>
+              <select
+                value={organizationId}
+                onChange={(e) => setOrganizationId(e.target.value)}
+                className="module-input"
+                style={{ width: '100%' }}
+              >
+                <option value="">Personal Workspace</option>
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
                   </option>
                 ))}
               </select>
@@ -509,28 +561,51 @@ export const ProjectSettings: React.FC<ProjectSettingsProps> = ({ project }) => 
         >
           <h3 style={{ margin: '0 0 0.4rem', color: '#FCA5A5', fontSize: '1.05rem' }}>Danger Zone</h3>
           <p style={{ margin: '0 0 1rem', color: '#9CA3AF', fontSize: '0.85rem' }}>
-            Deleting this project removes it from your organization and deletes GA4 Observer monitors scoped directly to it. Your actual Google Analytics and GTM accounts remain untouched.
+            Moving this project to Trash immediately closes all active GA4 Observer monitors and stops alert emails (you can restore it later from Trash). Permanent deletion erases the project, monitors, and audit history forever. Your actual Google Analytics and GTM accounts remain untouched.
           </p>
 
           {!confirmDelete ? (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              style={{
-                padding: '0.6rem 1.1rem',
-                borderRadius: '8px',
-                border: '1px solid rgba(239, 68, 68, 0.45)',
-                background: 'rgba(239, 68, 68, 0.14)',
-                color: '#FCA5A5',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem'
-              }}
-            >
-              <Trash2 size={15} /> Delete Project
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={handleTrashProject}
+                disabled={deleting}
+                style={{
+                  padding: '0.6rem 1.1rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(245, 158, 11, 0.45)',
+                  background: 'rgba(245, 158, 11, 0.14)',
+                  color: '#FCD34D',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                {deleting ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />}
+                Move to Trash (Closes Monitors)
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                disabled={deleting}
+                style={{
+                  padding: '0.6rem 1.1rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(239, 68, 68, 0.45)',
+                  background: 'rgba(239, 68, 68, 0.14)',
+                  color: '#FCA5A5',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <Trash2 size={15} /> Delete Permanently
+              </button>
+            </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button

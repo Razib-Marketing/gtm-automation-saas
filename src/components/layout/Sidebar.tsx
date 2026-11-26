@@ -15,16 +15,26 @@ import {
   Sliders,
   Layers,
   Menu,
-  X
+  X,
+  ShieldCheck,
+  Trash2
 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { ClerkOrgSwitcherWidget } from '../ui/ClerkOrgBoundary';
 import { getWebsiteTypeMeta } from '../../types/project';
 import './Sidebar.css';
 
 export const Sidebar: React.FC = () => {
   const { user } = useUser();
   const location = useLocation();
-  const { userTier, hasActiveSubscription, isSandboxMode, getProjectById } = useWorkspace();
+  const {
+    userTier,
+    hasActiveSubscription,
+    hasSharedAccess,
+    trashedProjects,
+    isSandboxMode,
+    getProjectById
+  } = useWorkspace();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
@@ -172,12 +182,15 @@ export const Sidebar: React.FC = () => {
           </div>
 
           {!isProjectMode ? (
-            <div className="sidebar-scope-pill org">
-              <Layers size={12} aria-hidden="true" />
-              <span>ORGANIZATION</span>
-              <span className={`sidebar-tier-tag ${hasActiveSubscription ? 'paid' : 'free'}`}>
-                {userTier.toUpperCase()}
-              </span>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <ClerkOrgSwitcherWidget compact isSandboxMode={isSandboxMode} />
+              <div className="sidebar-scope-pill org">
+                <Layers size={12} aria-hidden="true" />
+                <span>ORGANIZATION</span>
+                <span className={`sidebar-tier-tag ${hasActiveSubscription ? 'paid' : 'free'}`}>
+                  {userTier.toUpperCase()}
+                </span>
+              </div>
             </div>
           ) : (
             <div className="sidebar-project-context">
@@ -225,15 +238,39 @@ export const Sidebar: React.FC = () => {
             <NavLink to="/organization" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
               <FolderKanban size={19} aria-hidden="true" />
               <span>Organization</span>
+              {trashedProjects.length > 0 && (
+                <span
+                  title={`${trashedProjects.length} trashed project(s)`}
+                  style={{
+                    marginLeft: 'auto',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    padding: '0.12rem 0.42rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(239, 68, 68, 0.14)',
+                    color: '#FCA5A5',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.2rem'
+                  }}
+                >
+                  <Trash2 size={10} /> {trashedProjects.length}
+                </span>
+              )}
             </NavLink>
             <NavLink to="/onboarding" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
               <PlusCircle size={19} aria-hidden="true" />
               <span>New Project</span>
             </NavLink>
+            <NavLink to="/access" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
+              <ShieldCheck size={19} aria-hidden="true" />
+              <span>Access &amp; Teams</span>
+            </NavLink>
             <NavLink to="/billing" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
               <CreditCard size={19} aria-hidden="true" />
               <span>Billing &amp; Plan</span>
-              {!hasActiveSubscription && <span className="sidebar-badge-required">Required</span>}
+              {!hasActiveSubscription && !hasSharedAccess && <span className="sidebar-badge-required">Required</span>}
             </NavLink>
             <NavLink to="/settings" onClick={closeDrawer} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`}>
               <Settings size={19} aria-hidden="true" />

@@ -1,4 +1,4 @@
-import { ensureProjectsSchema } from '../ga4/_shared';
+import { ensureProjectsSchema, getClerkAuthContext, resolveProjectAccess } from '../ga4/_shared';
 
 export async function onRequest(context: any) {
   const { request, env } = context;
@@ -51,13 +51,20 @@ async function handleGetLogs(request: Request, env: any) {
 
     let results: any[] = [];
     if (projectId) {
+      const authCtx = getClerkAuthContext(request);
+      const access = await resolveProjectAccess(
+        env.DB,
+        authCtx || userId,
+        projectId
+      );
+      const ownerId = access?.project?.user_id || userId;
       const res = await env.DB.prepare(
         `SELECT id, project_id, gtm_id, health_score, issue_count, raw_data, created_at
          FROM audit_logs
-         WHERE user_id = ?
-           AND (project_id = ? OR (project_id IS NULL AND ? != '' AND gtm_id = ?))
+         WHERE project_id = ?
+            OR (project_id IS NULL AND user_id = ? AND ? != '' AND gtm_id = ?)
          ORDER BY created_at DESC LIMIT 50`
-      ).bind(userId, projectId, gtmId, gtmId).all();
+      ).bind(projectId, ownerId, gtmId, gtmId).all();
       results = res.results || [];
     } else if (gtmId) {
       const res = await env.DB.prepare(
