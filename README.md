@@ -5,7 +5,7 @@
 ## Core Features
 
 - **Personal Workspaces & Multi-Tenant Organizations**
-  - Choose between a **Personal** solo workspace or an **Organization** portfolio during sign-up (`/sign-up` & `/choose-organization`).
+  - Sign up directly into your workspace (`/sign-up`), then create, switch, and manage Organizations anytime from the dashboard sidebar, Access & Teams (`/access`), or Org Settings (`/settings`).
   - Manage 50+ client websites across scoped Organization Dashboards (`/organizations/:orgId`) and an Organization overview (`/organization`) with Card and Table views, search, health filters, industry chips, bulk organization assignment, bulk sharing, and bulk Trash.
   - Native Clerk Organizations integration: switch Personal Account and Organizations from the sidebar, create new organizations, invite team members, assign roles, or remove an organization while preserving websites safely in your Personal Workspace.
 - **Universal Project Sharing & Team Access Control (`/access`)**

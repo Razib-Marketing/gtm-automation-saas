@@ -108,7 +108,7 @@ export const Documentation: React.FC = () => {
               </p>
 
               <div className="docs-flow-strip" aria-label="End-to-End Platform User Flow">
-                <span className="docs-flow-node">Personal or Org Sign-Up</span>
+                <span className="docs-flow-node">Account Sign-Up</span>
                 <span className="docs-flow-arrow">&rarr;</span>
                 <span className="docs-flow-node">Billing &amp; Plan Sync</span>
                 <span className="docs-flow-arrow">&rarr;</span>
@@ -123,7 +123,7 @@ export const Documentation: React.FC = () => {
                 <div className="docs-mini-box">
                   <h4>Personal &amp; Organization Views (/organization, /organizations/:orgId)</h4>
                   <p>
-                    During sign-up (<code>/sign-up</code>), choose <strong>Personal</strong> for a solo workspace or <strong>Organization</strong> to set up a shared agency portfolio (<code>/choose-organization</code>). Use the sidebar organization switcher to jump between Personal Workspace and Organizations, create new organizations, or manage 50+ websites in Card or Table view with search, health filters, industry chips, and bulk actions. Removing an organization safely preserves all its websites inside your Personal Workspace.
+                    Sign up directly into your dashboard (<code>/sign-up</code>), then use the sidebar workspace switcher anytime to switch between your Personal Workspace and Organizations, create new organizations inside the dashboard, or manage 50+ websites in Card or Table view with search, health filters, industry chips, and bulk actions. Removing an organization safely preserves all its websites inside your Personal Workspace.
                   </p>
                 </div>
                 <div className="docs-mini-box">

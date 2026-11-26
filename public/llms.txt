@@ -9,7 +9,7 @@ GTMObserver (https://gtmobserver.com) is a multi-tenant analytics automation Saa
 
 ## Core Capabilities
 - **Workspaces, Onboarding & Polar.sh Billing**:
-  - Personal vs. Organization sign-up and workspace switcher (`/sign-up`, `/choose-organization`, `/organization`, `/organizations/:orgId`).
+  - Direct sign-up into your workspace with in-dashboard Organization switcher and creation (`/organization`, `/organizations/:orgId`, `/access`, `/settings`).
   - Guided 4-step Project Onboarding linking Google Analytics 4, Google Tag Manager containers/workspaces, and starter GA4 Observer monitors.
   - Polar.sh subscription sync and one-click Customer Portal for invoices and workspace capacity management.
   - Safe Trash workflow with immediate monitor closure, Restore, Permanent Delete, and Empty Trash.

@@ -4,9 +4,9 @@
 GTMObserver (https://gtmobserver.com | https://app.gtmobserver.com) is an edge-native analytics governance and automation SaaS platform built on Cloudflare Workers and Cloudflare D1. It empowers digital marketing agencies, hospitality management groups, e-commerce teams, and solo operators to isolate client properties across Personal Workspaces and Organizations, automate Google Tag Manager deployments, run GTM & 22-point GA4 property audits (with branded A4 PDF reports), and monitor GA4 telemetry continuously from the edge.
 
 ## Workspace, Organization & Access Control Model
-- **Personal & Organization Sign-Up**:
-  - Users can sign up on `/sign-up` under either a **Personal** solo workspace or an **Organization** team portfolio (`/choose-organization`).
-  - Native Clerk Organizations integration enables switching workspaces in the sidebar, inviting team members, managing Admin/Member roles (`/access` and `/settings`), and removing organizations while safely preserving all projects inside the user's Personal Workspace.
+- **Personal & Organization Workspaces**:
+  - Users sign up directly into their workspace on `/sign-up` and can create or switch Organizations anytime from inside the dashboard sidebar, `/access`, or `/settings`.
+  - Native Clerk Organizations integration enables switching between Personal Workspace and Organizations in the sidebar, inviting team members, managing Admin/Member roles (`/access` and `/settings`), and removing organizations while safely preserving all projects inside the user's Personal Workspace.
 - **Organization & Project Isolation**:
   - Organization Dashboard (`/organization`) and scoped Organization Dashboards (`/organizations/:orgId`) support managing 50+ client websites across Card and Table views with search, health filters, industry chips, bulk organization assignment, bulk sharing, and bulk Trash.
   - Each project opens into a strictly isolated workspace (`/projects/:projectId/dashboard`, `/gtm`, `/observer`, `/analytics`, `/settings`).
