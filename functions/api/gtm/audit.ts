@@ -1,5 +1,5 @@
 import { getGoogleAccessToken, extractClerkUserId } from './_utils';
-import { isValidGtmWorkspacePath } from '../_security';
+import { isValidGtmWorkspacePath, isUnlimitedAdminEmail, verifyClerkAuth } from '../_security';
 
 export async function onRequest(context) {
   const { env, request } = context;
@@ -19,12 +19,14 @@ export async function onRequest(context) {
       });
     }
 
-    const clerkUserId = await extractClerkUserId(request, env);
+    const auth = await verifyClerkAuth(request, env);
+    const clerkUserId = auth?.userId || (await extractClerkUserId(request, env));
     const userRow: any = await env.DB.prepare(
-      'SELECT subscription_tier FROM users WHERE id = ?'
+      'SELECT email, subscription_tier FROM users WHERE id = ?'
     ).bind(clerkUserId).first();
 
-    const tier = userRow?.subscription_tier || 'free';
+    const isAdmin = isUnlimitedAdminEmail(auth?.email) || isUnlimitedAdminEmail(userRow?.email);
+    const tier = isAdmin ? 'custom' : (userRow?.subscription_tier || 'free');
     if (tier === 'free') {
       const auditCountRow: any = await env.DB.prepare(
         'SELECT COUNT(*) as count FROM audit_logs WHERE user_id = ?'

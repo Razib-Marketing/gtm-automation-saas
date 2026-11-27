@@ -5,6 +5,42 @@ export interface ClerkAuthContext {
   email: string | null;
 }
 
+export const UNLIMITED_ADMIN_EMAILS = [
+  'ovi.cse23@gmail.com',
+  'ovi@razibmarketing.net',
+  'ovi@razibmarekting.net',
+  'support@cogwheelmarketing.com',
+  'razib@razibmarketing.com',
+  'mohammed@cogwheelmarketing.com'
+] as const;
+
+export const UNLIMITED_WORKSPACE_LIMIT = 999999;
+
+export function isUnlimitedAdminEmail(email?: string | null): boolean {
+  const normalized = (email || '').toLowerCase().trim();
+  return normalized.length > 0 && (UNLIMITED_ADMIN_EMAILS as readonly string[]).includes(normalized);
+}
+
+export async function resolveClerkVerifiedEmail(userId: string, env?: any): Promise<string | null> {
+  if (!userId || !env?.CLERK_SECRET_KEY) return null;
+  try {
+    const res = await fetch(`https://api.clerk.com/v1/users/${encodeURIComponent(userId)}`, {
+      headers: {
+        Authorization: `Bearer ${env.CLERK_SECRET_KEY}`,
+        Accept: 'application/json'
+      }
+    });
+    if (!res.ok) return null;
+    const data: any = await res.json().catch(() => null);
+    const list: any[] = Array.isArray(data?.email_addresses) ? data.email_addresses : [];
+    const primary = list.find((e: any) => e?.id === data?.primary_email_address_id) || list[0];
+    const candidate = typeof primary?.email_address === 'string' ? primary.email_address.toLowerCase().trim() : '';
+    return isValidEmail(candidate) ? candidate : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 const DEFAULT_CLERK_ISSUER = 'https://clerk.gtmobserver.com';
 const JWKS_CACHE_TTL_MS = 10 * 60 * 1000;
 

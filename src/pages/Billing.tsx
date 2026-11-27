@@ -57,7 +57,7 @@ export const Billing: React.FC = () => {
   const { getToken, isSignedIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { userTier, workspaceLimit, hasActiveSubscription, isSandboxMode, refreshWorkspace, projects } = useWorkspace();
+  const { userTier, workspaceLimit, isUnlimited, hasActiveSubscription, hasPolarCustomer, isSandboxMode, refreshWorkspace, projects } = useWorkspace();
 
   const [containers, setContainers] = useState(25);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
@@ -257,7 +257,7 @@ export const Billing: React.FC = () => {
           </h1>
           <p className="dashboard-subtitle">
             {hasActiveSubscription
-              ? `Your organization is currently on the ${userTier.toUpperCase()} package (${workspaceLimit > 0 ? `up to ${workspaceLimit} workspaces` : 'active'}). Manage billing or launch project onboarding.`
+              ? `Your organization is currently on the ${userTier.toUpperCase()} package (${isUnlimited ? 'unlimited workspaces' : workspaceLimit > 0 ? `up to ${workspaceLimit} workspaces` : 'active'}). Manage billing or launch project onboarding.`
               : 'Select a Polar.sh subscription package to unlock your Organization Dashboard, guided Project Onboarding, GTM automation, and 24/7 GA4 Observer.'}
           </p>
         </div>
@@ -325,10 +325,12 @@ export const Billing: React.FC = () => {
         )}
 
         {hasActiveSubscription && (() => {
-          const capacityPct = workspaceLimit > 0
+          const capacityPct = isUnlimited
+            ? 100
+            : workspaceLimit > 0
             ? Math.min(100, Math.max(projects.length > 0 ? 4 : 0, Math.round((projects.length / workspaceLimit) * 100)))
             : 100;
-          const remainingSlots = workspaceLimit > 0 ? Math.max(0, workspaceLimit - projects.length) : 0;
+          const remainingSlots = isUnlimited ? 0 : workspaceLimit > 0 ? Math.max(0, workspaceLimit - projects.length) : 0;
 
           return (
             <div className="billing-active-card">
@@ -337,12 +339,16 @@ export const Billing: React.FC = () => {
                   <div className="billing-badge-row">
                     <span className="billing-status-pill">
                       <span className="billing-status-dot" />
-                      Active Subscription • Polar.sh Synced
+                      {isUnlimited ? 'Active Subscription • Unlimited Access' : 'Active Subscription • Polar.sh Synced'}
                     </span>
-                    <span className="billing-tier-pill">{userTier.toUpperCase()} Tier</span>
+                    <span className="billing-tier-pill">
+                      {isUnlimited ? 'CUSTOM UNLIMITED' : `${userTier.toUpperCase()} Tier`}
+                    </span>
                   </div>
                   <h3 className="billing-active-title">
-                    {userTier === 'custom'
+                    {isUnlimited
+                      ? 'GTMObserver Custom Unlimited Plan'
+                      : userTier === 'custom'
                       ? customProduct?.name || 'GTMObserver Custom Scale Plan'
                       : proProduct?.name || 'GTMObserver Pro Plan'}
                   </h3>
@@ -358,14 +364,16 @@ export const Billing: React.FC = () => {
                     <span className="billing-capacity-label">Workspace Capacity</span>
                     <span className="billing-capacity-value">
                       {projects.length}
-                      {workspaceLimit > 0 ? <span> / {workspaceLimit}</span> : <span> active</span>}
+                      {isUnlimited ? <span> / Unlimited</span> : workspaceLimit > 0 ? <span> / {workspaceLimit}</span> : <span> active</span>}
                     </span>
                   </div>
                   <div className="billing-capacity-track">
                     <div className="billing-capacity-fill" style={{ width: `${capacityPct}%` }} />
                   </div>
                   <div className="billing-capacity-note">
-                    {workspaceLimit > 0
+                    {isUnlimited
+                      ? 'Unlimited projects, GTM containers, GA4 monitors & audits'
+                      : workspaceLimit > 0
                       ? `${remainingSlots} project slot${remainingSlots === 1 ? '' : 's'} remaining in plan`
                       : 'Active workspace quota unlocked'}
                   </div>
@@ -378,15 +386,17 @@ export const Billing: React.FC = () => {
                   New Project
                   <ArrowRight size={15} />
                 </Link>
-                <button
-                  type="button"
-                  onClick={handleOpenPortal}
-                  disabled={portalLoading}
-                  className="billing-action-btn accent"
-                >
-                  {portalLoading ? <Loader2 size={15} className="animate-spin" /> : <ExternalLink size={15} />}
-                  Manage Billing &amp; Invoices
-                </button>
+                {(!isUnlimited || hasPolarCustomer) && (
+                  <button
+                    type="button"
+                    onClick={handleOpenPortal}
+                    disabled={portalLoading}
+                    className="billing-action-btn accent"
+                  >
+                    {portalLoading ? <Loader2 size={15} className="animate-spin" /> : <ExternalLink size={15} />}
+                    Manage Billing &amp; Invoices
+                  </button>
+                )}
                 <Link to="/organization" className="billing-action-btn outline">
                   <Building2 size={15} />
                   Organization Dashboard
@@ -532,13 +542,15 @@ export const Billing: React.FC = () => {
 
             <button
               onClick={() => handlePurchase('custom')}
-              disabled={checkoutLoading !== null}
+              disabled={checkoutLoading !== null || (!isSandboxMode && isUnlimited)}
               className="checkout-btn outline"
             >
               {checkoutLoading === 'custom' ? (
                 <Loader2 className="animate-spin" size={20} />
               ) : isSandboxMode ? (
                 `Activate Custom (${containers}) & Start Onboarding →`
+              ) : isUnlimited ? (
+                'Unlimited Custom Plan Active'
               ) : userTier === 'custom' ? (
                 'Update Capacity in Polar'
               ) : (

@@ -16,6 +16,7 @@ export type ActiveOrgScope = 'all' | 'personal' | 'shared' | 'trash' | string;
 interface WorkspaceContextValue {
   userTier: 'free' | 'pro' | 'custom';
   workspaceLimit: number;
+  isUnlimited: boolean;
   hasActiveSubscription: boolean;
   hasPolarCustomer: boolean;
   hasSharedAccess: boolean;
@@ -40,6 +41,7 @@ interface WorkspaceContextValue {
 const WorkspaceContext = createContext<WorkspaceContextValue>({
   userTier: 'free',
   workspaceLimit: 0,
+  isUnlimited: false,
   hasActiveSubscription: false,
   hasPolarCustomer: false,
   hasSharedAccess: false,
@@ -71,6 +73,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
   const [workspaceLimit, setWorkspaceLimit] = useState<number>(0);
+  const [isUnlimited, setIsUnlimited] = useState(false);
   const [hasPolarCustomer, setHasPolarCustomer] = useState(false);
   const [hasSharedAccess, setHasSharedAccess] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
@@ -104,6 +107,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const trashedList = enriched.filter((p) => p.status === 'trashed');
       setUserTier(s.tier);
       setWorkspaceLimit(s.tier === 'custom' ? 100 : s.tier === 'pro' ? 10 : 0);
+      setIsUnlimited(false);
       setHasPolarCustomer(false);
       setHasSharedAccess(false);
       setGoogleConnected(s.googleConnected);
@@ -127,6 +131,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setTrashedProjects([]);
       setUserTier('free');
       setWorkspaceLimit(0);
+      setIsUnlimited(false);
       setHasPolarCustomer(false);
       setHasSharedAccess(false);
       setGoogleConnected(false);
@@ -165,6 +170,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (meRes.ok && meData?.subscription_tier) {
         setUserTier(meData.subscription_tier);
         setWorkspaceLimit(Number(meData.workspace_limit || 0));
+        setIsUnlimited(Boolean(meData.is_unlimited));
         setHasPolarCustomer(Boolean(meData.has_polar_customer));
       }
       setHasSharedAccess(Boolean(meData?.has_shared_access));
@@ -312,6 +318,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       value={{
         userTier,
         workspaceLimit,
+        isUnlimited,
         hasActiveSubscription,
         hasPolarCustomer,
         hasSharedAccess,

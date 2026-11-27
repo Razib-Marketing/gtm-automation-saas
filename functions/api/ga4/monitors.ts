@@ -9,7 +9,7 @@ import {
   isValidTimeHHMM,
   sanitizeTimezone
 } from './_shared';
-import { isValidGa4PropertyId } from '../_security';
+import { isValidGa4PropertyId, isUnlimitedAdminEmail } from '../_security';
 
 export async function onRequest(context: any) {
   const { env, request } = context;
@@ -158,14 +158,7 @@ export async function onRequest(context: any) {
         ).bind(userId).first();
       } catch (_) {}
 
-      const userEmail = (userRow?.email || '').toLowerCase().trim();
-      const ADMIN_EMAILS = [
-        'ovi.cse23@gmail.com',
-        'ovi@razibmarketing.net',
-        'ovi@razibmarekting.net',
-        'support@cogwheelmarketing.com'
-      ];
-      const isAdmin = ADMIN_EMAILS.includes(userEmail);
+      const isAdmin = isUnlimitedAdminEmail(auth.email) || isUnlimitedAdminEmail(userRow?.email);
       const tier = isAdmin ? 'custom' : (userRow?.subscription_tier || 'free');
 
       // Allow shared editors/admins on an active project even if their personal account is free

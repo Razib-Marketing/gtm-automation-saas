@@ -13,11 +13,19 @@ export const Settings = () => {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const navigate = useNavigate();
-  const { isSandboxMode, userTier: ctxTier, workspaceLimit: ctxLimit } = useWorkspace();
+  const {
+    isSandboxMode,
+    userTier: ctxTier,
+    workspaceLimit: ctxLimit,
+    isUnlimited: ctxUnlimited,
+    hasPolarCustomer: ctxHasPolarCustomer
+  } = useWorkspace();
 
   const [activeTab, setActiveTab] = useState<'subscription' | 'schedule' | 'organization' | 'profile'>('subscription');
   const [userTier, setUserTier] = useState<'free' | 'pro' | 'custom'>('free');
   const [workspaceLimit, setWorkspaceLimit] = useState(0);
+  const [isUnlimited, setIsUnlimited] = useState(false);
+  const [hasPolarCustomer, setHasPolarCustomer] = useState(false);
   const [deploymentCount, setDeploymentCount] = useState(0);
   const [loadingData, setLoadingData] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -34,6 +42,8 @@ export const Settings = () => {
     if (isSandboxMode) {
       setUserTier(ctxTier || 'pro');
       setWorkspaceLimit(ctxLimit || 10);
+      setIsUnlimited(ctxUnlimited);
+      setHasPolarCustomer(ctxHasPolarCustomer);
       setDeploymentCount(2);
       setLoadingData(false);
       return;
@@ -51,6 +61,8 @@ export const Settings = () => {
         if (data && data.subscription_tier) {
           setUserTier(data.subscription_tier);
           setWorkspaceLimit(Number(data.workspace_limit || 0));
+          setIsUnlimited(Boolean(data.is_unlimited));
+          setHasPolarCustomer(Boolean(data.has_polar_customer));
           setDeploymentCount(data.account_deployment_count || 0);
         }
         if (data?.schedule_time) {
@@ -68,7 +80,7 @@ export const Settings = () => {
     if (isSignedIn) {
       fetchUserData();
     }
-  }, [isSignedIn, user, isSandboxMode, ctxTier, ctxLimit, getToken]);
+  }, [isSignedIn, user, isSandboxMode, ctxTier, ctxLimit, ctxUnlimited, ctxHasPolarCustomer, getToken]);
 
   const handleSaveSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,7 +243,9 @@ export const Settings = () => {
                     <div className="subscription-card">
                       <div className="subscription-header">
                         <div className="plan-info">
-                          <span className="plan-badge">{userTier.toUpperCase()} PLAN</span>
+                          <span className="plan-badge">
+                            {isUnlimited ? 'CUSTOM UNLIMITED' : `${userTier.toUpperCase()} PLAN`}
+                          </span>
                           <h3>Current Plan</h3>
                         </div>
                         {isFree && (
@@ -246,7 +260,7 @@ export const Settings = () => {
                         )}
                         {(isPro || isCustom) && (
                           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-                            {!isSandboxMode && (
+                            {!isSandboxMode && (!isUnlimited || hasPolarCustomer) && (
                               <button
                                 type="button"
                                 className="btn-home-link"
@@ -291,7 +305,13 @@ export const Settings = () => {
                             </div>
                             <div className="feature-item">
                               <CheckCircleIcon color="#00F0FF" />
-                              <span>{isCustom ? 'Custom GTM Workspaces' : 'Up to 10 GTM Workspaces'}</span>
+                              <span>
+                                {isUnlimited
+                                  ? 'Unlimited Projects, GTM Workspaces & GA4 Monitors'
+                                  : isCustom
+                                  ? 'Custom GTM Workspaces'
+                                  : 'Up to 10 GTM Workspaces'}
+                              </span>
                             </div>
                           </>
                         )}
@@ -306,7 +326,9 @@ export const Settings = () => {
                       <div className="usage-progress-container">
                         <div className="usage-stats">
                           <span className="usage-count">{deploymentCount}</span>
-                          <span className="usage-limit">/ {isFree ? 'Limited' : isCustom ? 'Custom' : proLimit} Workspaces</span>
+                          <span className="usage-limit">
+                            / {isFree ? 'Limited' : isUnlimited ? 'Unlimited' : isCustom ? 'Custom' : proLimit} Workspaces
+                          </span>
                         </div>
                         
                         {(isFree || isPro) && (

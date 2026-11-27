@@ -1,5 +1,5 @@
 import { getGoogleAccessToken, extractClerkUserId } from './_utils';
-import { isValidGtmWorkspacePath } from '../_security';
+import { isValidGtmWorkspacePath, isUnlimitedAdminEmail, verifyClerkAuth } from '../_security';
 import { safaraTemplate, synxisTemplate, ihotelierTemplate, windsurferTemplate, mewsTemplate, woocommerceTemplate, getBasicTemplate } from './templates/index';
 
 // Only used for payload generation
@@ -360,19 +360,13 @@ export async function onRequest(context) {
       }
     }
 
-    const clerkUserId = await extractClerkUserId(request, env);
+    const auth = await verifyClerkAuth(request, env);
+    const clerkUserId = auth?.userId || (await extractClerkUserId(request, env));
     let userRow: any = null;
     try {
       userRow = await env.DB.prepare('SELECT email, subscription_tier FROM users WHERE id = ?').bind(clerkUserId).first();
     } catch (_) {}
-    const userEmail = (userRow?.email || '').toLowerCase().trim();
-    const ADMIN_EMAILS = [
-      'ovi.cse23@gmail.com',
-      'ovi@razibmarketing.net',
-      'ovi@razibmarekting.net',
-      'support@cogwheelmarketing.com'
-    ];
-    const isAdmin = ADMIN_EMAILS.includes(userEmail);
+    const isAdmin = isUnlimitedAdminEmail(auth?.email) || isUnlimitedAdminEmail(userRow?.email);
     const tier = isAdmin ? 'custom' : (userRow?.subscription_tier || 'free');
 
     if (tier === 'free') {

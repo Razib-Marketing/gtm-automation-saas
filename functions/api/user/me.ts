@@ -8,14 +8,12 @@ import {
   isValidTimezone,
   sanitizeTimezone
 } from '../ga4/_shared';
-import { isValidEmail } from '../_security';
-
-const ADMIN_EMAILS = [
-  'ovi.cse23@gmail.com',
-  'ovi@razibmarketing.net',
-  'ovi@razibmarekting.net',
-  'support@cogwheelmarketing.com'
-];
+import {
+  isValidEmail,
+  isUnlimitedAdminEmail,
+  resolveClerkVerifiedEmail,
+  UNLIMITED_WORKSPACE_LIMIT
+} from '../_security';
 
 export async function onRequestGet(context: any) {
   const { request, env } = context;
@@ -44,12 +42,16 @@ export async function onRequestGet(context: any) {
       .bind(clerkUserId)
       .first();
 
-    const verifiedJwtAdmin = Boolean(auth.email && ADMIN_EMAILS.includes(auth.email));
+    let verifiedEmail = (auth.email || '').toLowerCase().trim();
+    if (!verifiedEmail && env?.CLERK_SECRET_KEY) {
+      verifiedEmail = (await resolveClerkVerifiedEmail(clerkUserId, env)) || '';
+    }
 
     if (!dbResult) {
-      const initialEmail = auth.email || safeQueryEmail || 'unknown@example.com';
-      const initialTier = verifiedJwtAdmin ? 'custom' : 'free';
-      const initialLimit = verifiedJwtAdmin ? 100 : 0;
+      const initialEmail = verifiedEmail || safeQueryEmail || 'unknown@example.com';
+      const initialIsAdmin = isUnlimitedAdminEmail(verifiedEmail || initialEmail);
+      const initialTier = initialIsAdmin ? 'custom' : 'free';
+      const initialLimit = initialIsAdmin ? UNLIMITED_WORKSPACE_LIMIT : 0;
 
       await env.DB.prepare(
         `INSERT INTO users (id, email, subscription_tier, workspace_limit, schedule_time, schedule_timezone)
@@ -69,11 +71,11 @@ export async function onRequestGet(context: any) {
         polar_subscription_id: null
       };
     } else if (
-      safeQueryEmail &&
+      (verifiedEmail || safeQueryEmail) &&
       (!dbResult.email || dbResult.email === 'unknown@example.com')
     ) {
       // Populate email only if user row currently lacks one and email is not claimed by an admin
-      const candidateEmail = auth.email || (ADMIN_EMAILS.includes(safeQueryEmail) ? '' : safeQueryEmail);
+      const candidateEmail = verifiedEmail || (isUnlimitedAdminEmail(safeQueryEmail) ? '' : safeQueryEmail);
       if (candidateEmail) {
         try {
           await env.DB.prepare('UPDATE users SET email = ? WHERE id = ?')
@@ -84,18 +86,18 @@ export async function onRequestGet(context: any) {
       }
     }
 
-    const trustedEmail = (auth.email || dbResult.email || '').toLowerCase().trim();
-    const isAdmin = ADMIN_EMAILS.includes(trustedEmail);
+    const trustedEmail = (verifiedEmail || dbResult.email || '').toLowerCase().trim();
+    const isAdmin = isUnlimitedAdminEmail(trustedEmail);
 
     if (isAdmin) {
       dbResult.subscription_tier = 'custom';
       dbResult.account_deployment_count = 0;
-      dbResult.workspace_limit = Math.max(Number(dbResult.workspace_limit || 0), 100);
+      dbResult.workspace_limit = Math.max(Number(dbResult.workspace_limit || 0), UNLIMITED_WORKSPACE_LIMIT);
       try {
         await env.DB.prepare(
-          "UPDATE users SET subscription_tier = 'custom', workspace_limit = MAX(COALESCE(workspace_limit, 0), 100) WHERE id = ?"
+          "UPDATE users SET subscription_tier = 'custom', workspace_limit = MAX(COALESCE(workspace_limit, 0), ?) WHERE id = ?"
         )
-          .bind(clerkUserId)
+          .bind(UNLIMITED_WORKSPACE_LIMIT, clerkUserId)
           .run();
       } catch (_) {}
     }
@@ -161,13 +163,14 @@ export async function onRequestGet(context: any) {
         email: dbResult.email,
         subscription_tier: dbResult.subscription_tier || 'free',
         account_deployment_count: dbResult.account_deployment_count || 0,
-        workspace_limit: workspaceLimit,
+        workspace_limit: isAdmin ? UNLIMITED_WORKSPACE_LIMIT : workspaceLimit,
+        is_unlimited: isAdmin,
         has_polar_customer: Boolean(dbResult.polar_customer_id),
         has_polar_subscription: Boolean(dbResult.polar_subscription_id),
         audit_count: auditCount,
         project_count: projectCount,
         has_shared_access: hasSharedAccess,
-        has_active_subscription: activeTier === 'pro' || activeTier === 'custom',
+        has_active_subscription: activeTier === 'pro' || activeTier === 'custom' || isAdmin,
         schedule_time: isValidTimeHHMM(dbResult.schedule_time) ? dbResult.schedule_time : '08:00',
         schedule_timezone: sanitizeTimezone(dbResult.schedule_timezone)
       }),
@@ -227,10 +230,18 @@ export async function onRequestPost(context: any) {
       (typeof body.email === 'string' && isValidEmail(body.email) ? body.email.trim().toLowerCase() : '');
 
     if (!existing && safeEmail) {
+      const postIsAdmin = isUnlimitedAdminEmail(auth?.email || safeEmail);
       await env.DB.prepare(
-        "INSERT INTO users (id, email, subscription_tier, schedule_time, schedule_timezone) VALUES (?, ?, 'free', ?, ?)"
+        'INSERT INTO users (id, email, subscription_tier, workspace_limit, schedule_time, schedule_timezone) VALUES (?, ?, ?, ?, ?, ?)'
       )
-        .bind(userId, safeEmail, rawTime, safeTz)
+        .bind(
+          userId,
+          safeEmail,
+          postIsAdmin ? 'custom' : 'free',
+          postIsAdmin ? UNLIMITED_WORKSPACE_LIMIT : 0,
+          rawTime,
+          safeTz
+        )
         .run();
     } else {
       await env.DB.prepare(

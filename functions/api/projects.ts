@@ -16,12 +16,7 @@ import {
   AccessRole
 } from './ga4/_shared';
 
-const ADMIN_EMAILS = [
-  'ovi.cse23@gmail.com',
-  'ovi@razibmarketing.net',
-  'ovi@razibmarekting.net',
-  'support@cogwheelmarketing.com'
-];
+import { isUnlimitedAdminEmail } from './_security';
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -30,7 +25,11 @@ function json(data: any, status = 200) {
   });
 }
 
-async function resolveUserTier(db: any, userId: string): Promise<{ tier: string; email: string }> {
+async function resolveUserTier(
+  db: any,
+  userId: string,
+  jwtEmail?: string | null
+): Promise<{ tier: string; email: string }> {
   let userRow: any = null;
   try {
     userRow = await db
@@ -39,8 +38,8 @@ async function resolveUserTier(db: any, userId: string): Promise<{ tier: string;
       .first();
   } catch (_) {}
 
-  const email = (userRow?.email || '').toLowerCase().trim();
-  const isAdmin = ADMIN_EMAILS.includes(email);
+  const email = (jwtEmail || userRow?.email || '').toLowerCase().trim();
+  const isAdmin = isUnlimitedAdminEmail(jwtEmail) || isUnlimitedAdminEmail(userRow?.email);
   const tier = isAdmin ? 'custom' : (userRow?.subscription_tier || 'free');
   return { tier, email };
 }
@@ -477,7 +476,7 @@ export async function onRequest(context: any) {
         }
         orgName = orgAccess.organization.name;
       } else {
-        const { tier } = await resolveUserTier(env.DB, userId);
+        const { tier } = await resolveUserTier(env.DB, userId, auth.email);
         if (tier === 'free') {
           return json(
             {
